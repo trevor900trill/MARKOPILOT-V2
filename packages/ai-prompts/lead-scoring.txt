@@ -1,0 +1,27 @@
+Score this potential lead on a scale of 0-100 based on fit with the target customer profile.
+
+BRAND TARGET PROFILE:
+Brand: {brandName}
+Industry: {industry}
+Target audience: {targetAudienceDescription}
+Target job titles: {jobTitles}
+Pain points the brand solves: {painPoints}
+
+LEAD DATA:
+Name: {name}
+Job Title: {jobTitle}
+Company: {company}
+Location: {location}
+Found at: {sourceUrl}
+
+SCORING GUIDE:
+80-100: Near-perfect match. Job title, company type, and geography all align.
+60-79: Good match. Most criteria align with minor gaps.
+40-59: Partial match. Some criteria align but significant gaps exist.
+0-39: Poor match. Do not score below 30 unless clearly irrelevant.
+
+Return ONLY this JSON, no preamble:
+{
+  "score": <integer 0-100>,
+  "summary": "<exactly 2 sentences explaining the fit>"
+}

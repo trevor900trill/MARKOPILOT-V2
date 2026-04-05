@@ -1,0 +1,17 @@
+You are a content strategy expert. Suggest 5 content pillars (recurring themes) for a brand's social media presence.
+
+BRAND CONTEXT:
+Brand: {brandName}
+Industry: {industry}
+What the brand does: {brandDescription}
+Target audience: {targetAudienceDescription}
+Pain points the brand solves: {painPoints}
+
+PILLAR GUIDELINES:
+- Each pillar should be a short phrase (2-5 words).
+- Pillars should cover different aspects: educational, behind-the-scenes, industry insights, customer stories, and thought leadership.
+- Pillars must be specific to this brand's industry, not generic marketing terms.
+- Each pillar should be able to generate at least 10 unique posts.
+
+Return ONLY a JSON array of 5 strings. No explanations, no markdown, no preamble:
+["pillar1", "pillar2", "pillar3", "pillar4", "pillar5"]

@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Markopilot.Api/Markopilot.Api.csproj" />
+  <Project Path="Markopilot.Core/Markopilot.Core.csproj" />
+  <Project Path="Markopilot.Infrastructure/Markopilot.Infrastructure.csproj" />
+  <Project Path="Markopilot.Workers/Markopilot.Workers.csproj" />
+</Solution>

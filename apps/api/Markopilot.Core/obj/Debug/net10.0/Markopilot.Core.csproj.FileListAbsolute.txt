@@ -1,0 +1,13 @@
+/Users/trevormugo/Desktop/PROJECTS/MARKOPILOT/MARKOPILOTFULL/MARKOPILOT-V2/apps/api/Markopilot.Core/obj/Debug/net10.0/Markopilot.Core.GeneratedMSBuildEditorConfig.editorconfig
+/Users/trevormugo/Desktop/PROJECTS/MARKOPILOT/MARKOPILOTFULL/MARKOPILOT-V2/apps/api/Markopilot.Core/obj/Debug/net10.0/Markopilot.Core.AssemblyInfoInputs.cache
+/Users/trevormugo/Desktop/PROJECTS/MARKOPILOT/MARKOPILOTFULL/MARKOPILOT-V2/apps/api/Markopilot.Core/obj/Debug/net10.0/Markopilot.Core.AssemblyInfo.cs
+/Users/trevormugo/Desktop/PROJECTS/MARKOPILOT/MARKOPILOTFULL/MARKOPILOT-V2/apps/api/Markopilot.Core/obj/Debug/net10.0/Markopilot.Core.csproj.CoreCompileInputs.cache
+/Users/trevormugo/Desktop/PROJECTS/MARKOPILOT/MARKOPILOTFULL/MARKOPILOT-V2/apps/api/Markopilot.Core/obj/Debug/net10.0/Markopilot.Core.sourcelink.json
+/Users/trevormugo/Desktop/PROJECTS/MARKOPILOT/MARKOPILOTFULL/MARKOPILOT-V2/apps/api/Markopilot.Core/bin/Debug/net10.0/Markopilot.Core.deps.json
+/Users/trevormugo/Desktop/PROJECTS/MARKOPILOT/MARKOPILOTFULL/MARKOPILOT-V2/apps/api/Markopilot.Core/bin/Debug/net10.0/Markopilot.Core.dll
+/Users/trevormugo/Desktop/PROJECTS/MARKOPILOT/MARKOPILOTFULL/MARKOPILOT-V2/apps/api/Markopilot.Core/bin/Debug/net10.0/Markopilot.Core.pdb
+/Users/trevormugo/Desktop/PROJECTS/MARKOPILOT/MARKOPILOTFULL/MARKOPILOT-V2/apps/api/Markopilot.Core/obj/Debug/net10.0/Markopilot.Core.csproj.AssemblyReference.cache
+/Users/trevormugo/Desktop/PROJECTS/MARKOPILOT/MARKOPILOTFULL/MARKOPILOT-V2/apps/api/Markopilot.Core/obj/Debug/net10.0/Markopilot.Core.dll
+/Users/trevormugo/Desktop/PROJECTS/MARKOPILOT/MARKOPILOTFULL/MARKOPILOT-V2/apps/api/Markopilot.Core/obj/Debug/net10.0/refint/Markopilot.Core.dll
+/Users/trevormugo/Desktop/PROJECTS/MARKOPILOT/MARKOPILOTFULL/MARKOPILOT-V2/apps/api/Markopilot.Core/obj/Debug/net10.0/Markopilot.Core.pdb
+/Users/trevormugo/Desktop/PROJECTS/MARKOPILOT/MARKOPILOTFULL/MARKOPILOT-V2/apps/api/Markopilot.Core/obj/Debug/net10.0/ref/Markopilot.Core.dll

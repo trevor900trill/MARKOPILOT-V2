@@ -1,0 +1,31 @@
+{
+  "version": 2,
+  "dgSpecHash": "dEqCiwmnKjs=",
+  "success": true,
+  "projectFilePath": "/Users/trevormugo/Desktop/PROJECTS/MARKOPILOT/MARKOPILOTFULL/MARKOPILOT-V2/apps/api/Markopilot.Infrastructure/Markopilot.Infrastructure.csproj",
+  "expectedPackageFiles": [
+    "/Users/trevormugo/.nuget/packages/microsoft.extensions.configuration.abstractions/10.0.5/microsoft.extensions.configuration.abstractions.10.0.5.nupkg.sha512",
+    "/Users/trevormugo/.nuget/packages/microsoft.extensions.dependencyinjection.abstractions/10.0.5/microsoft.extensions.dependencyinjection.abstractions.10.0.5.nupkg.sha512",
+    "/Users/trevormugo/.nuget/packages/microsoft.extensions.logging.abstractions/10.0.5/microsoft.extensions.logging.abstractions.10.0.5.nupkg.sha512",
+    "/Users/trevormugo/.nuget/packages/microsoft.extensions.primitives/10.0.5/microsoft.extensions.primitives.10.0.5.nupkg.sha512",
+    "/Users/trevormugo/.nuget/packages/npgsql/10.0.2/npgsql.10.0.2.nupkg.sha512",
+    "/Users/trevormugo/.nuget/packages/pipelines.sockets.unofficial/2.2.8/pipelines.sockets.unofficial.2.2.8.nupkg.sha512",
+    "/Users/trevormugo/.nuget/packages/stackexchange.redis/2.12.14/stackexchange.redis.2.12.14.nupkg.sha512",
+    "/Users/trevormugo/.nuget/packages/system.io.hashing/10.0.2/system.io.hashing.10.0.2.nupkg.sha512",
+    "/Users/trevormugo/.nuget/packages/system.text.json/10.0.5/system.text.json.10.0.5.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1510",
+      "level": "Warning",
+      "message": "PackageReference System.Text.Json will not be pruned. Consider removing this package from your dependencies, as it is likely unnecessary.",
+      "projectPath": "/Users/trevormugo/Desktop/PROJECTS/MARKOPILOT/MARKOPILOTFULL/MARKOPILOT-V2/apps/api/Markopilot.Infrastructure/Markopilot.Infrastructure.csproj",
+      "warningLevel": 1,
+      "filePath": "/Users/trevormugo/Desktop/PROJECTS/MARKOPILOT/MARKOPILOTFULL/MARKOPILOT-V2/apps/api/Markopilot.Infrastructure/Markopilot.Infrastructure.csproj",
+      "libraryId": "System.Text.Json",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    }
+  ]
+}
