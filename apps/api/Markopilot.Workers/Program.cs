@@ -7,7 +7,7 @@ using StackExchange.Redis;
 
 var builder = Host.CreateApplicationBuilder(args);
 
-var connectionString = builder.Configuration["Supabase:Url"]
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? "Host=localhost;Port=5432;Database=markopilot;Username=postgres;Password=postgres";
 
 var redisConnectionString = builder.Configuration["Redis:ConnectionString"]
@@ -32,12 +32,13 @@ builder.Services.AddHangfire(config => config
 builder.Services.AddHangfireServer(options =>
 {
     options.Queues = ["critical", "scale", "growth", "starter", "default"];
-    options.WorkerCount = 20;
+    options.WorkerCount = 5;
 });
 
 // ── Services ─────────────────────────────────────
 builder.Services.AddSingleton(sp =>
     new SupabaseRepository(connectionString, sp.GetRequiredService<ILogger<SupabaseRepository>>()));
+builder.Services.AddSingleton<IUserRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
 
 builder.Services.AddSingleton<ITokenEncryptionService>(sp =>
 {
@@ -57,6 +58,21 @@ builder.Services.AddHttpClient<Markopilot.Core.Interfaces.IAiRoutingService, Mar
 builder.Services.AddSingleton<Markopilot.Core.Interfaces.IContentGenerationService, Markopilot.Infrastructure.AI.ContentGenerationService>();
 builder.Services.AddHttpClient<Markopilot.Core.Interfaces.ISearchClient, Markopilot.Infrastructure.Search.SerperClient>();
 builder.Services.AddHttpClient<Markopilot.Core.Interfaces.ISearchClient, Markopilot.Infrastructure.Search.ExaClient>();
+builder.Services.AddHttpClient<Markopilot.Core.Interfaces.IOutreachService, Markopilot.Infrastructure.Email.OutreachService>();
+builder.Services.AddHttpClient<Markopilot.Core.Interfaces.ILeadDiscoveryService, Markopilot.Infrastructure.Services.LeadDiscoveryService>();
+builder.Services.AddTransient<Markopilot.Core.Interfaces.ILeadExtractionWorker, Markopilot.Workers.Workers.LeadExtractionWorker>();
+builder.Services.AddTransient<Markopilot.Core.Interfaces.ISocialPostingWorker, Markopilot.Workers.Workers.SocialPostingWorker>();
+builder.Services.AddTransient<Markopilot.Core.Interfaces.IOutreachWorker, Markopilot.Workers.Workers.OutreachWorker>();
 
 var host = builder.Build();
+
+using (var scope = host.Services.CreateScope())
+{
+    var jobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+    jobManager.AddOrUpdate<Markopilot.Core.Interfaces.IOutreachWorker>(
+        "GlobalOutreachWorker",
+        worker => worker.ExecuteAsync(),
+        "*/30 * * * *");
+}
+
 host.Run();

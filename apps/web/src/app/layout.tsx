@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, Instrument_Serif, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { Providers } from "@/components/Providers";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -33,7 +34,9 @@ export default function RootLayout({
       lang="en"
       className={`${dmSans.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable} h-full antialiased dark`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

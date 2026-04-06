@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Hangfire;
 using Markopilot.Core.Interfaces;
 using Markopilot.Core.Models;
@@ -8,30 +12,29 @@ namespace Markopilot.Workers.Workers;
 
 /// <summary>
 /// Hangfire scheduled job that runs the lead discovery pipeline for a specific brand.
-/// Uses ISearchClient implementations (Serper/Exa) for initial search,
-/// then IAiRoutingService for entity extraction and scoring.
+/// Uses ILeadDiscoveryService for search, scraping, entity extraction, scoring, and validation.
 /// Per spec Section 8.1.
 /// </summary>
 public class LeadExtractionWorker : ILeadExtractionWorker
 {
-    private readonly IEnumerable<ISearchClient> _searchClients;
-    private readonly IAiRoutingService _aiService;
+    private readonly ILeadDiscoveryService _discoveryService;
     private readonly IContentGenerationService _contentService;
+    private readonly IQuotaService _quotaService;
     private readonly SupabaseRepository _repo;
     private readonly IGlobalRateLimiter _rateLimiter;
     private readonly ILogger<LeadExtractionWorker> _logger;
 
     public LeadExtractionWorker(
-        IEnumerable<ISearchClient> searchClients,
-        IAiRoutingService aiService,
+        ILeadDiscoveryService discoveryService,
         IContentGenerationService contentService,
+        IQuotaService quotaService,
         SupabaseRepository repo,
         IGlobalRateLimiter rateLimiter,
         ILogger<LeadExtractionWorker> logger)
     {
-        _searchClients = searchClients;
-        _aiService = aiService;
+        _discoveryService = discoveryService;
         _contentService = contentService;
+        _quotaService = quotaService;
         _repo = repo;
         _rateLimiter = rateLimiter;
         _logger = logger;
@@ -43,10 +46,23 @@ public class LeadExtractionWorker : ILeadExtractionWorker
         _logger.LogInformation("Starting lead extraction for Brand: {BrandId}", brandId);
 
         var brand = await _repo.GetBrandByIdSystemAsync(brandId);
-
         if (brand == null)
         {
             _logger.LogWarning("Brand {BrandId} not found, cannot extract leads.", brandId);
+            return;
+        }
+
+        if (!brand.AutomationLeadsEnabled)
+        {
+            _logger.LogInformation("Brand {BrandId} has automation leads discovering disabled. Skipping.", brandId);
+            return;
+        }
+
+        var canDiscover = await _quotaService.CanDiscoverLeadAsync(brand.OwnerId);
+        if (!canDiscover)
+        {
+            _logger.LogWarning("Brand {BrandId} owner has exceeded their leads quota.", brandId);
+            await _repo.InsertActivityAsync(brandId, "quota_warning", "Automated lead discovery paused because lead quota is exhausted.");
             return;
         }
 
@@ -55,42 +71,28 @@ public class LeadExtractionWorker : ILeadExtractionWorker
         try
         {
             searchQueries = await _contentService.GenerateSearchQueriesAsync(brand);
-            _logger.LogInformation("Generated {Count} search queries for brand {BrandId}.",
-                searchQueries.Count, brandId);
+            _logger.LogInformation("Generated {Count} search queries for brand {BrandId}.", searchQueries.Count, brandId);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to generate search queries for brand {BrandId}.", brandId);
-            await _repo.InsertActivityAsync(brandId, "error",
-                $"Lead discovery failed: could not generate search queries. {ex.Message}");
+            await _repo.InsertActivityAsync(brandId, "error", $"Lead discovery failed: could not generate search queries. {ex.Message}");
             return;
         }
 
         // 2. Execute searches and collect results
         var allResults = new List<SearchResult>();
-        var serperClient = _searchClients.FirstOrDefault(c => c.Provider == "serper");
-        var exaClient = _searchClients.FirstOrDefault(c => c.Provider == "exa");
-
         foreach (var query in searchQueries)
         {
             try
             {
-                // Route decision: use Exa for people/LinkedIn queries, Serper for broad queries
                 var isPersonQuery = query.Contains("linkedin.com/in", StringComparison.OrdinalIgnoreCase)
                     || query.Contains("speaker", StringComparison.OrdinalIgnoreCase)
                     || query.Contains("author", StringComparison.OrdinalIgnoreCase);
 
-                var client = isPersonQuery && exaClient != null ? exaClient : serperClient;
-                if (client == null)
-                {
-                    _logger.LogWarning("No search client available for query: {Query}", query);
-                    continue;
-                }
-
-                var results = await client.SearchAsync(query, maxResults: 10);
+                var results = await _discoveryService.SearchAsync(query, useExa: isPersonQuery);
                 allResults.AddRange(results);
-                _logger.LogDebug("Query '{Query}' returned {Count} results via {Provider}.",
-                    query, results.Count, client.Provider);
+                _logger.LogDebug("Query '{Query}' returned {Count} results.", query, results.Count);
             }
             catch (Exception ex)
             {
@@ -98,8 +100,7 @@ public class LeadExtractionWorker : ILeadExtractionWorker
             }
         }
 
-        _logger.LogInformation("Collected {Count} total search results for brand {BrandId}.",
-            allResults.Count, brandId);
+        _logger.LogInformation("Collected {Count} total search results for brand {BrandId}.", allResults.Count, brandId);
 
         // 3. Deduplicate by URL
         var uniqueResults = new List<SearchResult>();
@@ -107,53 +108,53 @@ public class LeadExtractionWorker : ILeadExtractionWorker
         {
             if (string.IsNullOrEmpty(result.Url)) continue;
             var exists = await _repo.LeadSourceUrlExistsAsync(brandId, result.Url);
-            if (!exists)
+            if (!exists && !uniqueResults.Any(r => r.Url == result.Url))
                 uniqueResults.Add(result);
         }
 
         _logger.LogInformation("{Count} unique new results after deduplication.", uniqueResults.Count);
 
-        // 4. Entity extraction + scoring via AI (will be fully implemented in Step 19)
-        // For now, create leads from search results with basic data
+        // 4. Processing Phase: Scraping, AI Extraction, Validation, Scoring
         var qualifiedLeads = new List<Lead>();
+        int dailyLimit = brand.AutomationLeadsPerDay > 0 ? brand.AutomationLeadsPerDay : 50;
 
-        foreach (var result in uniqueResults.Take(50)) // Max 50 URLs per run per spec
+        foreach (var result in uniqueResults.Take(dailyLimit))
         {
             try
             {
-                // Extract entities from the search result snippet using AI
-                var extractionRequest = new AiCompletionRequest
+                var scrapedText = await _discoveryService.ScrapePageAsync(result.Url);
+                if (string.IsNullOrWhiteSpace(scrapedText))
                 {
-                    Task = AiTask.EntityExtraction,
-                    SystemPrompt = "Extract contact information from the following text. Return JSON with: name, jobTitle, company, email, linkedinUrl, twitterHandle, location, confidence (low/medium/high).",
-                    UserPrompt = $"Title: {result.Title}\nURL: {result.Url}\nSnippet: {result.Snippet}",
-                    Temperature = 0.1,
-                    MaxTokens = 512
-                };
+                    // Fallback to snippet if scraping failed/blocked
+                    scrapedText = result.Snippet;
+                }
 
-                var extractionResponse = await _aiService.CompleteAsync(extractionRequest);
-                var entity = System.Text.Json.JsonSerializer.Deserialize<ExtractedEntity>(
-                    extractionResponse.Content,
-                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
+                var entity = await _discoveryService.ExtractEntityAsync(scrapedText);
                 if (entity == null || entity.Confidence == "low") continue;
 
-                // Score the lead
-                var scoringRequest = new AiCompletionRequest
+                // Only consider leads that have actionable contact information
+                if (string.IsNullOrWhiteSpace(entity.Email) && string.IsNullOrWhiteSpace(entity.LinkedinUrl))
                 {
-                    Task = AiTask.LeadScoring,
-                    SystemPrompt = $"Score this lead 0-100 for fit with: {brand.Name} ({brand.Industry}). Target: {brand.TargetAudienceDescription}. Return JSON: {{\"score\": int, \"summary\": \"2 sentences\"}}",
-                    UserPrompt = $"Name: {entity.Name}\nJob Title: {entity.JobTitle}\nCompany: {entity.Company}\nLocation: {entity.Location}\nSource: {result.Url}",
-                    Temperature = 0.1,
-                    MaxTokens = 256
-                };
+                    continue;
+                }
 
-                var scoringResponse = await _aiService.CompleteAsync(scoringRequest);
-                var scoreResult = System.Text.Json.JsonSerializer.Deserialize<LeadScoreResult>(
-                    scoringResponse.Content,
-                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                // If email exists, actively validate MX records
+                if (!string.IsNullOrWhiteSpace(entity.Email))
+                {
+                    var isEmailValid = await _discoveryService.ValidateEmailAsync(entity.Email);
+                    if (!isEmailValid)
+                    {
+                        _logger.LogDebug("Invalid or bouncing email rejected: {Email}", entity.Email);
+                        entity.Email = null; // Blank it out, maybe they have LinkedIn URL to survive qualification
+                        if (string.IsNullOrWhiteSpace(entity.LinkedinUrl))
+                        {
+                            continue; // Unreachable lead
+                        }
+                    }
+                }
 
-                if (scoreResult == null || scoreResult.Score < 30) continue;
+                var scoreResult = await _discoveryService.ScoreLeadAsync(brand, entity, result.Url);
+                if (scoreResult.Score < 30) continue;
 
                 qualifiedLeads.Add(new Lead
                 {
@@ -177,20 +178,23 @@ public class LeadExtractionWorker : ILeadExtractionWorker
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to process search result: {Url}", result.Url);
+                _logger.LogWarning(ex, "Failed to completely process search result: {Url}", result.Url);
             }
         }
 
-        _logger.LogInformation("{Count} leads passed qualification (score >= 30).", qualifiedLeads.Count);
+        _logger.LogInformation("{Count} leads passed complete qualification.", qualifiedLeads.Count);
 
-        // 5. Bulk insert qualified leads
+        // 5. Bulk insert strictly curated qualified leads
         if (qualifiedLeads.Count > 0)
         {
             await _repo.BulkInsertLeadsAsync(qualifiedLeads);
+            await _quotaService.IncrementLeadsUsedAsync(brand.OwnerId, qualifiedLeads.Count);
+            
             await _repo.InsertActivityAsync(brandId, "lead_discovered",
-                $"Discovered {qualifiedLeads.Count} new leads.",
+                $"Discovered and qualified {qualifiedLeads.Count} new leads.",
                 new Dictionary<string, object> { ["count"] = qualifiedLeads.Count });
-            _logger.LogInformation("Inserted {Count} leads for brand {BrandId}.", qualifiedLeads.Count, brandId);
+                
+            _logger.LogInformation("Inserted {Count} successfully sourced leads for brand {BrandId}.", qualifiedLeads.Count, brandId);
         }
     }
 }

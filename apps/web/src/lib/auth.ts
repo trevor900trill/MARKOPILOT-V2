@@ -1,7 +1,7 @@
 import NextAuth, { type NextAuthConfig } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { createClient } from "@supabase/supabase-js";
-import jwt from "jsonwebtoken";
+import { SignJWT } from "jose";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
@@ -28,7 +28,7 @@ export const config: NextAuthConfig = {
 
         const { data: existingUser } = await supabase
           .from("users")
-          .select("id, display_name, photo_url, plan_name, subscription_status")
+          .select("id, display_name, photo_url, plan_name, subscription_status, onboarding_completed")
           .eq("email", user.email)
           .single();
 
@@ -44,13 +44,14 @@ export const config: NextAuthConfig = {
               subscription_status: "trialing",
               plan_name: "Starter"
             })
-            .select("id, plan_name, subscription_status")
+            .select("id, plan_name, subscription_status, onboarding_completed")
             .single();
             
           if (data) {
              user.id = data.id;
              (user as any).planName = data.plan_name;
              (user as any).subscriptionStatus = data.subscription_status;
+             (user as any).onboardingCompleted = data.onboarding_completed;
           } else if (error) {
              console.error("Failed to create user in Supabase:", error);
           }
@@ -64,6 +65,7 @@ export const config: NextAuthConfig = {
           user.id = existingUser.id;
           (user as any).planName = existingUser.plan_name;
           (user as any).subscriptionStatus = existingUser.subscription_status;
+          (user as any).onboardingCompleted = existingUser.onboarding_completed;
         }
       }
       return true;
@@ -73,10 +75,12 @@ export const config: NextAuthConfig = {
         token.userId = user.id;
         token.planName = (user as any).planName;
         token.subscriptionStatus = (user as any).subscriptionStatus;
+        token.onboardingCompleted = (user as any).onboardingCompleted;
       }
       if (trigger === "update" && session) {
         if (session.planName) token.planName = session.planName;
         if (session.subscriptionStatus) token.subscriptionStatus = session.subscriptionStatus;
+        if (session.onboardingCompleted !== undefined) token.onboardingCompleted = session.onboardingCompleted;
       }
       return token;
     },
@@ -84,18 +88,40 @@ export const config: NextAuthConfig = {
       session.user.id = token.userId as string;
       (session.user as any).planName = token.planName as string;
       (session.user as any).subscriptionStatus = token.subscriptionStatus as string;
+      (session.user as any).onboardingCompleted = token.onboardingCompleted as boolean;
       
       if (supabaseJwtSecret) {
         const payload = {
           aud: "authenticated",
           exp: Math.floor(new Date(session.expires).getTime() / 1000),
-          sub: token.userId,
-          email: session.user.email,
+          sub: token.userId as string,
+          email: session.user.email as string,
           role: "authenticated",
         };
-        (session as any).supabaseAccessToken = jwt.sign(payload, supabaseJwtSecret);
+        const secret = new TextEncoder().encode(supabaseJwtSecret);
+        (session as any).supabaseAccessToken = await new SignJWT(payload)
+          .setProtectedHeader({ alg: "HS256" })
+          .sign(secret);
       }
       return session;
+    },
+    async redirect({ url, baseUrl }) {
+      // If the user just signed in, check if they completed onboarding
+      if (url.startsWith("/api/auth/callback") || url === baseUrl) {
+        // Note: We can't access the token directly here in the redirect callback,
+        // so the dashboard layout handles the onboarding redirect client-side.
+        // But we can handle explicit callbackUrl parameters:
+        if (url.includes("callbackUrl=")) {
+          try {
+            const callbackUrl = new URL(url, baseUrl).searchParams.get("callbackUrl");
+            if (callbackUrl && callbackUrl.startsWith("/")) {
+              return `${baseUrl}${callbackUrl}`;
+            }
+          } catch { /* fall through */ }
+        }
+        return `${baseUrl}/dashboard`;
+      }
+      return url.startsWith(baseUrl) ? url : baseUrl;
     },
   },
 };

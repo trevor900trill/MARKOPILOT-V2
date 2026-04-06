@@ -75,6 +75,7 @@ public class AuthMiddleware
 
             var principal = tokenHandler.ValidateToken(token, validationParams, out _);
             var userId = principal.FindFirst("sub")?.Value
+                         ?? principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
                          ?? principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
 
             if (string.IsNullOrEmpty(userId))

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Markopilot.Api.Controllers;
 
@@ -49,5 +50,28 @@ public class OutreachController : ControllerBase
         var repo = HttpContext.RequestServices.GetRequiredService<Markopilot.Infrastructure.Supabase.SupabaseRepository>();
         await repo.CancelOutreachEmailAsync(emailId, ownerId);
         return NoContent();
+    }
+
+    [AllowAnonymous]
+    [HttpGet("unsubscribe")]
+    public async Task<IActionResult> UnsubscribeGet([FromQuery] Guid brandId, [FromQuery] string email)
+    {
+        if (brandId == Guid.Empty || string.IsNullOrWhiteSpace(email)) return BadRequest("Invalid unsubscription parameters.");
+        var repo = HttpContext.RequestServices.GetRequiredService<Markopilot.Infrastructure.Supabase.SupabaseRepository>();
+        await repo.AddToSuppressionListAsync(brandId, email, "User requested unsubscription via email link.");
+        
+        // Return a simple HTML message for the browser
+        var htmlResponse = "<html><body><h2>You have been successfully unsubscribed.</h2><p>You will no longer receive automated outreach from this brand.</p></body></html>";
+        return Content(htmlResponse, "text/html");
+    }
+
+    [AllowAnonymous]
+    [HttpPost("unsubscribe")]
+    public async Task<IActionResult> UnsubscribePost([FromQuery] Guid brandId, [FromQuery] string email)
+    {
+        if (brandId == Guid.Empty || string.IsNullOrWhiteSpace(email)) return BadRequest("Invalid unsubscription parameters.");
+        var repo = HttpContext.RequestServices.GetRequiredService<Markopilot.Infrastructure.Supabase.SupabaseRepository>();
+        await repo.AddToSuppressionListAsync(brandId, email, "User requested unsubscription via email client.");
+        return Ok(new { success = true, message = "Unsubscribed successfully." });
     }
 }

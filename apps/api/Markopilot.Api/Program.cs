@@ -9,7 +9,7 @@ using StackExchange.Redis;
 var builder = WebApplication.CreateBuilder(args);
 
 // ── Configuration ────────────────────────────────
-var connectionString = builder.Configuration["Supabase:Url"]
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? "Host=localhost;Port=5432;Database=markopilot;Username=postgres;Password=postgres";
 
 var redisConnectionString = builder.Configuration["Redis:ConnectionString"]
@@ -44,11 +44,6 @@ builder.Services.AddHangfire(config => config
         DistributedLockTimeout = TimeSpan.FromMinutes(10),
     }));
 
-builder.Services.AddHangfireServer(options =>
-{
-    options.Queues = ["critical", "scale", "growth", "starter", "default"];
-    options.WorkerCount = 20;
-});
 
 // ── Services ─────────────────────────────────────
 builder.Services.AddSingleton(sp =>
@@ -78,6 +73,7 @@ builder.Services.AddHttpClient<Markopilot.Core.Interfaces.ISearchClient, Markopi
 builder.Services.AddHttpClient<Markopilot.Core.Interfaces.ISearchClient, Markopilot.Infrastructure.Search.ExaClient>();
 builder.Services.AddHttpClient<Markopilot.Infrastructure.LemonSqueezy.LemonSqueezyClient>();
 builder.Services.AddHttpClient<Markopilot.Core.Interfaces.IAiRoutingService, Markopilot.Infrastructure.OpenRouter.AiRoutingService>();
+builder.Services.AddHttpClient<Markopilot.Core.Interfaces.ILeadDiscoveryService, Markopilot.Infrastructure.Services.LeadDiscoveryService>();
 
 
 // ── API ──────────────────────────────────────────

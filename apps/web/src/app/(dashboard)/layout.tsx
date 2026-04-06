@@ -1,12 +1,30 @@
+"use client";
+
 import { AppSidebar } from "@/components/dashboard/AppSidebar";
 import { AppTopbar } from "@/components/dashboard/AppTopbar";
-import { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "Dashboard — Markopilot",
-};
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "loading") return;
+
+    if (status === "unauthenticated") {
+      router.push("/");
+    } else if (status === "authenticated" && (session?.user as any)?.onboardingCompleted === false) {
+      // Redirect to onboarding if the flag is specifically false
+      router.push("/onboarding");
+    }
+  }, [status, session, router]);
+
+  if (status === "loading") {
+    return <div className="h-screen w-screen bg-[#07070a] flex items-center justify-center text-white/50 animate-pulse">Telemetry Syncing...</div>;
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans">
       <AppSidebar />

@@ -117,3 +117,13 @@ public interface ILeadExtractionWorker
     Task ExecuteAsync(Guid brandId);
 }
 
+public interface ISocialPostingWorker
+{
+    Task ExecuteAsync(Guid brandId);
+}
+
+public interface IOutreachWorker
+{
+    Task ExecuteAsync();
+}
+

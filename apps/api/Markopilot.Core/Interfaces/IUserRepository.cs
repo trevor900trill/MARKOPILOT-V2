@@ -12,4 +12,5 @@ public interface IUserRepository
     Task IncrementQuotaPostsUsedAsync(Guid userId, int count = 1);
     Task IncrementQuotaLeadsUsedAsync(Guid userId, int count = 1);
     Task ResetQuotaCountersAsync(Guid userId);
+    Task UpdateOnboardingStatusAsync(Guid userId, bool completed);
 }

@@ -247,6 +247,21 @@ public class SupabaseRepository : IUserRepository
         return Convert.ToInt32(await cmd.ExecuteScalarAsync());
     }
 
+    public async Task<List<Brand>> GetActiveOutreachBrandsAsync()
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(
+            "SELECT * FROM brands WHERE status != 'archived' AND automation_outreach_enabled = TRUE AND gmail_connected = TRUE", conn);
+
+        var brands = new List<Brand>();
+        await using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+            brands.Add(MapBrand(reader));
+        return brands;
+    }
+
     // ── POSTS ─────────────────────────────────────────
 
     public async Task<SocialPost> CreatePostAsync(SocialPost post)
@@ -382,6 +397,28 @@ public class SupabaseRepository : IUserRepository
         return MapOutreachEmail(reader);
     }
 
+    public async Task<List<OutreachEmail>> GetQueuedOutreachEmailsToProcessAsync(Guid brandId, int limit = 20)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            SELECT * FROM outreach_emails
+            WHERE brand_id = @brandId 
+              AND status = 'queued' 
+              AND (scheduled_send_at IS NULL OR scheduled_send_at <= NOW())
+            ORDER BY generated_at ASC
+            LIMIT @limit", conn);
+        cmd.Parameters.AddWithValue("brandId", brandId);
+        cmd.Parameters.AddWithValue("limit", limit);
+
+        var emails = new List<OutreachEmail>();
+        await using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+            emails.Add(MapOutreachEmail(reader));
+        return emails;
+    }
+
     // ── SUPPRESSION LIST ──────────────────────────────
 
     public async Task AddToSuppressionListAsync(Guid brandId, string email, string reason)
@@ -494,6 +531,19 @@ public class SupabaseRepository : IUserRepository
             UPDATE users SET quota_leads_used = 0, quota_posts_used = 0, updated_at = NOW()
             WHERE id = @userId", conn);
         cmd.Parameters.AddWithValue("userId", userId);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task UpdateOnboardingStatusAsync(Guid userId, bool completed)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            UPDATE users SET onboarding_completed = @completed, updated_at = NOW()
+            WHERE id = @userId", conn);
+        cmd.Parameters.AddWithValue("userId", userId);
+        cmd.Parameters.AddWithValue("completed", completed);
         await cmd.ExecuteNonQueryAsync();
     }
 
@@ -852,6 +902,24 @@ public class SupabaseRepository : IUserRepository
             AND brand_id IN (SELECT id FROM brands WHERE owner_id = @ownerId)", conn);
         cmd.Parameters.AddWithValue("id", emailId);
         cmd.Parameters.AddWithValue("ownerId", ownerId);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task UpdateOutreachEmailContentAsync(Guid emailId, string subject, string bodyText, string bodyHtml)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            UPDATE outreach_emails SET
+                subject = @subject,
+                body_text = @bodyText,
+                body_html = @bodyHtml
+            WHERE id = @id", conn);
+        cmd.Parameters.AddWithValue("id", emailId);
+        cmd.Parameters.AddWithValue("subject", subject);
+        cmd.Parameters.AddWithValue("bodyText", bodyText);
+        cmd.Parameters.AddWithValue("bodyHtml", bodyHtml);
         await cmd.ExecuteNonQueryAsync();
     }
 

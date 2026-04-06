@@ -41,6 +41,9 @@ public class OAuthService
                 return $"https://api.instagram.com/oauth/authorize?client_id={_config["Social:Instagram:ClientId"]}&redirect_uri={redirectUri}&scope=instagram_basic,instagram_content_publish&response_type=code&state={brandId}";
             case "tiktok":
                 return $"https://www.tiktok.com/v2/auth/authorize?client_key={_config["Social:TikTok:ClientKey"]}&response_type=code&redirect_uri={redirectUri}&scope=user.info.basic,video.publish&state={brandId}";
+            case "gmail":
+                // offline access forces refresh token generation
+                return $"https://accounts.google.com/o/oauth2/v2/auth?client_id={_config["Google:ClientId"]}&redirect_uri={redirectUri}&response_type=code&scope=https://www.googleapis.com/auth/gmail.send%20https://www.googleapis.com/auth/gmail.readonly&state={brandId}&access_type=offline&prompt=consent";
             default:
                 throw new ArgumentException($"Unsupported social platform: {platform}");
         }
@@ -54,7 +57,36 @@ public class OAuthService
             "linkedin" => await ExchangeLinkedInTokenAsync(code, redirectUri),
             "instagram" => await ExchangeInstagramTokenAsync(code, redirectUri),
             "tiktok" => await ExchangeTikTokTokenAsync(code, redirectUri),
+            "gmail" => await ExchangeGmailTokenAsync(code, redirectUri),
             _ => throw new ArgumentException($"Unsupported platform: {platform}")
+        };
+    }
+
+    private async Task<OAuthTokenResult> ExchangeGmailTokenAsync(string code, string redirectUri)
+    {
+        var clientId = _config["Google:ClientId"];
+        var clientSecret = _config["Google:ClientSecret"];
+        
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://oauth2.googleapis.com/token");
+        request.Content = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["client_id"] = clientId!,
+            ["client_secret"] = clientSecret!,
+            ["code"] = code,
+            ["grant_type"] = "authorization_code",
+            ["redirect_uri"] = redirectUri
+        });
+
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        
+        var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
+
+        return new OAuthTokenResult
+        {
+            AccessToken = json.GetProperty("access_token").GetString()!,
+            RefreshToken = json.TryGetProperty("refresh_token", out var rt) ? rt.GetString() : null,
+            ExpiresAt = json.TryGetProperty("expires_in", out var exp) ? DateTimeOffset.UtcNow.AddSeconds(exp.GetInt32()) : null
         };
     }
 

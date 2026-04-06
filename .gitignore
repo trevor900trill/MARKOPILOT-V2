@@ -1,0 +1,13 @@
+# .NET Core / ASP.NET Core
+**/bin/
+**/obj/
+
+# Important environment specific configurations
+**/appsettings.json
+**/appsettings.Development.json
+**/appsettings.*.json
+
+# Local env files
+.env
+.env.local
+.env.*.local
