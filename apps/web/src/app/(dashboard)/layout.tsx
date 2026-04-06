@@ -2,6 +2,7 @@
 
 import { AppSidebar } from "@/components/dashboard/AppSidebar";
 import { AppTopbar } from "@/components/dashboard/AppTopbar";
+import { BrandProvider } from "@/lib/brand-context";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -16,7 +17,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (status === "unauthenticated") {
       router.push("/");
     } else if (status === "authenticated" && (session?.user as any)?.onboardingCompleted === false) {
-      // Redirect to onboarding if the flag is specifically false
       router.push("/onboarding");
     }
   }, [status, session, router]);
@@ -26,16 +26,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans">
-      <AppSidebar />
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <AppTopbar />
-        <main className="flex-1 overflow-y-auto p-4 md:p-8">
-          <div className="max-w-6xl mx-auto">
-             {children}
-          </div>
-        </main>
+    <BrandProvider>
+      <div className="flex h-screen overflow-hidden bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans">
+        <AppSidebar />
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <AppTopbar />
+          <main className="flex-1 overflow-y-auto p-4 md:p-8">
+            <div className="max-w-6xl mx-auto">
+               {children}
+            </div>
+          </main>
+        </div>
       </div>
-    </div>
+    </BrandProvider>
   );
 }

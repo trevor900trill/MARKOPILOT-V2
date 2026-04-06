@@ -17,6 +17,31 @@ public class UsersController : ControllerBase
         _logger = logger;
     }
 
+    [HttpGet("me")]
+    public async Task<IActionResult> GetCurrentUser()
+    {
+        var userId = HttpContext.GetUserId();
+        var user = await _userRepo.GetUserByIdAsync(userId);
+        if (user == null) return NotFound(new { error = new { code = "NOT_FOUND", message = "User not found" } });
+
+        return Ok(new
+        {
+            id = user.Id,
+            email = user.Email,
+            displayName = user.DisplayName,
+            photoUrl = user.PhotoUrl,
+            planName = user.PlanName,
+            subscriptionStatus = user.SubscriptionStatus,
+            onboardingCompleted = user.OnboardingCompleted,
+            quotaLeadsPerMonth = user.QuotaLeadsPerMonth,
+            quotaPostsPerMonth = user.QuotaPostsPerMonth,
+            quotaLeadsUsed = user.QuotaLeadsUsed,
+            quotaPostsUsed = user.QuotaPostsUsed,
+            quotaBrandsAllowed = user.QuotaBrandsAllowed,
+            createdAt = user.CreatedAt,
+        });
+    }
+
     [HttpPatch("onboarding-complete")]
     public async Task<IActionResult> CompleteOnboarding()
     {

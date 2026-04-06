@@ -131,18 +131,51 @@ Set confidence to ""high"" if name + job title + company all found. ""medium"" i
             MaxTokens = 512
         };
 
+        string originalContent = string.Empty;
         try
         {
             var response = await _aiService.CompleteAsync(request);
+            originalContent = response.Content;
+            var content = originalContent;
+            
+            // Robust bracket counting to extract the first complete JSON object
+            int start = content.IndexOf('{');
+            if (start != -1)
+            {
+                int end = -1;
+                int depth = 0;
+                for (int i = start; i < content.Length; i++)
+                {
+                    if (content[i] == '{') depth++;
+                    else if (content[i] == '}') depth--;
+
+                    if (depth == 0)
+                    {
+                        end = i;
+                        break;
+                    }
+                }
+
+                if (end != -1 && end > start)
+                {
+                    content = content.Substring(start, end - start + 1);
+                }
+            }
+
             var entity = System.Text.Json.JsonSerializer.Deserialize<ExtractedEntity>(
-                response.Content,
+                content,
                 new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             
             return entity;
         }
+        catch (System.Text.Json.JsonException jsonEx)
+        {
+            _logger.LogError(jsonEx, "Failed to extract entity from text. Raw LLM content:\n{Content}", originalContent);
+            return null;
+        }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to extract entity from text");
+            _logger.LogError(ex, "Failed to complete AI request for entity extraction.");
             return null;
         }
     }
@@ -175,14 +208,47 @@ Return ONLY this JSON, no preamble:
             MaxTokens = 256
         };
 
+        string originalContent = string.Empty;
         try
         {
             var response = await _aiService.CompleteAsync(request);
+            originalContent = response.Content;
+            var content = originalContent;
+            
+            // Robust bracket counting to extract the first complete JSON object
+            int start = content.IndexOf('{');
+            if (start != -1)
+            {
+                int end = -1;
+                int depth = 0;
+                for (int i = start; i < content.Length; i++)
+                {
+                    if (content[i] == '{') depth++;
+                    else if (content[i] == '}') depth--;
+
+                    if (depth == 0)
+                    {
+                        end = i;
+                        break;
+                    }
+                }
+
+                if (end != -1 && end > start)
+                {
+                    content = content.Substring(start, end - start + 1);
+                }
+            }
+
             var scoreResult = System.Text.Json.JsonSerializer.Deserialize<LeadScoreResult>(
-                response.Content,
+                content,
                 new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 
             return scoreResult ?? new LeadScoreResult { Score = 0, Summary = "Failed to parse scoring" };
+        }
+        catch (System.Text.Json.JsonException jsonEx)
+        {
+            _logger.LogError(jsonEx, "Failed to score lead {Name}. Raw LLM content:\n{Content}", entity.Name, originalContent);
+            return new LeadScoreResult { Score = 0, Summary = "Failed to parse scoring" };
         }
         catch (Exception ex)
         {

@@ -156,6 +156,17 @@ public class LeadExtractionWorker : ILeadExtractionWorker
                 var scoreResult = await _discoveryService.ScoreLeadAsync(brand, entity, result.Url);
                 if (scoreResult.Score < 30) continue;
 
+                var linkedinUrl = entity.LinkedinUrl?.Trim();
+                if (!string.IsNullOrWhiteSpace(linkedinUrl))
+                {
+                    if (!linkedinUrl.StartsWith("http")) linkedinUrl = "https://" + linkedinUrl;
+                    if (linkedinUrl.Contains("linkedin.com") && !linkedinUrl.Contains("www.linkedin.com"))
+                    {
+                        linkedinUrl = linkedinUrl.Replace("https://linkedin.com", "https://www.linkedin.com")
+                                                 .Replace("http://linkedin.com", "https://www.linkedin.com");
+                    }
+                }
+
                 qualifiedLeads.Add(new Lead
                 {
                     Id = Guid.NewGuid(),
@@ -166,7 +177,7 @@ public class LeadExtractionWorker : ILeadExtractionWorker
                     JobTitle = entity.JobTitle,
                     Company = entity.Company,
                     Email = entity.Email,
-                    LinkedinUrl = entity.LinkedinUrl,
+                    LinkedinUrl = linkedinUrl,
                     TwitterHandle = entity.TwitterHandle,
                     Location = entity.Location,
                     AiSummary = scoreResult.Summary,

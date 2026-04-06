@@ -1,9 +1,10 @@
 "use client";
 
-import { Share2, Briefcase, Image as ImageIcon, Video, CheckCircle2, AlertCircle, Plus, Calendar, Clock, Trash2, Edit3, MessageSquare, Heart, RefreshCw } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Share2, Briefcase, Image as ImageIcon, Video, CheckCircle2, AlertCircle, Plus, Calendar, Clock, Trash2, Heart, MessageSquare, RefreshCw } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { useBrand } from "@/lib/brand-context";
+import { apiGet, apiPost, apiDelete } from "@/lib/api-client";
 
-// Mock types
 type Post = {
   id: string;
   platform: string;
@@ -11,85 +12,108 @@ type Post = {
   generatedCopy: string;
   scheduledFor: string;
   status: string;
-  engagementLikes: number;
-  engagementComments: number;
-  engagementReposts: number;
+  publishedAt?: string;
 };
 
 export default function SocialPage() {
+  const { activeBrand, refreshBrands } = useBrand();
   const [activeTab, setActiveTab] = useState<"accounts" | "queue" | "published">("accounts");
   const [loadingPlatform, setLoadingPlatform] = useState<string | null>(null);
-  
-  // Data States
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newPostPlatform, setNewPostPlatform] = useState("linkedin");
+  const [newPostCopy, setNewPostCopy] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
 
-  // Mock initial connected state
-  const [connectedPlatforms, setConnectedPlatforms] = useState<Record<string, boolean>>({
-    x: false,
-    linkedin: true, // Example connected
-    instagram: false,
-    tiktok: false
-  });
-
-  // Mock initial queue data
-  useEffect(() => {
-    if (activeTab !== "accounts") {
-      fetchPosts();
-    }
-  }, [activeTab]);
-
-  const fetchPosts = async () => {
-    setIsLoading(true);
-    try {
-      // Stub data for UI purposes until true auth/brand binding exists in frontend
-      setTimeout(() => {
-        setPosts([
-          {
-            id: "1", platform: "linkedin", contentPillar: "Thought Leadership",
-            generatedCopy: "We're excited to announce major improvements to our autonomous scheduling. Building things seamlessly without manual intervention changes the way teams scale.",
-            scheduledFor: new Date(Date.now() + 86400000).toISOString(), status: "queued",
-            engagementLikes: 0, engagementComments: 0, engagementReposts: 0
-          },
-          {
-            id: "2", platform: "x", contentPillar: "Product Update",
-            generatedCopy: "New feature drop! 🚀 You can now automate your whole pipeline. #SaaS #Growth",
-            scheduledFor: new Date(Date.now() - 86400000).toISOString(), status: "published",
-            engagementLikes: 42, engagementComments: 5, engagementReposts: 12
-          }
-        ]);
-        setIsLoading(false);
-      }, 500);
-    } catch (e) {
-      console.error(e);
-      setIsLoading(false);
-    }
+  const connectedPlatforms: Record<string, boolean> = {
+    x: activeBrand?.twitterConnected ?? false,
+    linkedin: activeBrand?.linkedinConnected ?? false,
+    instagram: activeBrand?.instagramConnected ?? false,
+    tiktok: activeBrand?.tiktokConnected ?? false,
   };
 
+  const fetchPosts = useCallback(async () => {
+    if (!activeBrand) return;
+    setIsLoading(true);
+    try {
+      const res = await apiGet<{ data: Post[] }>(`/social/${activeBrand.id}/posts`);
+      setPosts(res.data || []);
+    } catch (err) {
+      console.error("Failed to fetch posts:", err);
+      setPosts([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [activeBrand]);
+
+  useEffect(() => {
+    if (activeTab !== "accounts" && activeBrand) {
+      fetchPosts();
+    }
+  }, [activeTab, activeBrand, fetchPosts]);
+
   const handleConnect = async (platformId: string) => {
-     setLoadingPlatform(platformId);
-     try {
-       await new Promise(resolve => setTimeout(resolve, 800));
-       setConnectedPlatforms(prev => ({ ...prev, [platformId]: true }));
-     } finally {
-       setLoadingPlatform(null);
-     }
+    if (!activeBrand) return;
+    setLoadingPlatform(platformId);
+    try {
+      const res = await apiGet<{ authUrl: string }>(`/social/${activeBrand.id}/connect/${platformId}`);
+      if (res.authUrl) {
+        window.location.href = res.authUrl;
+      }
+    } catch (err) {
+      console.error("Failed to get OAuth URL:", err);
+      alert("Failed to initiate connection. Please try again.");
+    } finally {
+      setLoadingPlatform(null);
+    }
   };
 
   const handleDisconnect = async (platformId: string) => {
-      setConnectedPlatforms(prev => ({ ...prev, [platformId]: false }));
+    if (!activeBrand) return;
+    try {
+      await apiDelete(`/social/${activeBrand.id}/disconnect/${platformId}`);
+      await refreshBrands();
+    } catch (err) {
+      console.error("Failed to disconnect:", err);
+    }
   };
 
-  const handleDeletePost = (id: string) => {
+  const handleDeletePost = async (id: string) => {
+    if (!activeBrand) return;
+    try {
+      await apiDelete(`/social/${activeBrand.id}/posts/${id}`);
       setPosts(posts.filter(p => p.id !== id));
+    } catch (err) {
+      console.error("Failed to cancel post:", err);
+    }
+  };
+
+  const handleCreatePost = async () => {
+    if (!activeBrand || !newPostCopy.trim()) return;
+    setIsCreating(true);
+    try {
+      await apiPost(`/social/${activeBrand.id}/posts`, {
+        platform: newPostPlatform,
+        generatedCopy: newPostCopy,
+        scheduledFor: new Date(Date.now() + 3600000).toISOString(),
+        hashtags: [],
+      });
+      setIsModalOpen(false);
+      setNewPostCopy("");
+      await fetchPosts();
+    } catch (err) {
+      console.error("Failed to create post:", err);
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const platforms = [
     { id: "x", name: "X (Twitter)", icon: Share2, color: "bg-black", textColor: "text-white" },
     { id: "linkedin", name: "LinkedIn", icon: Briefcase, color: "bg-[#0A66C2]", textColor: "text-white" },
     { id: "instagram", name: "Instagram", icon: ImageIcon, color: "bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888]", textColor: "text-white" },
-    { id: "tiktok", name: "TikTok", icon: Video, color: "bg-black", textColor: "text-[#00f2fe]" }
+    { id: "tiktok", name: "TikTok", icon: Video, color: "bg-black", textColor: "text-[#00f2fe]" },
   ];
 
   const queuedPosts = posts.filter(p => p.status === "queued");
@@ -229,31 +253,21 @@ export default function SocialPage() {
                 <thead className="bg-[#111114] border-b border-[var(--border)] text-[var(--text-secondary)]">
                   <tr>
                     <th className="px-6 py-4 font-medium uppercase text-[10px] tracking-wider w-[15%]">Platform</th>
-                    <th className="px-6 py-4 font-medium uppercase text-[10px] tracking-wider w-[45%]">Content Preview</th>
-                    <th className="px-6 py-4 font-medium uppercase text-[10px] tracking-wider w-[15%]">Published On</th>
-                    <th className="px-6 py-4 font-medium uppercase text-[10px] tracking-wider text-right w-[25%]">Engagement</th>
+                    <th className="px-6 py-4 font-medium uppercase text-[10px] tracking-wider w-[55%]">Content Preview</th>
+                    <th className="px-6 py-4 font-medium uppercase text-[10px] tracking-wider w-[30%]">Published On</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
                   {publishedPosts.map(post => (
                     <tr key={post.id} className="hover:bg-white/5 transition">
                        <td className="px-6 py-4">
-                          <span className="capitalize text-[var(--text-muted)]">
-                             {post.platform}
-                          </span>
+                          <span className="capitalize text-[var(--text-muted)]">{post.platform}</span>
                        </td>
                        <td className="px-6 py-4">
                           <p className="text-[var(--text-secondary)] line-clamp-1">{post.generatedCopy}</p>
                        </td>
                        <td className="px-6 py-4 text-[var(--text-muted)]">
-                          {new Date(post.scheduledFor).toLocaleDateString()}
-                       </td>
-                       <td className="px-6 py-4 text-right">
-                          <div className="flex justify-end gap-4 text-xs font-medium text-[var(--text-secondary)]">
-                             <div className="flex items-center gap-1.5"><Heart size={14} className="text-red-400" /> {post.engagementLikes}</div>
-                             <div className="flex items-center gap-1.5"><MessageSquare size={14} className="text-blue-400" /> {post.engagementComments}</div>
-                             <div className="flex items-center gap-1.5"><Share2 size={14} className="text-green-400" /> {post.engagementReposts}</div>
-                          </div>
+                          {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : new Date(post.scheduledFor).toLocaleDateString()}
                        </td>
                     </tr>
                   ))}
@@ -274,19 +288,23 @@ export default function SocialPage() {
              <div className="p-6 space-y-4">
                 <div>
                    <label className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider mb-2 block">Platform</label>
-                   <select className="w-full bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl px-4 py-3 text-white outline-none focus:border-[var(--accent-primary)] transition">
+                   <select value={newPostPlatform} onChange={(e) => setNewPostPlatform(e.target.value)} className="w-full bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl px-4 py-3 text-white outline-none focus:border-[var(--accent-primary)] transition">
                       <option value="linkedin">LinkedIn</option>
                       <option value="twitter">X (Twitter)</option>
+                      <option value="instagram">Instagram</option>
+                      <option value="tiktok">TikTok</option>
                    </select>
                 </div>
                 <div>
                    <label className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider mb-2 block">Post Copy</label>
-                   <textarea rows={4} className="w-full bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl px-4 py-3 text-white outline-none focus:border-[var(--accent-primary)] transition resize-none placeholder:text-[var(--text-muted)]" placeholder="What do you want to share with your audience?"></textarea>
+                   <textarea rows={4} value={newPostCopy} onChange={(e) => setNewPostCopy(e.target.value)} className="w-full bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl px-4 py-3 text-white outline-none focus:border-[var(--accent-primary)] transition resize-none placeholder:text-[var(--text-muted)]" placeholder="What do you want to share with your audience?"></textarea>
                 </div>
              </div>
              <div className="p-6 border-t border-[var(--border)] flex justify-end gap-3 bg-[#111114]">
                 <button onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 rounded-xl border border-[var(--border)] text-white font-medium hover:bg-[var(--bg-elevated)] transition">Cancel</button>
-                <button onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 rounded-xl bg-[var(--accent-primary)] text-white font-medium hover:opacity-90 transition">Queue Post</button>
+                <button onClick={handleCreatePost} disabled={isCreating || !newPostCopy.trim()} className="px-5 py-2.5 rounded-xl bg-[var(--accent-primary)] text-white font-medium hover:opacity-90 transition disabled:opacity-50">
+                  {isCreating ? "Queuing..." : "Queue Post"}
+                </button>
              </div>
            </div>
          </div>

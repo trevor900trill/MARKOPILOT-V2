@@ -70,6 +70,26 @@ public class BrandsController : ControllerBase
         return Ok(updated);
     }
 
+    [HttpGet("{brandId:guid}/overview")]
+    public async Task<IActionResult> GetOverview(Guid brandId)
+    {
+        var userId = HttpContext.GetUserId();
+        var brand = await _repo.GetBrandByIdAsync(brandId, userId);
+        if (brand == null) return NotFound(new { error = new { code = "NOT_FOUND", message = "Brand not found" } });
+
+        var stats = await _repo.GetBrandOverviewStatsAsync(brandId, userId);
+        return Ok(stats);
+    }
+
+    [HttpGet("{brandId:guid}/activity")]
+    public async Task<IActionResult> GetActivity(Guid brandId,
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 50, [FromQuery] string? type = null)
+    {
+        var userId = HttpContext.GetUserId();
+        var result = await _repo.GetActivityLogAsync(brandId, userId, page, pageSize, type);
+        return Ok(new { data = result.Items, total = result.Total, page, pageSize, totalPages = (int)Math.Ceiling(result.Total / (double)pageSize) });
+    }
+
     private void ScheduleLeadExtractionWorker(Core.Models.Brand brand)
     {
         var jobId = $"brand-leads-gen-{brand.Id}";

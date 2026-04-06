@@ -197,6 +197,15 @@ public class SupabaseRepository : IUserRepository
                 brand_voice_humour = @humour,
                 brand_voice_assertiveness = @assertiveness,
                 brand_voice_empathy = @empathy,
+                target_job_titles = @jobTitles::jsonb,
+                target_pain_points = @painPoints::jsonb,
+                target_geographies = @geos::jsonb,
+                content_pillars = @pillars::jsonb,
+                automation_posts_enabled = @autoPosts,
+                automation_leads_enabled = @autoLeads,
+                automation_outreach_enabled = @autoOutreach,
+                automation_outreach_daily_limit = @outreachLimit,
+                automation_outreach_delay_hours = @outreachDelay,
                 updated_at = NOW()
             WHERE id = @id AND owner_id = @ownerId
             RETURNING *", conn);
@@ -213,6 +222,15 @@ public class SupabaseRepository : IUserRepository
         cmd.Parameters.AddWithValue("humour", brand.BrandVoiceHumour);
         cmd.Parameters.AddWithValue("assertiveness", brand.BrandVoiceAssertiveness);
         cmd.Parameters.AddWithValue("empathy", brand.BrandVoiceEmpathy);
+        cmd.Parameters.AddWithValue("jobTitles", System.Text.Json.JsonSerializer.Serialize(brand.TargetJobTitles ?? []));
+        cmd.Parameters.AddWithValue("painPoints", System.Text.Json.JsonSerializer.Serialize(brand.TargetPainPoints ?? []));
+        cmd.Parameters.AddWithValue("geos", System.Text.Json.JsonSerializer.Serialize(brand.TargetGeographies ?? []));
+        cmd.Parameters.AddWithValue("pillars", System.Text.Json.JsonSerializer.Serialize(brand.ContentPillars ?? []));
+        cmd.Parameters.AddWithValue("autoPosts", brand.AutomationPostsEnabled);
+        cmd.Parameters.AddWithValue("autoLeads", brand.AutomationLeadsEnabled);
+        cmd.Parameters.AddWithValue("autoOutreach", brand.AutomationOutreachEnabled);
+        cmd.Parameters.AddWithValue("outreachLimit", brand.AutomationOutreachDailyLimit);
+        cmd.Parameters.AddWithValue("outreachDelay", brand.AutomationOutreachDelayHours);
 
         await using var reader = await cmd.ExecuteReaderAsync();
         await reader.ReadAsync();
@@ -923,6 +941,118 @@ public class SupabaseRepository : IUserRepository
         await cmd.ExecuteNonQueryAsync();
     }
 
+    // ── BRAND OVERVIEW STATS ───────────────────────────
+
+    public async Task<object> GetBrandOverviewStatsAsync(Guid brandId, Guid ownerId)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        // Aggregate counts
+        await using var statsCmd = new NpgsqlCommand(@"
+            SELECT
+                (SELECT COUNT(*) FROM posts p JOIN brands b ON b.id = p.brand_id WHERE p.brand_id = @brandId AND b.owner_id = @ownerId AND p.status = 'published') AS posts_published,
+                (SELECT COUNT(*) FROM leads l JOIN brands b ON b.id = l.brand_id WHERE l.brand_id = @brandId AND b.owner_id = @ownerId) AS leads_discovered,
+                (SELECT COUNT(*) FROM outreach_emails oe JOIN brands b ON b.id = oe.brand_id WHERE oe.brand_id = @brandId AND b.owner_id = @ownerId AND oe.status = 'sent') AS emails_sent
+        ", conn);
+        statsCmd.Parameters.AddWithValue("brandId", brandId);
+        statsCmd.Parameters.AddWithValue("ownerId", ownerId);
+
+        int postsPublished = 0, leadsDiscovered = 0, emailsSent = 0;
+        await using (var r = await statsCmd.ExecuteReaderAsync())
+        {
+            if (await r.ReadAsync())
+            {
+                postsPublished = r.GetInt32(0);
+                leadsDiscovered = r.GetInt32(1);
+                emailsSent = r.GetInt32(2);
+            }
+        }
+
+        // Upcoming queued posts (next 3)
+        await using var postsCmd = new NpgsqlCommand(@"
+            SELECT p.id, p.platform, p.generated_copy, p.scheduled_for FROM posts p
+            JOIN brands b ON b.id = p.brand_id
+            WHERE p.brand_id = @brandId AND b.owner_id = @ownerId AND p.status = 'queued'
+            ORDER BY p.scheduled_for ASC LIMIT 3", conn);
+        postsCmd.Parameters.AddWithValue("brandId", brandId);
+        postsCmd.Parameters.AddWithValue("ownerId", ownerId);
+
+        var upcomingPosts = new List<object>();
+        await using (var r = await postsCmd.ExecuteReaderAsync())
+        {
+            while (await r.ReadAsync())
+            {
+                upcomingPosts.Add(new
+                {
+                    id = r.GetGuid(0),
+                    platform = r.GetString(1),
+                    content = r.GetString(2),
+                    scheduledFor = r.GetFieldValue<DateTimeOffset>(3),
+                });
+            }
+        }
+
+        // Recent leads (last 5)
+        await using var leadsCmd = new NpgsqlCommand(@"
+            SELECT l.id, l.name, l.company, l.lead_score, l.status FROM leads l
+            JOIN brands b ON b.id = l.brand_id
+            WHERE l.brand_id = @brandId AND b.owner_id = @ownerId
+            ORDER BY l.discovered_at DESC LIMIT 5", conn);
+        leadsCmd.Parameters.AddWithValue("brandId", brandId);
+        leadsCmd.Parameters.AddWithValue("ownerId", ownerId);
+
+        var recentLeads = new List<object>();
+        await using (var r = await leadsCmd.ExecuteReaderAsync())
+        {
+            while (await r.ReadAsync())
+            {
+                recentLeads.Add(new
+                {
+                    id = r.GetGuid(0),
+                    name = r.IsDBNull(1) ? "Unknown" : r.GetString(1),
+                    company = r.IsDBNull(2) ? "" : r.GetString(2),
+                    score = r.GetInt32(3),
+                    status = r.GetString(4),
+                });
+            }
+        }
+
+        // Recent activity (last 8)
+        await using var actCmd = new NpgsqlCommand(@"
+            SELECT a.id, a.type, a.description, a.created_at FROM activity_log a
+            JOIN brands b ON b.id = a.brand_id
+            WHERE a.brand_id = @brandId AND b.owner_id = @ownerId
+            ORDER BY a.created_at DESC LIMIT 8", conn);
+        actCmd.Parameters.AddWithValue("brandId", brandId);
+        actCmd.Parameters.AddWithValue("ownerId", ownerId);
+
+        var recentActivity = new List<object>();
+        await using (var r = await actCmd.ExecuteReaderAsync())
+        {
+            while (await r.ReadAsync())
+            {
+                recentActivity.Add(new
+                {
+                    id = r.GetGuid(0),
+                    type = r.GetString(1),
+                    description = r.GetString(2),
+                    createdAt = r.GetFieldValue<DateTimeOffset>(3),
+                });
+            }
+        }
+
+        return new
+        {
+            postsPublished,
+            leadsDiscovered,
+            emailsSent,
+            upcomingPosts,
+            recentLeads,
+            recentActivity
+        };
+    }
+
     // ── ACTIVITY LOG (Extended) ───────────────────────
 
     public async Task<(List<ActivityLogEntry> Items, int Total)> GetActivityLogAsync(
@@ -1052,6 +1182,17 @@ public class SupabaseRepository : IUserRepository
         Description = r.GetString(r.GetOrdinal("description")),
         Industry = r.GetString(r.GetOrdinal("industry")),
         Status = r.GetString(r.GetOrdinal("status")),
+        WebsiteUrl = r.IsDBNull(r.GetOrdinal("website_url")) ? null : r.GetString(r.GetOrdinal("website_url")),
+        LogoUrl = r.IsDBNull(r.GetOrdinal("logo_url")) ? null : r.GetString(r.GetOrdinal("logo_url")),
+        TargetAudienceDescription = r.IsDBNull(r.GetOrdinal("target_audience_description")) ? null : r.GetString(r.GetOrdinal("target_audience_description")),
+        BrandVoiceFormality = r.GetString(r.GetOrdinal("brand_voice_formality")),
+        BrandVoiceHumour = r.GetString(r.GetOrdinal("brand_voice_humour")),
+        BrandVoiceAssertiveness = r.GetString(r.GetOrdinal("brand_voice_assertiveness")),
+        BrandVoiceEmpathy = r.GetString(r.GetOrdinal("brand_voice_empathy")),
+        TargetJobTitles = r.IsDBNull(r.GetOrdinal("target_job_titles")) ? [] : System.Text.Json.JsonSerializer.Deserialize<List<string>>(r.GetString(r.GetOrdinal("target_job_titles"))) ?? [],
+        TargetPainPoints = r.IsDBNull(r.GetOrdinal("target_pain_points")) ? [] : System.Text.Json.JsonSerializer.Deserialize<List<string>>(r.GetString(r.GetOrdinal("target_pain_points"))) ?? [],
+        TargetGeographies = r.IsDBNull(r.GetOrdinal("target_geographies")) ? [] : System.Text.Json.JsonSerializer.Deserialize<List<string>>(r.GetString(r.GetOrdinal("target_geographies"))) ?? [],
+        ContentPillars = r.IsDBNull(r.GetOrdinal("content_pillars")) ? [] : System.Text.Json.JsonSerializer.Deserialize<List<string>>(r.GetString(r.GetOrdinal("content_pillars"))) ?? [],
         TwitterConnected = r.GetBoolean(r.GetOrdinal("twitter_connected")),
         LinkedinConnected = r.GetBoolean(r.GetOrdinal("linkedin_connected")),
         InstagramConnected = r.GetBoolean(r.GetOrdinal("instagram_connected")),

@@ -4,21 +4,23 @@ import { useSession } from "next-auth/react";
 import { CreditCard, ExternalLink, Trash2, BatteryCharging, User as UserIcon, LogOut, CheckCircle2, ShieldAlert } from "lucide-react";
 import { useState } from "react";
 import { signOut } from "next-auth/react";
+import { useBrand } from "@/lib/brand-context";
 
 export default function AccountPage() {
    const { data: session } = useSession();
+   const { user } = useBrand();
    const [isDeleting, setIsDeleting] = useState(false);
    const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-   // Mocking quotas for Sprint 1 demo
-   const currentPlan = "Growth Tier";
+   // Usage of real quotas from the API UserProfile
+   const currentPlan = user?.planName || "Starter";
    const limits = {
-      leadsUsed: 2100,
-      leadsAllowed: 5000,
-      postsUsed: 140,
-      postsAllowed: 300,
-      cycleCurrent: "Oct 12, 2026",
-      cycleEnd: "Nov 12, 2026"
+      leadsUsed: user?.quotaLeadsUsed || 0,
+      leadsAllowed: user?.quotaLeadsPerMonth || 100,
+      postsUsed: user?.quotaPostsUsed || 0,
+      postsAllowed: user?.quotaPostsPerMonth || 30,
+      cycleCurrent: "Current Billing Cycle",
+      cycleEnd: "End of month"
    };
 
    const handleManageBilling = () => {

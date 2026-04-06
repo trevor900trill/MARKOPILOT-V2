@@ -37,12 +37,12 @@ public class AiRoutingService : IAiRoutingService
     {
         return task switch
         {
-            AiTask.LeadQueryGeneration => "groq/llama-3.3-70b-versatile",
-            AiTask.EntityExtraction => "groq/llama-3.1-8b-instant",
-            AiTask.LeadScoring => "groq/llama-3.1-8b-instant",
+            AiTask.LeadQueryGeneration => "meta-llama/llama-3.3-70b-instruct",
+            AiTask.EntityExtraction => "meta-llama/llama-3.1-8b-instruct",
+            AiTask.LeadScoring => "meta-llama/llama-3.1-8b-instruct",
             AiTask.SocialPostGeneration => "google/gemini-2.0-flash-001",
             AiTask.EmailOutreachCopy => "google/gemini-2.5-flash",
-            AiTask.ContentPillarSuggestion => "groq/llama-3.3-70b-versatile",
+            AiTask.ContentPillarSuggestion => "meta-llama/llama-3.3-70b-instruct",
             _ => "google/gemini-2.5-flash"
         };
     }

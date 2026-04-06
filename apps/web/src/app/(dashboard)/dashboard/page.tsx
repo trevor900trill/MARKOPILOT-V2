@@ -1,31 +1,80 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { Zap, Play, Pause, TrendingUp, Users, Send, Calendar, Activity, ChevronRight } from "lucide-react";
+import { Zap, Play, Pause, TrendingUp, Users, Send, Calendar, Activity, ChevronRight, RefreshCw } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useBrand } from "@/lib/brand-context";
+import { apiGet, apiPut } from "@/lib/api-client";
+
+type OverviewData = {
+  postsPublished: number;
+  leadsDiscovered: number;
+  emailsSent: number;
+  upcomingPosts: { id: string; platform: string; content: string; scheduledFor: string }[];
+  recentLeads: { id: string; name: string; company: string; score: number; status: string }[];
+  recentActivity: { id: string; type: string; description: string; createdAt: string }[];
+};
 
 export default function DashboardOverviewPage() {
   const { data: session } = useSession();
+  const { activeBrand, refreshBrands } = useBrand();
   const [engineState, setEngineState] = useState<"RUNNING" | "PAUSED">("RUNNING");
+  const [overview, setOverview] = useState<OverviewData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock data for Sprint 1 demo
-  const stats = {
-    postsPublished: 140,
-    leadsDiscovered: 2100,
-    emailsSent: 843
+  useEffect(() => {
+    if (activeBrand) {
+      setEngineState(activeBrand.automationPostsEnabled ? "RUNNING" : "PAUSED");
+    }
+  }, [activeBrand]);
+
+  const fetchOverview = useCallback(async () => {
+    if (!activeBrand) return;
+    setIsLoading(true);
+    try {
+      const data = await apiGet<OverviewData>(`/brands/${activeBrand.id}/overview`);
+      setOverview(data);
+    } catch (err) {
+      console.error("Failed to fetch overview:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [activeBrand]);
+
+  useEffect(() => {
+    fetchOverview();
+  }, [fetchOverview]);
+
+  const handleToggleEngine = async () => {
+    if (!activeBrand) return;
+    const newState = engineState === "RUNNING" ? "PAUSED" : "RUNNING";
+    setEngineState(newState);
+    try {
+      await apiPut(`/brands/${activeBrand.id}`, {
+        ...activeBrand,
+        automationPostsEnabled: newState === "RUNNING",
+        automationLeadsEnabled: newState === "RUNNING",
+        automationOutreachEnabled: newState === "RUNNING",
+      });
+      await refreshBrands();
+    } catch (err) {
+      console.error("Failed to toggle engine:", err);
+      setEngineState(engineState); // revert
+    }
   };
 
-  const upcomingPosts = [
-    { id: 1, platform: "LinkedIn", content: "Excited to share our new methodology for...", time: "Today, 14:00" },
-    { id: 2, platform: "X", content: "Automation is changing the speed at which...", time: "Tomorrow, 09:00" }
-  ];
+  const stats = overview || { postsPublished: 0, leadsDiscovered: 0, emailsSent: 0 };
+  const upcomingPosts = overview?.upcomingPosts || [];
+  const recentLeads = overview?.recentLeads || [];
 
-  const recentLeads = [
-    { id: 1, name: "Sarah Jenkins", company: "Acme Corp", score: 92, target: "outreach_queued" },
-    { id: 2, name: "David Chen", company: "TechFlow", score: 88, target: "qualified" },
-    { id: 3, name: "Elena Rostova", company: "Global AI", score: 85, target: "qualified" }
-  ];
+  // Skeleton block
+  const Skeleton = () => (
+    <div className="animate-pulse space-y-3 p-6">
+      <div className="h-4 bg-[var(--bg-surface)] rounded w-1/3"></div>
+      <div className="h-8 bg-[var(--bg-surface)] rounded w-1/2"></div>
+    </div>
+  );
 
   return (
      <div className="space-y-8 animate-in fade-in max-w-6xl pb-12">
@@ -45,7 +94,7 @@ export default function DashboardOverviewPage() {
                </div>
                <div className="h-8 w-px bg-[var(--border)] mx-2"></div>
                <button 
-                  onClick={() => setEngineState(engineState === 'RUNNING' ? 'PAUSED' : 'RUNNING')}
+                  onClick={handleToggleEngine}
                   className="p-2 border border-[var(--border)] hover:bg-[var(--bg-surface)] hover:text-white rounded-lg transition text-[var(--text-secondary)]">
                    {engineState === 'RUNNING' ? <Pause size={18}/> : <Play size={18}/>}
                </button>
@@ -60,7 +109,8 @@ export default function DashboardOverviewPage() {
                    <ChevronRight size={20} className="text-[var(--text-muted)] group-hover:text-white transition" />
                </div>
                <p className="text-[12px] uppercase font-bold tracking-wider text-[var(--text-secondary)] mb-1">Posts Published</p>
-               <h3 className="text-3xl font-serif text-white">{stats.postsPublished.toLocaleString()}</h3>
+               {isLoading ? <div className="h-8 w-16 bg-[var(--bg-surface)] rounded animate-pulse"></div> :
+               <h3 className="text-3xl font-serif text-white">{stats.postsPublished.toLocaleString()}</h3>}
            </Link>
 
            <Link href="/dashboard/leads" className="group bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6 hover:border-[var(--accent-primary)] transition">
@@ -69,7 +119,8 @@ export default function DashboardOverviewPage() {
                    <ChevronRight size={20} className="text-[var(--text-muted)] group-hover:text-white transition" />
                </div>
                <p className="text-[12px] uppercase font-bold tracking-wider text-[var(--text-secondary)] mb-1">Leads Extracted</p>
-               <h3 className="text-3xl font-serif text-white">{stats.leadsDiscovered.toLocaleString()}</h3>
+               {isLoading ? <div className="h-8 w-16 bg-[var(--bg-surface)] rounded animate-pulse"></div> :
+               <h3 className="text-3xl font-serif text-white">{stats.leadsDiscovered.toLocaleString()}</h3>}
            </Link>
 
            <Link href="/dashboard/outreach" className="group bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6 hover:border-[var(--accent-primary)] transition">
@@ -78,7 +129,8 @@ export default function DashboardOverviewPage() {
                    <ChevronRight size={20} className="text-[var(--text-muted)] group-hover:text-white transition" />
                </div>
                <p className="text-[12px] uppercase font-bold tracking-wider text-[var(--text-secondary)] mb-1">Emails Dispatched</p>
-               <h3 className="text-3xl font-serif text-white">{stats.emailsSent.toLocaleString()}</h3>
+               {isLoading ? <div className="h-8 w-16 bg-[var(--bg-surface)] rounded animate-pulse"></div> :
+               <h3 className="text-3xl font-serif text-white">{stats.emailsSent.toLocaleString()}</h3>}
            </Link>
        </div>
 
@@ -92,19 +144,20 @@ export default function DashboardOverviewPage() {
                  <Link href="/dashboard/social" className="text-xs font-semibold text-[var(--accent-primary)] hover:underline">View All</Link>
               </div>
               <div className="divide-y divide-[var(--border)] flex-1 p-2">
-                 {upcomingPosts.map(post => (
+                 {isLoading ? <Skeleton /> : upcomingPosts.length === 0 ? (
+                   <div className="p-8 text-center text-[var(--text-muted)] text-sm">No posts in the queue yet. Automation will populate this.</div>
+                 ) : upcomingPosts.map(post => (
                     <div key={post.id} className="p-4 flex gap-4 items-center">
                        <div className="w-2 h-2 rounded-full bg-[var(--accent-primary)] flex-shrink-0"></div>
                        <div className="flex-1">
                           <p className="text-sm text-white line-clamp-1">{post.content}</p>
                           <div className="flex gap-3 text-xs text-[var(--text-muted)] mt-1 font-mono">
                              <span>Via {post.platform}</span>
-                             <span>{post.time}</span>
+                             <span>{new Date(post.scheduledFor).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
                           </div>
                        </div>
                     </div>
                  ))}
-                 {upcomingPosts.length === 0 && <div className="p-8 text-center text-[var(--text-muted)] text-sm">Queue is dry. AI is drafting new assets currently.</div>}
               </div>
            </div>
 
@@ -115,7 +168,9 @@ export default function DashboardOverviewPage() {
                  <Link href="/dashboard/leads" className="text-xs font-semibold text-[var(--accent-primary)] hover:underline">Full Pipeline</Link>
               </div>
               <div className="divide-y divide-[var(--border)] flex-1 p-2">
-                 {recentLeads.map(lead => (
+                 {isLoading ? <Skeleton /> : recentLeads.length === 0 ? (
+                   <div className="p-8 text-center text-[var(--text-muted)] text-sm">No leads discovered yet. Run lead discovery to populate this.</div>
+                 ) : recentLeads.map(lead => (
                     <div key={lead.id} className="p-4 flex justify-between items-center">
                        <div>
                           <p className="text-sm font-medium text-white">{lead.name}</p>
