@@ -41,6 +41,7 @@ public interface ILeadDiscoveryService
     Task<ExtractedEntity?> ExtractEntityAsync(string scrapedText);
     Task<LeadScoreResult> ScoreLeadAsync(Brand brand, ExtractedEntity entity, string sourceUrl);
     Task<bool> ValidateEmailAsync(string email);
+    Task<string?> DiscoverEmailAsync(string name, string company, string domain);
 }
 
 public interface ILeadEnrichmentService

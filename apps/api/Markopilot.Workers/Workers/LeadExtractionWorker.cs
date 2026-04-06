@@ -86,6 +86,7 @@ public class LeadExtractionWorker : ILeadExtractionWorker
         {
             try
             {
+                _logger.LogInformation("Executing search query: {Query}", query);
                 var isPersonQuery = query.Contains("linkedin.com/in", StringComparison.OrdinalIgnoreCase)
                     || query.Contains("speaker", StringComparison.OrdinalIgnoreCase)
                     || query.Contains("author", StringComparison.OrdinalIgnoreCase);
@@ -118,19 +119,32 @@ public class LeadExtractionWorker : ILeadExtractionWorker
         var qualifiedLeads = new List<Lead>();
         int dailyLimit = brand.AutomationLeadsPerDay > 0 ? brand.AutomationLeadsPerDay : 50;
 
+        _logger.LogInformation("Processing {Count} unique results for brand {BrandId}. Daily limit: {DailyLimit}", uniqueResults.Count, brandId, dailyLimit);
+        
         foreach (var result in uniqueResults.Take(dailyLimit))
         {
             try
             {
-                var scrapedText = await _discoveryService.ScrapePageAsync(result.Url);
-                if (string.IsNullOrWhiteSpace(scrapedText))
-                {
-                    // Fallback to snippet if scraping failed/blocked
-                    scrapedText = result.Snippet;
-                }
+                // Commented out to avoid 999 errors from ..
+                // var scrapedText = await _discoveryService.ScrapePageAsync(result.Url);
+                // if (string.IsNullOrWhiteSpace(scrapedText))
+                // {
+                //     scrapedText = result.Snippet;
+                // }
+                var scrapedText = result.Title + "\n" + result.Snippet + "\n" + result.Url;
 
                 var entity = await _discoveryService.ExtractEntityAsync(scrapedText);
                 if (entity == null || entity.Confidence == "low") continue;
+
+                _logger.LogInformation("Checking entity {Entity}", System.Text.Json.JsonSerializer.Serialize(entity));
+
+                if (string.IsNullOrWhiteSpace(entity.Email) && !string.IsNullOrWhiteSpace(entity.Name) && !string.IsNullOrWhiteSpace(entity.Company))
+                {
+                    // Basic heuristic to guess domain if it's missing (can be improved later with a company search API)
+                    var assumedDomain = entity.Company.ToLowerInvariant().Replace(" ", "").Replace(",", "").Replace("inc", "").Replace("llc", "") + ".com";
+                    _logger.LogInformation("Attempting to discover email for {Name} at {Domain}", entity.Name, assumedDomain);
+                    entity.Email = await _discoveryService.DiscoverEmailAsync(entity.Name, entity.Company, assumedDomain);
+                }
 
                 // Only consider leads that have actionable contact information
                 if (string.IsNullOrWhiteSpace(entity.Email) && string.IsNullOrWhiteSpace(entity.LinkedinUrl))

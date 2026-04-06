@@ -5,6 +5,8 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Net.Sockets;
+using System.IO;
 using DnsClient;
 using HtmlAgilityPack;
 using Markopilot.Core.Interfaces;
@@ -106,7 +108,7 @@ public class LeadDiscoveryService : ILeadDiscoveryService
     {
         if (string.IsNullOrWhiteSpace(scrapedText)) return null;
 
-        var systemPrompt = @"Extract contact information from the following web page content. Return only structured data. If a field is not present, return null.
+        var systemPrompt = @"Extract contact information from the following search result snippet or web page content. Return only structured data. If a field is not present, return null.
 
 Return ONLY this JSON structure, no preamble:
 {
@@ -126,7 +128,7 @@ Set confidence to ""high"" if name + job title + company all found. ""medium"" i
         {
             Task = AiTask.EntityExtraction,
             SystemPrompt = systemPrompt,
-            UserPrompt = $"WEB PAGE CONTENT:\n{scrapedText}",
+            UserPrompt = $"WEB PAGE/SNIPPET CONTENT:\n{scrapedText}",
             Temperature = 0.1,
             MaxTokens = 512
         };
@@ -279,5 +281,93 @@ Return ONLY this JSON, no preamble:
             _logger.LogWarning(ex, "Failed MX lookup for {Email}", email);
             return false;
         }
+    }
+
+    public async Task<string?> DiscoverEmailAsync(string name, string company, string domain)
+    {
+        if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(domain)) return null;
+
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var first = parts.Length > 0 ? parts[0].ToLowerInvariant() : "";
+        var last = parts.Length > 1 ? parts[parts.Length - 1].ToLowerInvariant() : "";
+        
+        var permutations = new List<string>
+        {
+            $"{first}@{domain}",
+            $"{first}.{last}@{domain}",
+            $"{first}{last}@{domain}",
+            $"{first[0]}{last}@{domain}",
+            $"{first}_{last}@{domain}",
+            $"{last}@{domain}",
+            $"{first[0]}.{last}@{domain}"
+        }.Distinct().Where(e => !e.StartsWith("@")).ToList();
+
+        try
+        {
+            var lookup = new LookupClient();
+            var result = await lookup.QueryAsync(domain, QueryType.MX);
+            var mxRecords = result.Answers.MxRecords().OrderBy(mx => mx.Preference).ToList();
+
+            if (!mxRecords.Any()) return null;
+
+            foreach (var mx in mxRecords)
+            {
+                var mxDomain = mx.Exchange.Value;
+                if (mxDomain.EndsWith(".")) mxDomain = mxDomain.Substring(0, mxDomain.Length - 1);
+
+                try
+                {
+                    using var client = new TcpClient();
+                    // Connect with short timeout
+                    var connectTask = client.ConnectAsync(mxDomain, 25);
+                    if (await Task.WhenAny(connectTask, Task.Delay(5000)) != connectTask)
+                    {
+                        continue; // Timeout, try next MX
+                    }
+                    
+                    using var stream = client.GetStream();
+                    using var reader = new StreamReader(stream);
+                    using var writer = new StreamWriter(stream) { AutoFlush = true };
+
+                    var greeting = await reader.ReadLineAsync();
+                    if (greeting == null || !greeting.StartsWith("220")) continue;
+
+                    await writer.WriteLineAsync("HELO markopilot.com");
+                    var heloResponse = await reader.ReadLineAsync();
+                    if (heloResponse == null || !heloResponse.StartsWith("250")) continue;
+
+                    await writer.WriteLineAsync("MAIL FROM:<ping@markopilot.com>");
+                    var mailFromResponse = await reader.ReadLineAsync();
+                    if (mailFromResponse == null || !mailFromResponse.StartsWith("250")) continue;
+
+                    foreach (var email in permutations)
+                    {
+                        _logger.LogInformation("Checking email {Email}", email);
+                        await writer.WriteLineAsync($"RCPT TO:<{email}>");
+                        var rcptResponse = await reader.ReadLineAsync();
+                        _logger.LogInformation("Email {Email} response: {Response}", email, rcptResponse);
+                        if (rcptResponse != null && rcptResponse.StartsWith("250"))
+                        {
+                            await writer.WriteLineAsync("QUIT");
+                            return email;
+                        }
+                    }
+
+                    await writer.WriteLineAsync("QUIT");
+                    break; // Checked all permutations on primary MX, no need to check fallback MXs
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug(ex, "Failed to connect/verify via MX {MxDomain}", mxDomain);
+                    continue; // Try next MX on error
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "DiscoverEmailAsync failed for {Domain}", domain);
+        }
+
+        return null;
     }
 }
