@@ -1,0 +1,11 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "builder": "nixpacks",
+    "buildCommand": "dotnet publish Markopilot.Workers.csproj -c Release -o out_worker"
+  },
+  "deploy": {
+    "startCommand": "dotnet out_worker/Markopilot.Workers.dll",
+    "restartPolicyType": "on-failure"
+  }
+}
