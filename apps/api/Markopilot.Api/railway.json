@@ -2,8 +2,7 @@
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
     "builder": "DOCKERFILE",
-    "dockerfilePath": "Markopilot.Api/Dockerfile",
-    "watchPatterns": ["Markopilot.Api/**", "Markopilot.Core/**", "Markopilot.Infrastructure/**"]
+    "dockerfilePath": "Markopilot.Api/Dockerfile"
   },
   "deploy": {
     "numReplicas": 1,
