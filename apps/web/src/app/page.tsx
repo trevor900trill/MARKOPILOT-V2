@@ -411,7 +411,7 @@ export default function LandingPage() {
         <div className="relative z-10 space-y-10 max-w-4xl mx-auto flex flex-col items-center">
           <h2 className="font-serif text-5xl md:text-7xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 drop-shadow-xl">Stop marketing manually.</h2>
           <NavLink href={SIGNIN_URL} className="group inline-flex items-center gap-3 px-12 py-5 rounded-full bg-white text-black font-semibold text-lg hover:scale-[1.04] transition-all shadow-[0_0_50px_rgba(255,255,255,0.2)] active:scale-95 hover:shadow-[0_0_80px_rgba(255,255,255,0.4)]">
-            Start Free Trial — No Card Needed <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+            Start Free Trial <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
           </NavLink>
         </div>
       </section>

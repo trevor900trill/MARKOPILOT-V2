@@ -80,6 +80,24 @@ public class BrandsController : ControllerBase
         return Ok(updated);
     }
 
+    [HttpDelete("{brandId:guid}")]
+    public async Task<IActionResult> Delete(Guid brandId)
+    {
+        var userId = HttpContext.GetUserId();
+        
+        // 1. Delete from Repository
+        var success = await _repo.DeleteBrandAsync(brandId, userId);
+        if (!success) return NotFound(new { error = new { code = "NOT_FOUND", message = "Brand not found or could not be deleted" } });
+
+        // 2. Immediately remove all recurring jobs from Hangfire
+        RecurringJob.RemoveIfExists($"brand-leads-gen-{brandId}");
+        RecurringJob.RemoveIfExists($"brand-post-gen-{brandId}");
+
+        _logger.LogInformation("Brand {BrandId} and its associated automation jobs deleted by user {UserId}", brandId, userId);
+
+        return NoContent();
+    }
+
     [HttpGet("{brandId:guid}/overview")]
     public async Task<IActionResult> GetOverview(Guid brandId)
     {

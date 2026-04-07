@@ -231,10 +231,23 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         cmd.Parameters.AddWithValue("autoOutreach", brand.AutomationOutreachEnabled);
         cmd.Parameters.AddWithValue("outreachLimit", brand.AutomationOutreachDailyLimit);
         cmd.Parameters.AddWithValue("outreachDelay", brand.AutomationOutreachDelayHours);
-
         await using var reader = await cmd.ExecuteReaderAsync();
         await reader.ReadAsync();
         return MapBrand(reader);
+    }
+
+    public async Task<bool> DeleteBrandAsync(Guid brandId, Guid ownerId)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(
+            "DELETE FROM brands WHERE id = @id AND owner_id = @ownerId", conn);
+        cmd.Parameters.AddWithValue("id", brandId);
+        cmd.Parameters.AddWithValue("ownerId", ownerId);
+
+        var result = await cmd.ExecuteNonQueryAsync();
+        return result > 0;
     }
 
     public async Task<List<Brand>> GetBrandsByOwnerAsync(Guid ownerId)

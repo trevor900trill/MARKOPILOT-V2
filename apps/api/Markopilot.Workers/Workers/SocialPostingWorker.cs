@@ -45,13 +45,15 @@ public class SocialPostingWorker : ISocialPostingWorker
         var brand = await _brandRepo.GetBrandByIdSystemAsync(brandId);
         if (brand == null)
         {
-            _logger.LogWarning("Brand {BrandId} not found.", brandId);
+            _logger.LogWarning("Brand {BrandId} not found. Removing recurring job.", brandId);
+            RecurringJob.RemoveIfExists($"brand-post-gen-{brandId}");
             return;
         }
 
         if (!brand.AutomationPostsEnabled)
         {
-            _logger.LogInformation("Brand {BrandId} has automation posting disabled. Skipping.", brandId);
+            _logger.LogInformation("Brand {BrandId} has automation posting disabled. Removing recurring job.", brandId);
+            RecurringJob.RemoveIfExists($"brand-post-gen-{brandId}");
             return;
         }
 

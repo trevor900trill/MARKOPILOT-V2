@@ -47,4 +47,8 @@ public interface IBrandRepository
     /// <summary>Update a brand's settings, voice, pillars, and automation config.</summary>
     /// <remarks>Used by: API</remarks>
     Task<Brand> UpdateBrandAsync(Brand brand);
+
+    /// <summary>Delete a brand and all associated data.</summary>
+    /// <remarks>Used by: API</remarks>
+    Task<bool> DeleteBrandAsync(Guid brandId, Guid ownerId);
 }

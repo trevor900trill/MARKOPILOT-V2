@@ -50,13 +50,15 @@ public class LeadExtractionWorker : ILeadExtractionWorker
         var brand = await _brandRepo.GetBrandByIdSystemAsync(brandId);
         if (brand == null)
         {
-            _logger.LogWarning("Brand {BrandId} not found, cannot extract leads.", brandId);
+            _logger.LogWarning("Brand {BrandId} not found. Removing recurring job.", brandId);
+            RecurringJob.RemoveIfExists($"brand-leads-gen-{brandId}");
             return;
         }
 
         if (!brand.AutomationLeadsEnabled)
         {
-            _logger.LogInformation("Brand {BrandId} has automation leads discovering disabled. Skipping.", brandId);
+            _logger.LogInformation("Brand {BrandId} has automation leads discovering disabled. Removing recurring job.", brandId);
+            RecurringJob.RemoveIfExists($"brand-leads-gen-{brandId}");
             return;
         }
 
