@@ -1,11 +1,12 @@
 {
-  "$schema": "https://railway.com/railway.schema.json",
+  "$schema": "https://railway.app/railway.schema.json",
   "build": {
-    "builder": "NIXPACKS",
-    "buildCommand": "dotnet publish Markopilot.Workers.csproj -c Release -o out_worker"
+    "builder": "DOCKERFILE",
+    "dockerfilePath": "Markopilot.Workers/Dockerfile",
+    "watchPatterns": ["Markopilot.Workers/**", "Markopilot.Core/**", "Markopilot.Infrastructure/**"]
   },
   "deploy": {
-    "startCommand": "dotnet out_worker/Markopilot.Workers.dll",
+    "numReplicas": 1,
     "restartPolicyType": "ON_FAILURE"
   }
 }
