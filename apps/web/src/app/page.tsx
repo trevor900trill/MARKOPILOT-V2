@@ -43,20 +43,20 @@ export default function LandingPage() {
   }, []);
 
   // Safe navigation renderer to prevent hydration mismatch for auth links
-  const NavLink = ({ 
-    href, 
-    className, 
-    children, 
-    isPrimary = false 
-  }: { 
-    href: string; 
-    className?: string; 
-    children: React.ReactNode; 
+  const NavLink = ({
+    href,
+    className,
+    children,
+    isPrimary = false
+  }: {
+    href: string;
+    className?: string;
+    children: React.ReactNode;
     isPrimary?: boolean;
   }) => {
     // During hydration/SSR, we render a stable version. Once mounted, we use the final URL.
     const safeHref = mounted ? href : "/api/auth/signin";
-    
+
     return (
       <Link href={safeHref} className={className}>
         {isPrimary && <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></span>}
@@ -389,7 +389,7 @@ export default function LandingPage() {
                     <li className={`flex items-center gap-3 text-sm ${isFeatured ? 'text-white font-medium' : 'text-gray-300 font-light'}`}><Check size={18} className="text-[var(--success)]" /> {plan.leads} / month</li>
                   </ul>
                   <NavLink
-                    href={SIGNIN_URL}
+                    href={`${SIGNIN_URL}&plan=${plan.id}`}
                     className={isFeatured
                       ? "w-full block text-center py-4 rounded-xl bg-[var(--accent-primary)] text-white font-semibold hover:opacity-90 hover:scale-[1.03] transition-all shadow-lg active:scale-95 relative z-10"
                       : "w-full block text-center py-4 rounded-xl bg-white/5 border border-white/10 text-white font-medium hover:bg-white/10 transition-all active:scale-95"

@@ -63,7 +63,7 @@ public class WebhooksController : ControllerBase
                     string status = attributes.GetProperty("status").GetString() ?? "unknown";
                     
                     string variantName = "Starter";
-                    if (attributes.TryGetProperty("variant_name", out var variantNameElem) && variantNameElem.ValueKind != JsonValueKind.Null)
+                    if (attributes.TryGetProperty("product_name", out var variantNameElem) && variantNameElem.ValueKind != JsonValueKind.Null)
                     {
                         variantName = variantNameElem.GetString() ?? "Starter";
                     }

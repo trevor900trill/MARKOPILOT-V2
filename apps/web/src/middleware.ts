@@ -17,11 +17,6 @@ export default auth((req) => {
     if (nextUrl.pathname.startsWith("/dashboard") && !onboardingCompleted) {
       return NextResponse.redirect(new URL("/onboarding", nextUrl));
     }
-
-    // If trying to access onboarding but already completed, go to dashboard
-    if (nextUrl.pathname.startsWith("/onboarding") && onboardingCompleted) {
-      return NextResponse.redirect(new URL("/dashboard", nextUrl));
-    }
   }
 
   return NextResponse.next();

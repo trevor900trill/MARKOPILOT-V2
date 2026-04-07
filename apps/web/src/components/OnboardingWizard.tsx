@@ -183,8 +183,16 @@ export function OnboardingWizard() {
             <div className="w-24 h-24 bg-[var(--bg-elevated)] rounded-full mx-auto mb-4 border border-[var(--border)] flex items-center justify-center overflow-hidden">
               {user.image ? <img src={user.image} className="w-full h-full object-cover" alt="Profile" referrerPolicy="no-referrer" /> : <span className="text-3xl text-[var(--text-muted)]">👋</span>}
             </div>
-            <h1 className="font-serif text-4xl text-white">Welcome, {(user as any).name?.split(' ')[0] || "Pilot"}.</h1>
-            <p className="text-[var(--text-secondary)] text-lg">Let&apos;s set up your first brand in about 2 minutes.</p>
+            <h1 className="font-serif text-4xl text-white">
+              {(session?.user as any)?.onboardingCompleted 
+                ? "Add a New Brand" 
+                : `Welcome, ${(user as any).name?.split(' ')[0] || "Pilot"}.`}
+            </h1>
+            <p className="text-[var(--text-secondary)] text-lg">
+              {(session?.user as any)?.onboardingCompleted 
+                ? "Ready to scale? Let's get your next brand up and running." 
+                : "Let's set up your first brand in about 2 minutes."}
+            </p>
             <button onClick={nextStep} className="w-full py-4 mt-8 rounded-full bg-[var(--accent-primary)] text-white font-medium hover:opacity-90 flex justify-center gap-2 items-center">
               Let&apos;s get started <ArrowRight size={18} />
             </button>
@@ -194,7 +202,9 @@ export function OnboardingWizard() {
         {/* Step 2 — Create Your First Brand */}
         {step === 2 && (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
-            <h2 className="font-serif text-3xl text-white">Create Your First Brand</h2>
+            <h2 className="font-serif text-3xl text-white">
+              {(session?.user as any)?.onboardingCompleted ? "Brand Details" : "Create Your First Brand"}
+            </h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm text-[var(--text-secondary)] mb-1">Brand Name *</label>

@@ -1,13 +1,16 @@
 "use client";
 
-import { LayoutDashboard, Send, Users, Activity, Settings, ChevronDown, ChevronsLeft, ChevronsRight, Mail } from "lucide-react";
+import { LayoutDashboard, Send, Users, Activity, Settings, ChevronDown, ChevronsLeft, ChevronsRight, Mail, Briefcase } from "lucide-react";
 import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
 import { useState } from "react";
 import { useBrand } from "@/lib/brand-context";
 
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [switcherOpen, setSwitcherOpen] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
   const { brands, activeBrand, setActiveBrandId, user } = useBrand();
 
   const planName = user?.planName || "Starter";
@@ -19,19 +22,23 @@ export function AppSidebar() {
   const brandsAllowed = user?.quotaBrandsAllowed || 1;
 
   const links = [
-    { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Overview", href: "/dashboard", icon: LayoutDashboard, exact: true },
+    { name: "Brands", href: "/dashboard/brands", icon: Briefcase },
     { name: "Social Posting", href: "/dashboard/social", icon: Send },
     { name: "Lead Generation", href: "/dashboard/leads", icon: Users },
     { name: "Email Outreach", href: "/dashboard/outreach", icon: Mail },
     { name: "Activity Log", href: "/dashboard/activity", icon: Activity },
   ];
 
+  const isActive = (href: string, exact?: boolean) =>
+    exact ? pathname === href : pathname.startsWith(href);
+
   return (
     <aside className={`bg-[var(--bg-surface)] border-r border-[var(--border)] flex flex-col transition-all duration-300 ${collapsed ? "w-20" : "w-64"} hidden md:flex`}>
       {/* Logo Area */}
       <div className="h-16 flex items-center px-6 border-b border-[var(--border)]">
         <Link href="/dashboard" className="font-serif text-xl tracking-wide text-white overflow-hidden whitespace-nowrap">
-           {collapsed ? "M" : "Markopilot"}
+          {collapsed ? "M" : "Markopilot"}
         </Link>
       </div>
 
@@ -65,33 +72,38 @@ export function AppSidebar() {
                 <span className="truncate">{brand.name}</span>
               </button>
             ))}
-            <Link
-              href="/onboarding"
-              onClick={() => setSwitcherOpen(false)}
-              className="w-full block text-left px-3 py-2.5 text-sm text-[var(--accent-primary)] hover:bg-[var(--bg-surface)] transition border-t border-[var(--border)]"
-            >
-              + New Brand
-            </Link>
+            <div className="p-2 border-t border-[var(--border)]">
+              <Link
+                href="/dashboard/brands"
+                onClick={() => setSwitcherOpen(false)}
+                className="w-full block text-center px-3 py-2 text-xs font-medium text-[var(--accent-primary)] hover:bg-[var(--bg-surface)] transition rounded-lg"
+              >
+                Manage All Brands
+              </Link>
+            </div>
           </div>
         )}
       </div>
 
       {/* Nav Links */}
       <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
-        {links.map((link) => (
-          <Link key={link.href} href={link.href} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-elevated)] transition group">
-             <link.icon size={18} className="text-[var(--text-muted)] group-hover:text-[var(--accent-primary)] flex-shrink-0" />
-             {!collapsed && <span className="text-sm font-medium">{link.name}</span>}
-          </Link>
-        ))}
+        {links.map((link) => {
+          const active = isActive(link.href, link.exact);
+          return (
+            <Link key={link.href} href={link.href} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition group ${active ? "bg-[var(--bg-elevated)] text-white" : "text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-elevated)]"}`}>
+              <link.icon size={18} className={`flex-shrink-0 ${active ? "text-[var(--accent-primary)]" : "text-[var(--text-muted)] group-hover:text-[var(--accent-primary)]"}`} />
+              {!collapsed && <span className="text-sm font-medium">{link.name}</span>}
+            </Link>
+          );
+        })}
         {!collapsed && <hr className="my-4 border-[var(--border)] mx-3" />}
-        <Link href="/dashboard/settings" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-elevated)] transition group">
-            <Settings size={18} className="text-[var(--text-muted)] group-hover:text-[var(--accent-primary)] flex-shrink-0" />
-            {!collapsed && <span className="text-sm font-medium">Brand Settings</span>}
+        <Link href="/dashboard/settings" className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition group ${isActive("/dashboard/settings") ? "bg-[var(--bg-elevated)] text-white" : "text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-elevated)]"}`}>
+          <Settings size={18} className={`flex-shrink-0 ${isActive("/dashboard/settings") ? "text-[var(--accent-primary)]" : "text-[var(--text-muted)] group-hover:text-[var(--accent-primary)]"}`} />
+          {!collapsed && <span className="text-sm font-medium">Brand Settings</span>}
         </Link>
-        <Link href="/account" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-elevated)] transition group">
-            <Settings size={18} className="text-[var(--text-muted)] group-hover:text-[var(--accent-primary)] flex-shrink-0" />
-            {!collapsed && <span className="text-sm font-medium">Account Settings</span>}
+        <Link href="/dashboard/account" className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition group ${isActive("/dashboard/account") ? "bg-[var(--bg-elevated)] text-white" : "text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-elevated)]"}`}>
+          <Settings size={18} className={`flex-shrink-0 ${isActive("/dashboard/account") ? "text-[var(--accent-primary)]" : "text-[var(--text-muted)] group-hover:text-[var(--accent-primary)]"}`} />
+          {!collapsed && <span className="text-sm font-medium">Account Settings</span>}
         </Link>
       </nav>
 
@@ -105,29 +117,29 @@ export function AppSidebar() {
           <div className="space-y-3">
             <div>
               <div className="flex justify-between text-[10px] text-[var(--text-muted)] mb-1">
-                 <span>Posts</span>
-                 <span>{postsUsed} / {postsAllowed}</span>
+                <span>Posts</span>
+                <span>{postsUsed} / {postsAllowed}</span>
               </div>
               <div className="h-1.5 w-full bg-[var(--bg-elevated)] rounded-full overflow-hidden">
-                <div className="h-full bg-[var(--accent-primary)] rounded-full transition-all duration-700" style={{ width: `${postsAllowed > 0 ? (postsUsed/postsAllowed)*100 : 0}%` }} />
+                <div className="h-full bg-[var(--accent-primary)] rounded-full transition-all duration-700" style={{ width: `${postsAllowed > 0 ? (postsUsed / postsAllowed) * 100 : 0}%` }} />
               </div>
             </div>
             <div>
               <div className="flex justify-between text-[10px] text-[var(--text-muted)] mb-1">
-                 <span>Leads</span>
-                 <span>{leadsUsed} / {leadsAllowed}</span>
+                <span>Leads</span>
+                <span>{leadsUsed} / {leadsAllowed}</span>
               </div>
               <div className="h-1.5 w-full bg-[var(--bg-elevated)] rounded-full overflow-hidden">
-                <div className="h-full bg-[var(--accent-primary)] rounded-full transition-all duration-700" style={{ width: `${leadsAllowed > 0 ? (leadsUsed/leadsAllowed)*100 : 0}%` }} />
+                <div className="h-full bg-[var(--accent-primary)] rounded-full transition-all duration-700" style={{ width: `${leadsAllowed > 0 ? (leadsUsed / leadsAllowed) * 100 : 0}%` }} />
               </div>
             </div>
             <div>
               <div className="flex justify-between text-[10px] text-[var(--text-muted)] mb-1">
-                 <span>Brands</span>
-                 <span>{brandsUsed} / {brandsAllowed}</span>
+                <span>Brands</span>
+                <span>{brandsUsed} / {brandsAllowed}</span>
               </div>
               <div className="h-1.5 w-full bg-[var(--bg-elevated)] rounded-full overflow-hidden">
-                <div className="h-full bg-[var(--accent-primary)] rounded-full transition-all duration-700" style={{ width: `${brandsAllowed > 0 ? (brandsUsed/brandsAllowed)*100 : 0}%` }} />
+                <div className="h-full bg-[var(--accent-primary)] rounded-full transition-all duration-700" style={{ width: `${brandsAllowed > 0 ? (brandsUsed / brandsAllowed) * 100 : 0}%` }} />
               </div>
             </div>
           </div>
@@ -136,7 +148,7 @@ export function AppSidebar() {
 
       {/* Collapse Toggle */}
       <button onClick={() => setCollapsed(!collapsed)} className="h-10 border-t border-[var(--border)] flex items-center justify-center text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-elevated)] transition">
-         {collapsed ? <ChevronsRight size={16} /> : <ChevronsLeft size={16} />}
+        {collapsed ? <ChevronsRight size={16} /> : <ChevronsLeft size={16} />}
       </button>
     </aside>
   );

@@ -95,7 +95,11 @@ public class SocialController : ControllerBase
 
         try
         {
-            var redirectUri = $"{_config["Api:BaseUrl"] ?? "http://localhost:5085"}/api/social/callback/{platform}";
+            var apiBaseUrl = _config["Api:BaseUrl"] ?? "http://localhost:5085";
+            var redirectUri = $"{apiBaseUrl}/api/social/callback/{platform}";
+            
+            _logger.LogInformation("Exchanging OAuth code for {Platform} (Brand: {BrandId}). Redirect URI: {RedirectUri}", platform, brandId, redirectUri);
+            
             var tokenResult = await _oauthService.ExchangeCodeForTokenAsync(platform, code, redirectUri);
             
             var encryptedToken = _encryptionService.Encrypt(tokenResult.AccessToken);
@@ -112,14 +116,14 @@ public class SocialController : ControllerBase
 
             await _brandRepo.InsertActivityAsync(brandId, "social_connected", $"Successfully connected {platform}");
 
-            _logger.LogInformation("Successfully encrypted and stored OAuth token for {Platform} (Brand: {BrandId})", platform, brandId);
+            _logger.LogInformation("Successfully connected {Platform} for brand {BrandId}", platform, brandId);
             
             var frontendBaseUrl = _config["Frontend:BaseUrl"] ?? "http://localhost:3000";
             return Redirect($"{frontendBaseUrl}/dashboard/social?connected={platform}");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "OAuth Callback failed");
+            _logger.LogError(ex, "OAuth Callback failed for {Platform} (Brand: {BrandId})", platform, brandId);
             var frontendBaseUrl = _config["Frontend:BaseUrl"] ?? "http://localhost:3000";
             return Redirect($"{frontendBaseUrl}/dashboard/social?error=auth_failed");
         }

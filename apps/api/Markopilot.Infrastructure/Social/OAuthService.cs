@@ -28,12 +28,13 @@ public class OAuthService
     public string GetAuthorizationUrl(string platform, Guid brandId)
     {
         var baseUrl = _config["Frontend:BaseUrl"] ?? "http://localhost:3000";
-        var redirectUri = $"{_config["Api:BaseUrl"] ?? "http://localhost:5030"}/api/social/callback/{platform}";
+        var rawRedirectUri = $"{_config["Api:BaseUrl"] ?? "http://localhost:5085"}/api/social/callback/{platform}";
+        var redirectUri = Uri.EscapeDataString(rawRedirectUri);
         
         switch (platform.ToLower())
         {
             case "linkedin":
-                return $"https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id={_config["Social:LinkedIn:ClientId"]}&redirect_uri={redirectUri}&state={brandId}&scope=w_member_social%20r_liteprofile";
+                return $"https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id={_config["Social:LinkedIn:ClientId"]}&redirect_uri={redirectUri}&state={brandId}&scope=w_member_social%20profile%20openid%20email";
             case "x":
             case "twitter":
                 return $"https://twitter.com/i/oauth2/authorize?response_type=code&client_id={_config["Social:X:ClientId"]}&redirect_uri={redirectUri}&scope=tweet.read%20tweet.write%20users.read%20offline.access&state={brandId}&code_challenge=challenge&code_challenge_method=plain";
@@ -93,14 +94,19 @@ public class OAuthService
     private async Task<OAuthTokenResult> ExchangeTwitterTokenAsync(string code, string redirectUri)
     {
         var clientId = _config["Social:X:ClientId"];
+        var clientSecret = _config["Social:X:ClientSecret"];
         var request = new HttpRequestMessage(HttpMethod.Post, "https://api.twitter.com/2/oauth2/token");
+        
+        // Twitter/X OAuth 2.0 requires Basic Auth header for confidential clients
+        var authHeader = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{clientId}:{clientSecret}"));
+        request.Headers.Authorization = new AuthenticationHeaderValue("Basic", authHeader);
+
         var formData = new Dictionary<string, string>
         {
-            ["client_id"] = clientId!,
             ["grant_type"] = "authorization_code",
             ["code"] = code,
             ["redirect_uri"] = redirectUri,
-            ["code_verifier"] = "challenge" // Since PKCE challenge was hardcoded to "challenge" via plain method
+            ["code_verifier"] = "challenge"
         };
         request.Content = new FormUrlEncodedContent(formData);
 

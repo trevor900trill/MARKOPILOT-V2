@@ -1,0 +1,26 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "services": {
+    "web": {
+      "name": "markopilot-web",
+      "root": "apps/web",
+      "watchPatterns": ["apps/web/**", "packages/**"],
+      "buildCommand": "npm install && npm run build",
+      "startCommand": "npm start"
+    },
+    "api": {
+      "name": "markopilot-api",
+      "root": "apps/api",
+      "watchPatterns": ["apps/api/Markopilot.Api/**", "apps/api/Markopilot.Core/**", "apps/api/Markopilot.Infrastructure/**"],
+      "buildCommand": "dotnet publish Markopilot.Api/Markopilot.Api.csproj -c Release -o out",
+      "startCommand": "dotnet out/Markopilot.Api.dll"
+    },
+    "worker": {
+      "name": "markopilot-worker",
+      "root": "apps/api",
+      "watchPatterns": ["apps/api/Markopilot.Workers/**", "apps/api/Markopilot.Core/**", "apps/api/Markopilot.Infrastructure/**"],
+      "buildCommand": "dotnet publish Markopilot.Workers/Markopilot.Workers.csproj -c Release -o out_worker",
+      "startCommand": "dotnet out_worker/Markopilot.Workers.dll"
+    }
+  }
+}
