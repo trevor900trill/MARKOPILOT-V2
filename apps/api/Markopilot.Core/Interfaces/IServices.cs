@@ -2,24 +2,27 @@ using Markopilot.Core.Models;
 
 namespace Markopilot.Core.Interfaces;
 
-public interface IBrandService
-{
-    Task<Brand> CreateAsync(Brand brand);
-    Task<Brand?> GetByIdAsync(Guid brandId, Guid ownerId);
-    Task<List<Brand>> GetByOwnerAsync(Guid ownerId);
-    Task<Brand> UpdateAsync(Brand brand);
-    Task ArchiveAsync(Guid brandId, Guid ownerId);
-    Task<int> CountByOwnerAsync(Guid ownerId);
-}
+// ═══════════════════════════════════════════════════
+// AI & CONTENT SERVICES
+// ═══════════════════════════════════════════════════
 
+/// <summary>
+/// Routes AI completion requests to the configured LLM provider (OpenRouter).
+/// Used by: Workers (LeadExtractionWorker, SocialPostingWorker, OutreachWorker)
+/// </summary>
 public interface IAiRoutingService
 {
     Task<AiCompletionResponse> CompleteAsync(AiCompletionRequest request);
     string GetModelForTask(AiTask task);
 }
 
+/// <summary>
+/// High-level content generation: posts, outreach emails, search queries, pillars.
+/// Used by: Workers (SocialPostingWorker, LeadExtractionWorker, OutreachWorker)
+/// </summary>
 public interface IContentGenerationService
 {
+    // ── Generate ─────────────────────────────────
     Task<GeneratedPost> GeneratePostAsync(Brand brand, string contentPillar, SocialPlatform platform);
     Task<GeneratedEmail> GenerateOutreachEmailAsync(Brand brand, Lead lead);
     Task<GeneratedEmail> GenerateFollowUpEmailAsync(Brand brand, Lead lead, string originalSubject);
@@ -27,64 +30,58 @@ public interface IContentGenerationService
     Task<List<string>> GenerateSearchQueriesAsync(Brand brand);
 }
 
-public interface ISocialPostingService
-{
-    Task<string> PublishAsync(Brand brand, SocialPost post);
-    Task<bool> RefreshTokenAsync(Brand brand, SocialPlatform platform);
-    Task<bool> ValidateConnectionAsync(Brand brand, SocialPlatform platform);
-}
+// ═══════════════════════════════════════════════════
+// LEAD DISCOVERY SERVICE
+// ═══════════════════════════════════════════════════
 
+/// <summary>
+/// Orchestrates the full lead discovery pipeline: search, scrape, extract, score, validate.
+/// Used by: Workers (LeadExtractionWorker)
+/// </summary>
 public interface ILeadDiscoveryService
 {
+    // ── Search & Scrape ──────────────────────────
     Task<List<SearchResult>> SearchAsync(string query, bool useExa = false);
     Task<string> ScrapePageAsync(string url);
+
+    // ── AI Extraction & Scoring ──────────────────
     Task<ExtractedEntity?> ExtractEntityAsync(string scrapedText);
     Task<LeadScoreResult> ScoreLeadAsync(Brand brand, ExtractedEntity entity, string sourceUrl);
+
+    // ── Email Validation & Discovery ─────────────
     Task<bool> ValidateEmailAsync(string email);
     Task<string?> DiscoverEmailAsync(string name, string company, string domain);
 }
 
-public interface ILeadEnrichmentService
-{
-    Task<Lead> EnrichLeadAsync(Lead lead);
-}
+// ═══════════════════════════════════════════════════
+// QUOTA & RATE LIMITING
+// ═══════════════════════════════════════════════════
 
-public interface IEmailOutreachService
-{
-    Task SendEmailAsync(Brand brand, OutreachEmail email);
-    Task<bool> CheckForReplyAsync(Brand brand, string recipientEmail, DateTimeOffset sentAfter);
-    Task<bool> RefreshGmailTokenAsync(Brand brand);
-}
-
+/// <summary>
+/// Manages per-user usage quotas for leads, posts, and brands.
+/// Used by: API (BrandsController, LeadsController, SocialController, UsersController)
+///          Workers (LeadExtractionWorker, SocialPostingWorker)
+/// </summary>
 public interface IQuotaService
 {
+    // ── Read ──────────────────────────────────────
     Task<QuotaStatus> GetQuotaStatusAsync(Guid userId);
     Task<bool> CanGeneratePostAsync(Guid userId);
     Task<bool> CanDiscoverLeadAsync(Guid userId);
+    Task<bool> IsBrandLimitReachedAsync(Guid userId);
+    string GetQueueForUser(string planName);
+
+    // ── Update ───────────────────────────────────
     Task IncrementPostsUsedAsync(Guid userId, int count = 1);
     Task IncrementLeadsUsedAsync(Guid userId, int count = 1);
     Task ResetQuotaAsync(Guid userId);
-    string GetQueueForUser(string planName);
     Task InvalidateQuotaCacheAsync(Guid userId);
 }
 
-public interface ISubscriptionService
-{
-    Task HandleSubscriptionCreatedAsync(string payload);
-    Task HandleSubscriptionUpdatedAsync(string payload);
-    Task HandlePaymentSuccessAsync(string payload);
-    Task HandlePaymentFailedAsync(string payload);
-    Task HandleSubscriptionCancelledAsync(string payload);
-    Task HandleSubscriptionExpiredAsync(string payload);
-    Task<string> GetBillingPortalUrlAsync(Guid userId);
-}
-
-public interface ITokenEncryptionService
-{
-    string Encrypt(string plaintext);
-    string Decrypt(string ciphertext);
-}
-
+/// <summary>
+/// Distributed rate limiter and circuit breaker for external API calls.
+/// Used by: Workers (LeadExtractionWorker — via LeadDiscoveryService)
+/// </summary>
 public interface IGlobalRateLimiter
 {
     Task<bool> TryAcquireAsync(string key, int ratePerMinute);
@@ -93,38 +90,51 @@ public interface IGlobalRateLimiter
     Task RecordSuccessAsync(string serviceKey);
 }
 
-public interface INotificationService
+// ═══════════════════════════════════════════════════
+// ENCRYPTION
+// ═══════════════════════════════════════════════════
+
+/// <summary>
+/// AES encryption for OAuth tokens at rest.
+/// Used by: API (SocialController), Workers (SocialPublishingWorker, OutreachService)
+/// </summary>
+public interface ITokenEncryptionService
 {
-    Task CreateAsync(Notification notification);
-    Task<List<Notification>> GetRecentAsync(Guid userId, int count = 10);
-    Task MarkAllReadAsync(Guid userId);
-    Task<int> GetUnreadCountAsync(Guid userId);
+    string Encrypt(string plaintext);
+    string Decrypt(string ciphertext);
 }
 
-public interface IActivityLogService
-{
-    Task LogAsync(Guid brandId, string type, string description, Dictionary<string, object>? metadata = null);
-    Task<List<ActivityLogEntry>> GetByBrandAsync(Guid brandId, int page = 1, int pageSize = 50, string? typeFilter = null);
-}
+// ═══════════════════════════════════════════════════
+// HANGFIRE WORKER CONTRACTS
+// These interfaces exist so Hangfire can resolve workers via DI.
+// ═══════════════════════════════════════════════════
 
-public interface ISuppressionService
-{
-    Task AddToSuppressionListAsync(Guid brandId, string email, string reason = "unsubscribed");
-    Task<bool> IsEmailSuppressedAsync(Guid brandId, string email);
-}
-
+/// <summary>
+/// Runs the automated lead discovery pipeline for a brand.
+/// Scheduled by: API (BrandsController, LeadsController)
+/// Executed by: Workers (LeadExtractionWorker)
+/// </summary>
 public interface ILeadExtractionWorker
 {
     Task ExecuteAsync(Guid brandId);
 }
 
+/// <summary>
+/// Runs the automated content generation pipeline for a brand.
+/// Scheduled by: API (BrandsController)
+/// Executed by: Workers (SocialPostingWorker)
+/// </summary>
 public interface ISocialPostingWorker
 {
     Task ExecuteAsync(Guid brandId);
 }
 
+/// <summary>
+/// Runs the global outreach email dispatch and follow-up pipeline.
+/// Scheduled by: Workers (Program.cs recurring job)
+/// Executed by: Workers (OutreachWorker)
+/// </summary>
 public interface IOutreachWorker
 {
     Task ExecuteAsync();
 }
-

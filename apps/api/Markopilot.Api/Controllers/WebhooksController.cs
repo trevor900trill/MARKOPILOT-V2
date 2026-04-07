@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Markopilot.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Markopilot.Api.Controllers;
@@ -51,23 +52,67 @@ public class WebhooksController : ControllerBase
             var userIdStr = userIdElem.GetString();
             if (Guid.TryParse(userIdStr, out var userId))
             {
-                var repo = HttpContext.RequestServices.GetRequiredService<Markopilot.Infrastructure.Supabase.SupabaseRepository>();
-                var attributes = root.GetProperty("data").GetProperty("attributes");
+                var repo = HttpContext.RequestServices.GetRequiredService<IUserRepository>();
                 
-                string status = attributes.GetProperty("status").GetString() ?? "unknown";
-                string variantName = attributes.GetProperty("variant_name").GetString() ?? "";
-
-                // E.g. "subscription_created", "subscription_updated", "subscription_cancelled"
-                _logger.LogInformation("Processing Lemon Squeezy event: {EventName} for UserId: {UserId}", eventName, userId);
-
-                await repo.UpdateUserSubscriptionAsync(userId, $"sub_{userId}", status, variantName, null, 100, 30, 1);
-                
-                if (eventName == "subscription_payment_success")
+                if (eventName == "subscription_created" || eventName == "subscription_updated")
                 {
+                    var data = root.GetProperty("data");
+                    var attributes = data.GetProperty("attributes");
+                    
+                    string subscriptionId = data.GetProperty("id").GetString() ?? "";
+                    string status = attributes.GetProperty("status").GetString() ?? "unknown";
+                    
+                    string variantName = "Starter";
+                    if (attributes.TryGetProperty("variant_name", out var variantNameElem) && variantNameElem.ValueKind != JsonValueKind.Null)
+                    {
+                        variantName = variantNameElem.GetString() ?? "Starter";
+                    }
+                    
+                    DateTimeOffset? renewsAt = null;
+                    if (attributes.TryGetProperty("renews_at", out var renewsAtElem) && renewsAtElem.ValueKind != JsonValueKind.Null)
+                    {
+                        renewsAt = renewsAtElem.GetDateTimeOffset();
+                    }
+
+                    var plan = Markopilot.Core.Models.PlanCatalog.GetByName(variantName);
+
+                    _logger.LogInformation("Processing LS event {EventName} for User {UserId}. Plan: {Plan}, Status: {Status}", eventName, userId, variantName, status);
+
+                    await repo.UpdateUserSubscriptionAsync(
+                        userId, 
+                        subscriptionId, 
+                        status, 
+                        plan.Name, 
+                        renewsAt, 
+                        plan.LeadsPerMonth, 
+                        plan.PostsPerMonth, 
+                        plan.BrandsAllowed);
+                }
+                else if (eventName == "subscription_payment_success")
+                {
+                    _logger.LogInformation("Processing payment success for User {UserId}. Resetting quotas.", userId);
                     await repo.ResetQuotaCountersAsync(userId);
                 }
+                else if (eventName == "subscription_expired" || eventName == "subscription_cancelled")
+                {
+                    // Fallback to trialing state
+                    var data = root.GetProperty("data");
+                    var attributes = data.GetProperty("attributes");
+                    string subscriptionId = data.GetProperty("id").GetString() ?? "";
+                    string status = attributes.GetProperty("status").GetString() ?? "cancelled";
+                    
+                    await repo.UpdateUserSubscriptionAsync(
+                        userId, 
+                        subscriptionId, 
+                        status, 
+                        "Starter", 
+                        null, 
+                        100, 
+                        30, 
+                        1);
+                }
                 
-                _logger.LogInformation("Updated user {UserId} to plan {VariantName} status {Status}", userId, variantName, status);
+                _logger.LogInformation("Successfully processed webhook for user {UserId}", userId);
             }
         }
 

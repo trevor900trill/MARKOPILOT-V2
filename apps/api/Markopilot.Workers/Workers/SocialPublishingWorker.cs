@@ -1,7 +1,6 @@
 using Hangfire;
 using Markopilot.Core.Interfaces;
 using Markopilot.Core.Models;
-using Markopilot.Infrastructure.Supabase;
 using Microsoft.Extensions.Logging;
 
 namespace Markopilot.Workers.Workers;
@@ -13,18 +12,21 @@ namespace Markopilot.Workers.Workers;
 /// </summary>
 public class SocialPublishingWorker
 {
-    private readonly SupabaseRepository _repo;
+    private readonly ISocialRepository _socialRepo;
+    private readonly IBrandRepository _brandRepo;
     private readonly IEnumerable<ISocialPublisher> _publishers;
     private readonly ITokenEncryptionService _encryptionService;
     private readonly ILogger<SocialPublishingWorker> _logger;
 
     public SocialPublishingWorker(
-        SupabaseRepository repo,
+        ISocialRepository socialRepo,
+        IBrandRepository brandRepo,
         IEnumerable<ISocialPublisher> publishers,
         ITokenEncryptionService encryptionService,
         ILogger<SocialPublishingWorker> logger)
     {
-        _repo = repo;
+        _socialRepo = socialRepo;
+        _brandRepo = brandRepo;
         _publishers = publishers;
         _encryptionService = encryptionService;
         _logger = logger;
@@ -35,7 +37,7 @@ public class SocialPublishingWorker
     {
         _logger.LogInformation("SocialPublishingWorker polling for scheduled posts.");
 
-        var posts = await _repo.GetQueuedPostsAsync(limit: 20);
+        var posts = await _socialRepo.GetQueuedPostsAsync(limit: 20);
 
         if (!posts.Any())
         {
@@ -54,8 +56,8 @@ public class SocialPublishingWorker
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to publish post {PostId} to {Platform}.", post.Id, post.Platform);
-                await _repo.UpdatePostStatusAsync(post.Id, "failed", errorMessage: ex.Message);
-                await _repo.InsertActivityAsync(post.BrandId, "error",
+                await _socialRepo.UpdatePostStatusAsync(post.Id, "failed", errorMessage: ex.Message);
+                await _brandRepo.InsertActivityAsync(post.BrandId, "error",
                     $"Failed to publish post to {post.Platform}: {ex.Message}");
             }
         }
@@ -70,21 +72,21 @@ public class SocialPublishingWorker
         {
             _logger.LogWarning("No ISocialPublisher found for platform '{Platform}' (Post {PostId}).",
                 post.Platform, post.Id);
-            await _repo.UpdatePostStatusAsync(post.Id, "failed",
+            await _socialRepo.UpdatePostStatusAsync(post.Id, "failed",
                 errorMessage: $"No publisher available for platform: {post.Platform}");
             return;
         }
 
         // Retrieve the real encrypted OAuth token from the database
-        var encryptedToken = await _repo.GetBrandSocialTokenAsync(post.BrandId, post.Platform);
+        var encryptedToken = await _socialRepo.GetBrandSocialTokenAsync(post.BrandId, post.Platform);
 
         if (string.IsNullOrEmpty(encryptedToken))
         {
             _logger.LogError("No OAuth token found for {Platform} on brand {BrandId}. Post {PostId} failed.",
                 post.Platform, post.BrandId, post.Id);
-            await _repo.UpdatePostStatusAsync(post.Id, "failed",
+            await _socialRepo.UpdatePostStatusAsync(post.Id, "failed",
                 errorMessage: $"No {post.Platform} OAuth token configured for this brand.");
-            await _repo.InsertActivityAsync(post.BrandId, "token_error",
+            await _brandRepo.InsertActivityAsync(post.BrandId, "token_error",
                 $"Missing {post.Platform} token — reconnect the platform.");
             return;
         }
@@ -98,7 +100,7 @@ public class SocialPublishingWorker
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to decrypt {Platform} token for brand {BrandId}.", post.Platform, post.BrandId);
-            await _repo.UpdatePostStatusAsync(post.Id, "failed", errorMessage: "Token decryption failed.");
+            await _socialRepo.UpdatePostStatusAsync(post.Id, "failed", errorMessage: "Token decryption failed.");
             return;
         }
 
@@ -109,8 +111,8 @@ public class SocialPublishingWorker
         _logger.LogInformation("Successfully published post {PostId} to {Platform}. External ID: {ExternalId}",
             post.Id, post.Platform, externalId);
 
-        await _repo.UpdatePostStatusAsync(post.Id, "published", platformPostId: externalId);
-        await _repo.InsertActivityAsync(post.BrandId, "post_published",
+        await _socialRepo.UpdatePostStatusAsync(post.Id, "published", platformPostId: externalId);
+        await _brandRepo.InsertActivityAsync(post.BrandId, "post_published",
             $"Published post to {post.Platform}.",
             new Dictionary<string, object>
             {

@@ -1,7 +1,8 @@
 using Hangfire;
 using Markopilot.Api.Middleware;
-using Markopilot.Infrastructure.Supabase;
 using Microsoft.AspNetCore.Mvc;
+using Markopilot.Core.Interfaces;
+
 
 namespace Markopilot.Api.Controllers;
 
@@ -9,12 +10,14 @@ namespace Markopilot.Api.Controllers;
 [Route("api/[controller]")]
 public class BrandsController : ControllerBase
 {
-    private readonly SupabaseRepository _repo;
+    private readonly IBrandRepository _repo;
+    private readonly IQuotaService _quotaService;
     private readonly ILogger<BrandsController> _logger;
 
-    public BrandsController(SupabaseRepository repo, ILogger<BrandsController> logger)
+    public BrandsController(IBrandRepository repo, IQuotaService quotaService, ILogger<BrandsController> logger)
     {
         _repo = repo;
+        _quotaService = quotaService;
         _logger = logger;
     }
 
@@ -39,6 +42,13 @@ public class BrandsController : ControllerBase
     public async Task<IActionResult> Create([FromBody] Core.Models.Brand brand)
     {
         var userId = HttpContext.GetUserId();
+        
+        if (await _quotaService.IsBrandLimitReachedAsync(userId))
+        {
+            _logger.LogWarning("User {UserId} attempted to create a brand but has reached their plan limit.", userId);
+            return StatusCode(403, new { error = new { code = "QUOTA_EXCEEDED", message = "You have reached the maximum number of brands allowed on your plan. Please upgrade to add more." } });
+        }
+
         brand.OwnerId = userId;
         
         var created = await _repo.CreateBrandAsync(brand);

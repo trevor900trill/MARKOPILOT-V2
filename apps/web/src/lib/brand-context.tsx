@@ -36,6 +36,7 @@ export type UserProfile = {
   quotaLeadsUsed: number;
   quotaPostsUsed: number;
   quotaBrandsAllowed: number;
+  quotaBrandsUsed: number;
 };
 
 type BrandContextType = {

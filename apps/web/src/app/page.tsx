@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Check, Menu, ArrowRight, Share2, Users, Send, Rocket, Sparkles, Zap, ShieldCheck, MessageSquare, Briefcase, Camera, Video, Mail, Bot, Database } from "lucide-react";
+import { PLANS } from "@/lib/plans";
 import { useState, useEffect } from "react";
 
 export default function LandingPage() {
@@ -354,65 +355,51 @@ export default function LandingPage() {
           </div>
 
           <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto items-center">
-            {/* Starter */}
-            <div className="bg-white/[0.02] backdrop-blur-xl border border-white/10 hover:border-white/20 transition-colors rounded-[32px] p-10 flex flex-col h-full hover:-translate-y-2 duration-500 ease-out">
-              <h3 className="text-xl font-medium text-white mb-2">Starter</h3>
-              <p className="text-sm text-gray-500 mb-6">Perfect for solo founders establishing baseline activity.</p>
-              <div className="text-5xl font-serif text-white mb-8">$19<span className="text-xl text-gray-500 font-sans font-light">/mo</span></div>
-              <ul className="space-y-5 mb-10 flex-1">
-                <li className="flex items-center gap-3 text-gray-300 font-light text-sm"><Check size={18} className="text-[var(--success)]" /> 1 Brand</li>
-                <li className="flex items-center gap-3 text-gray-300 font-light text-sm"><Check size={18} className="text-[var(--success)]" /> 30 Posts / month</li>
-                <li className="flex items-center gap-3 text-gray-300 font-light text-sm"><Check size={18} className="text-[var(--success)]" /> 100 Leads / month</li>
-              </ul>
-              <NavLink 
-                href={SIGNIN_URL} 
-                className="w-full block text-center py-4 rounded-xl bg-white/5 border border-white/10 text-white font-medium hover:bg-white/10 transition-all active:scale-95"
-              >
-                Start Free Trial
-              </NavLink>
-            </div>
-
-            {/* Growth */}
-            <div className="group bg-gradient-to-b from-[var(--bg-elevated)] to-[#07070a] border border-[var(--accent-primary)]/70 rounded-[32px] p-10 flex flex-col relative shadow-[0_0_50px_rgba(168,85,247,0.2)] ring-2 ring-[var(--accent-primary)]/30 lg:scale-105 z-10 h-full backdrop-blur-2xl hover:shadow-[0_0_100px_rgba(168,85,247,0.4)] transition-all duration-700 ease-out">
-              <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-primary)]/10 to-transparent rounded-[32px] opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-              <div className="absolute -top-4 inset-x-0 flex justify-center">
-                <span className="bg-[var(--accent-primary)] text-white text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full shadow-xl flex items-center gap-1.5">
-                  <ShieldCheck size={14} /> Most Popular
-                </span>
-              </div>
-              <h3 className="text-xl font-medium text-white mb-2 pb-1 relative z-10 drop-shadow-md">Growth</h3>
-              <p className="text-sm text-gray-300 mb-6 relative z-10">Unlocks high throughput orchestration for scaling teams.</p>
-              <div className="text-6xl font-serif text-white mb-8 relative z-10 drop-shadow-md">$49<span className="text-xl text-[var(--text-muted)] font-sans font-light">/mo</span></div>
-              <ul className="space-y-5 mb-10 flex-1 relative z-10">
-                <li className="flex items-center gap-3 text-white font-medium text-sm"><Check size={18} className="text-[var(--success)]" /> 3 Brands</li>
-                <li className="flex items-center gap-3 text-white font-medium text-sm"><Check size={18} className="text-[var(--success)]" /> 120 Posts / month</li>
-                <li className="flex items-center gap-3 text-white font-medium text-sm"><Check size={18} className="text-[var(--success)]" /> 500 Leads / month</li>
-              </ul>
-              <NavLink 
-                href={SIGNIN_URL} 
-                className="w-full block text-center py-4 rounded-xl bg-[var(--accent-primary)] text-white font-semibold hover:opacity-90 hover:scale-[1.03] transition-all shadow-lg active:scale-95 relative z-10"
-              >
-                Start Free Trial
-              </NavLink>
-            </div>
-
-            {/* Scale */}
-            <div className="bg-white/[0.02] backdrop-blur-xl border border-white/10 hover:border-white/20 transition-colors rounded-[32px] p-10 flex flex-col h-full hover:-translate-y-2 duration-500 ease-out">
-              <h3 className="text-xl font-medium text-white mb-2">Scale</h3>
-              <p className="text-sm text-gray-500 mb-6">Designed for massive portfolio administration.</p>
-              <div className="text-5xl font-serif text-white mb-8">$149<span className="text-xl text-gray-500 font-sans font-light">/mo</span></div>
-              <ul className="space-y-5 mb-10 flex-1">
-                <li className="flex items-center gap-3 text-gray-300 font-light text-sm"><Check size={18} className="text-[var(--success)]" /> 10 Brands</li>
-                <li className="flex items-center gap-3 text-gray-300 font-light text-sm"><Check size={18} className="text-[var(--success)]" /> Unlimited Posts</li>
-                <li className="flex items-center gap-3 text-gray-300 font-light text-sm"><Check size={18} className="text-[var(--success)]" /> 2,000 Leads / month</li>
-              </ul>
-              <NavLink 
-                href={SIGNIN_URL} 
-                className="w-full block text-center py-4 rounded-xl bg-white/5 border border-white/10 text-white font-medium hover:bg-white/10 transition-all active:scale-95"
-              >
-                Start Free Trial
-              </NavLink>
-            </div>
+            {PLANS.map((plan) => {
+              const isFeatured = plan.featured;
+              const descriptions: Record<string, string> = {
+                starter: "Perfect for solo founders establishing baseline activity.",
+                growth: "Unlocks high throughput orchestration for scaling teams.",
+                scale: "Designed for massive portfolio administration.",
+              };
+              return (
+                <div
+                  key={plan.id}
+                  className={isFeatured
+                    ? "group bg-gradient-to-b from-[var(--bg-elevated)] to-[#07070a] border border-[var(--accent-primary)]/70 rounded-[32px] p-10 flex flex-col relative shadow-[0_0_50px_rgba(168,85,247,0.2)] ring-2 ring-[var(--accent-primary)]/30 lg:scale-105 z-10 h-full backdrop-blur-2xl hover:shadow-[0_0_100px_rgba(168,85,247,0.4)] transition-all duration-700 ease-out"
+                    : "bg-white/[0.02] backdrop-blur-xl border border-white/10 hover:border-white/20 transition-colors rounded-[32px] p-10 flex flex-col h-full hover:-translate-y-2 duration-500 ease-out"
+                  }
+                >
+                  {isFeatured && (
+                    <>
+                      <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-primary)]/10 to-transparent rounded-[32px] opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                      <div className="absolute -top-4 inset-x-0 flex justify-center">
+                        <span className="bg-[var(--accent-primary)] text-white text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full shadow-xl flex items-center gap-1.5">
+                          <ShieldCheck size={14} /> Most Popular
+                        </span>
+                      </div>
+                    </>
+                  )}
+                  <h3 className={`text-xl font-medium text-white mb-2 ${isFeatured ? 'pb-1 relative z-10 drop-shadow-md' : ''}`}>{plan.name}</h3>
+                  <p className={`text-sm mb-6 ${isFeatured ? 'text-gray-300 relative z-10' : 'text-gray-500'}`}>{descriptions[plan.id] || ''}</p>
+                  <div className={`font-serif text-white mb-8 ${isFeatured ? 'text-6xl relative z-10 drop-shadow-md' : 'text-5xl'}`}>{plan.price}<span className={`text-xl font-sans font-light ${isFeatured ? 'text-[var(--text-muted)]' : 'text-gray-500'}`}>/mo</span></div>
+                  <ul className={`space-y-5 mb-10 flex-1 ${isFeatured ? 'relative z-10' : ''}`}>
+                    <li className={`flex items-center gap-3 text-sm ${isFeatured ? 'text-white font-medium' : 'text-gray-300 font-light'}`}><Check size={18} className="text-[var(--success)]" /> {plan.brands}</li>
+                    <li className={`flex items-center gap-3 text-sm ${isFeatured ? 'text-white font-medium' : 'text-gray-300 font-light'}`}><Check size={18} className="text-[var(--success)]" /> {plan.posts} / month</li>
+                    <li className={`flex items-center gap-3 text-sm ${isFeatured ? 'text-white font-medium' : 'text-gray-300 font-light'}`}><Check size={18} className="text-[var(--success)]" /> {plan.leads} / month</li>
+                  </ul>
+                  <NavLink
+                    href={SIGNIN_URL}
+                    className={isFeatured
+                      ? "w-full block text-center py-4 rounded-xl bg-[var(--accent-primary)] text-white font-semibold hover:opacity-90 hover:scale-[1.03] transition-all shadow-lg active:scale-95 relative z-10"
+                      : "w-full block text-center py-4 rounded-xl bg-white/5 border border-white/10 text-white font-medium hover:bg-white/10 transition-all active:scale-95"
+                    }
+                  >
+                    Start Free Trial
+                  </NavLink>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>

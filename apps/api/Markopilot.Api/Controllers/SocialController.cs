@@ -1,5 +1,4 @@
 using Markopilot.Api.Middleware;
-using Markopilot.Infrastructure.Supabase;
 using Markopilot.Core.Interfaces;
 using Markopilot.Infrastructure.Social;
 using Microsoft.AspNetCore.Mvc;
@@ -12,29 +11,35 @@ public class SocialController : ControllerBase
 {
     private readonly OAuthService _oauthService;
     private readonly ITokenEncryptionService _encryptionService;
+    private readonly IQuotaService _quotaService;
     private readonly IConfiguration _config;
     private readonly ILogger<SocialController> _logger;
-    private readonly SupabaseRepository _repo;
+    private readonly ISocialRepository _socialRepo;
+    private readonly IBrandRepository _brandRepo;
 
     public SocialController(
         OAuthService oauthService,
         ITokenEncryptionService encryptionService,
+        IQuotaService quotaService,
         IConfiguration config,
         ILogger<SocialController> logger,
-        SupabaseRepository repo)
+        ISocialRepository socialRepo,
+        IBrandRepository brandRepo)
     {
         _oauthService = oauthService;
         _encryptionService = encryptionService;
+        _quotaService = quotaService;
         _config = config;
         _logger = logger;
-        _repo = repo;
+        _socialRepo = socialRepo;
+        _brandRepo = brandRepo;
     }
 
     [HttpGet("{brandId:guid}/posts")]
     public async Task<IActionResult> GetPosts(Guid brandId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
         var ownerId = HttpContext.GetUserId();
-        var result = await _repo.GetPostsByBrandAsync(brandId, ownerId, page, pageSize);
+        var result = await _socialRepo.GetPostsByBrandAsync(brandId, ownerId, page, pageSize);
         return Ok(new { data = result, total = result.Count, page, pageSize, totalPages = 1 });
     }
 
@@ -44,12 +49,17 @@ public class SocialController : ControllerBase
         var ownerId = HttpContext.GetUserId();
         if (ownerId == Guid.Empty) return Unauthorized();
 
+        if (!await _quotaService.CanGeneratePostAsync(ownerId))
+        {
+            return StatusCode(403, new { error = new { code = "QUOTA_EXCEEDED", message = "Post limit reached for this month." } });
+        }
+
         post.Id = Guid.NewGuid();
         post.BrandId = brandId;
         post.Status = "queued";
         post.GeneratedAt = DateTimeOffset.UtcNow;
         
-        await _repo.CreatePostAsync(post);
+        await _socialRepo.CreatePostAsync(post);
         return Ok(post);
     }
 
@@ -57,7 +67,7 @@ public class SocialController : ControllerBase
     public async Task<IActionResult> CancelPost(Guid brandId, Guid postId)
     {
         var ownerId = HttpContext.GetUserId();
-        await _repo.CancelPostAsync(postId, ownerId);
+        await _socialRepo.CancelPostAsync(postId, ownerId);
         return NoContent();
     }
 
@@ -71,7 +81,7 @@ public class SocialController : ControllerBase
         }
         catch (ArgumentException ex)
         {
-            return BadRequest(new { error = ex.Message });
+            return StatusCode(400, new { error = new { code = "AUTH_INIT_FAILED", message = ex.Message } });
         }
     }
 
@@ -80,18 +90,18 @@ public class SocialController : ControllerBase
     {
         if (!Guid.TryParse(state, out var brandId))
         {
-            return BadRequest("Invalid state parameter");
+            return StatusCode(400, new { error = new { code = "INVALID_STATE", message = "Invalid state parameter" } });
         }
 
         try
         {
-            var redirectUri = $"{_config["Api:BaseUrl"] ?? "http://localhost:5030"}/api/social/callback/{platform}";
+            var redirectUri = $"{_config["Api:BaseUrl"] ?? "http://localhost:5085"}/api/social/callback/{platform}";
             var tokenResult = await _oauthService.ExchangeCodeForTokenAsync(platform, code, redirectUri);
             
             var encryptedToken = _encryptionService.Encrypt(tokenResult.AccessToken);
             var encryptedRefresh = tokenResult.RefreshToken != null ? _encryptionService.Encrypt(tokenResult.RefreshToken) : null;
             
-            await _repo.UpdateBrandSocialTokenAsync(
+            await _socialRepo.UpdateBrandSocialTokenAsync(
                 brandId, 
                 platform, 
                 encryptedToken, 
@@ -100,7 +110,7 @@ public class SocialController : ControllerBase
                 tokenResult.Username, 
                 connected: true);
 
-            await _repo.InsertActivityAsync(brandId, "social_connected", $"Successfully connected {platform}");
+            await _brandRepo.InsertActivityAsync(brandId, "social_connected", $"Successfully connected {platform}");
 
             _logger.LogInformation("Successfully encrypted and stored OAuth token for {Platform} (Brand: {BrandId})", platform, brandId);
             
@@ -121,8 +131,8 @@ public class SocialController : ControllerBase
         var ownerId = HttpContext.GetUserId();
         if (ownerId == Guid.Empty) return Unauthorized();
 
-        await _repo.DisconnectBrandPlatformAsync(brandId, ownerId, platform);
-        await _repo.InsertActivityAsync(brandId, "social_disconnected", $"Disconnected {platform}");
+        await _socialRepo.DisconnectBrandPlatformAsync(brandId, ownerId, platform);
+        await _brandRepo.InsertActivityAsync(brandId, "social_disconnected", $"Disconnected {platform}");
 
         return NoContent();
     }

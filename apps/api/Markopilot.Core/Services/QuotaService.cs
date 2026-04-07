@@ -16,14 +16,6 @@ public class QuotaService : IQuotaService
     private readonly ILogger<QuotaService> _logger;
     private const int CacheTtlMinutes = 5;
 
-    // Plan limits
-    private static readonly Dictionary<string, (int Leads, int Posts, int Brands)> PlanLimits = new()
-    {
-        { "starter", (100, 30, 1) },
-        { "growth", (500, 120, 3) },
-        { "scale", (2000, int.MaxValue, 10) }
-    };
-
     public QuotaService(IConnectionMultiplexer redis, IUserRepository repo, ILogger<QuotaService> logger)
     {
         _redis = redis;
@@ -51,21 +43,19 @@ public class QuotaService : IQuotaService
         }
 
         var user = await _repo.GetUserByIdAsync(userId);
-        var planName = user?.PlanName ?? "starter";
+        var plan = PlanCatalog.GetByName(user?.PlanName);
         
         var leadsUsed = user?.QuotaLeadsUsed ?? 0;
         var postsUsed = user?.QuotaPostsUsed ?? 0;
-        var brandsUsed = 0; 
-        
-        var limits = PlanLimits.TryGetValue(planName, out var limit) ? limit : PlanLimits["starter"];
+        var brandsUsed = await _repo.CountBrandsByOwnerAsync(userId); 
 
         var status = new QuotaStatus
         {
             UserId = userId,
-            PlanName = planName,
-            LeadsAllowed = limits.Leads,
-            PostsAllowed = limits.Posts,
-            BrandsAllowed = limits.Brands,
+            PlanName = plan.Name,
+            LeadsAllowed = plan.LeadsPerMonth,
+            PostsAllowed = plan.PostsPerMonth,
+            BrandsAllowed = plan.BrandsAllowed,
             LeadsUsed = leadsUsed,
             PostsUsed = postsUsed,
             BrandsUsed = brandsUsed
@@ -89,6 +79,12 @@ public class QuotaService : IQuotaService
         return !quota.LeadsExceeded;
     }
 
+    public async Task<bool> IsBrandLimitReachedAsync(Guid userId)
+    {
+        var quota = await GetQuotaStatusAsync(userId);
+        return quota.BrandsExceeded;
+    }
+
     public async Task IncrementPostsUsedAsync(Guid userId, int count = 1)
     {
         await _repo.IncrementQuotaPostsUsedAsync(userId, count);
@@ -108,13 +104,8 @@ public class QuotaService : IQuotaService
         _logger.LogInformation("Quota reset for user {UserId}", userId);
     }
 
-    public string GetQueueForUser(string planName) => planName switch
-    {
-        "scale" => "scale",
-        "growth" => "growth",
-        "starter" => "starter",
-        _ => "starter"
-    };
+    public string GetQueueForUser(string planName) =>
+        PlanCatalog.GetByName(planName).HangfireQueue;
 
     public async Task InvalidateQuotaCacheAsync(Guid userId)
     {

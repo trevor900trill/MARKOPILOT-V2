@@ -61,13 +61,33 @@ public class ContentGenerationService : IContentGenerationService
         
         try
         {
-            return JsonSerializer.Deserialize<GeneratedPost>(response.Content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+            var cleaned = CleanJsonResponse(response.Content);
+            return JsonSerializer.Deserialize<GeneratedPost>(cleaned, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
         }
         catch (JsonException ex)
         {
             _logger.LogError(ex, "Failed to parse GeneratedPost JSON: {Content}", response.Content);
             return new GeneratedPost { Copy = response.Content, Hashtags = new List<string>() };
         }
+    }
+
+    private string CleanJsonResponse(string content)
+    {
+        if (string.IsNullOrWhiteSpace(content)) return content;
+
+        // 1. Find the first '{' (for objects) or '[' (for arrays)
+        var startIndex = content.IndexOfAny(['{', '[']);
+        if (startIndex == -1) return content;
+
+        // 2. Find the last '}' or ']'
+        var lastBrace = content.LastIndexOf('}');
+        var lastBracket = content.LastIndexOf(']');
+        var endIndex = Math.Max(lastBrace, lastBracket);
+
+        if (endIndex == -1 || endIndex <= startIndex) return content;
+
+        // 3. Extract just the JSON portion
+        return content.Substring(startIndex, endIndex - startIndex + 1).Trim();
     }
 
     public async Task<GeneratedEmail> GenerateOutreachEmailAsync(Brand brand, Lead lead)
@@ -90,7 +110,8 @@ public class ContentGenerationService : IContentGenerationService
         
         try
         {
-            return JsonSerializer.Deserialize<GeneratedEmail>(response.Content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+            var cleaned = CleanJsonResponse(response.Content);
+            return JsonSerializer.Deserialize<GeneratedEmail>(cleaned, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
         }
         catch (JsonException ex)
         {
@@ -118,7 +139,8 @@ public class ContentGenerationService : IContentGenerationService
         
         try
         {
-            return JsonSerializer.Deserialize<GeneratedEmail>(response.Content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+            var cleaned = CleanJsonResponse(response.Content);
+            return JsonSerializer.Deserialize<GeneratedEmail>(cleaned, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
         }
         catch (JsonException ex)
         {
@@ -147,11 +169,12 @@ public class ContentGenerationService : IContentGenerationService
         
         try
         {
-            return JsonSerializer.Deserialize<List<string>>(response.Content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
+            var cleaned = CleanJsonResponse(response.Content);
+            return JsonSerializer.Deserialize<List<string>>(cleaned, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
         }
         catch (JsonException ex)
         {
-            _logger.LogError(ex, "Failed to parse List<string> JSON for Content Pillars: {Content}", response.Content);
+            _logger.LogError(ex, "Failed to parse List<string> JSON: {Content}", response.Content);
             return new List<string> { response.Content };
         }
     }

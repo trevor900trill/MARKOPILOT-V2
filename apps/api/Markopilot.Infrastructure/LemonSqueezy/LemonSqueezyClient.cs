@@ -11,10 +11,12 @@ public class LemonSqueezyClient
     private readonly HttpClient _httpClient;
     private readonly string _apiKey;
     private readonly string _storeId;
+    private readonly IConfiguration _configuration;
 
     public LemonSqueezyClient(HttpClient httpClient, IConfiguration configuration)
     {
         _httpClient = httpClient;
+        _configuration = configuration;
         _apiKey = configuration["LemonSqueezy:ApiKey"] ?? throw new ArgumentNullException("LemonSqueezy:ApiKey is missing");
         _storeId = configuration["LemonSqueezy:StoreId"] ?? throw new ArgumentNullException("LemonSqueezy:StoreId is missing");
         
@@ -25,6 +27,10 @@ public class LemonSqueezyClient
 
     public async Task<string> CreateCheckoutAsync(string variantId, string userEmail, string userId)
     {
+        // Get the frontend URL from config, default to localhost if missing
+        var frontendUrl = _configuration["Frontend:BaseUrl"] ?? "http://localhost:3000";
+        var redirectUrl = $"{frontendUrl}/dashboard?checkout_completed=true";
+
         var payload = new
         {
             data = new
@@ -32,6 +38,10 @@ public class LemonSqueezyClient
                 type = "checkouts",
                 attributes = new
                 {
+                    product_options = new
+                    {
+                        redirect_url = redirectUrl
+                    },
                     checkout_data = new
                     {
                         email = userEmail,
@@ -59,9 +69,9 @@ public class LemonSqueezyClient
         return resObj.GetProperty("data").GetProperty("attributes").GetProperty("url").GetString()!;
     }
 
-    public async Task<string> GetCustomerPortalUrlAsync(string customerId)
+    public async Task<string> GetSubscriptionPortalUrlAsync(string subscriptionId)
     {
-        var response = await _httpClient.GetAsync($"customers/{customerId}");
+        var response = await _httpClient.GetAsync($"subscriptions/{subscriptionId}");
 
         if (!response.IsSuccessStatusCode)
         {

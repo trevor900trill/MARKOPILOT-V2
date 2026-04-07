@@ -74,12 +74,12 @@ public class OutreachService : IOutreachService
 
     public bool ValidateSpamScore(string emailBody, out string reason)
     {
-        // Simple spam heuristic check (min 80 words, max 350 words)
+        // Simple spam heuristic check (min 40 words, max 350 words)
         var wordCount = emailBody.Split(new[] { ' ', '\n', '\r', '\t' }, StringSplitOptions.RemoveEmptyEntries).Length;
         
-        if (wordCount < 80)
+        if (wordCount < 40)
         {
-            reason = $"Email body is too short ({wordCount} words). Minimum is 80 words.";
+            reason = $"Email body is too short ({wordCount} words). Minimum is 40 words.";
             return false;
         }
 
@@ -124,6 +124,42 @@ public class OutreachService : IOutreachService
         }
 
         return true;
+    }
+
+    public async Task<bool> HasRecipientRepliedAsync(Brand brand, string recipientEmail, DateTimeOffset since)
+    {
+        if (string.IsNullOrEmpty(brand.GmailAccessToken))
+            return false;
+
+        string accessToken;
+        if (brand.GmailTokenExpiresAt.HasValue && brand.GmailTokenExpiresAt.Value <= DateTimeOffset.UtcNow.AddMinutes(5))
+        {
+            accessToken = await RefreshTokenAsync(brand);
+        }
+        else
+        {
+            accessToken = _encryptionService.Decrypt(brand.GmailAccessToken);
+        }
+
+        // Search for any messages from the recipient that arrived AFTER we sent our first email
+        var query = $"from:{recipientEmail} after:{since.ToUnixTimeSeconds()}";
+        var url = $"https://gmail.googleapis.com/gmail/v1/users/me/messages?q={Uri.EscapeDataString(query)}&maxResults=1";
+
+        var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await _httpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode) return false;
+
+        var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
+        
+        // If resultSizeEstimate > 0, someone from that email sent us something
+        if (json.TryGetProperty("resultSizeEstimate", out var size) && size.GetInt32() > 0)
+        {
+            return true;
+        }
+
+        return false;
     }
 
     private string CreateRFC2822Message(Brand brand, string toEmail, string subject, string bodyText, string bodyHtml)

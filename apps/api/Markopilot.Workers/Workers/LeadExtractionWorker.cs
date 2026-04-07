@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Hangfire;
 using Markopilot.Core.Interfaces;
 using Markopilot.Core.Models;
-using Markopilot.Infrastructure.Supabase;
 using Microsoft.Extensions.Logging;
 
 namespace Markopilot.Workers.Workers;
@@ -20,7 +19,8 @@ public class LeadExtractionWorker : ILeadExtractionWorker
     private readonly ILeadDiscoveryService _discoveryService;
     private readonly IContentGenerationService _contentService;
     private readonly IQuotaService _quotaService;
-    private readonly SupabaseRepository _repo;
+    private readonly ILeadRepository _leadRepo;
+    private readonly IBrandRepository _brandRepo;
     private readonly IGlobalRateLimiter _rateLimiter;
     private readonly ILogger<LeadExtractionWorker> _logger;
 
@@ -28,14 +28,16 @@ public class LeadExtractionWorker : ILeadExtractionWorker
         ILeadDiscoveryService discoveryService,
         IContentGenerationService contentService,
         IQuotaService quotaService,
-        SupabaseRepository repo,
+        ILeadRepository leadRepo,
+        IBrandRepository brandRepo,
         IGlobalRateLimiter rateLimiter,
         ILogger<LeadExtractionWorker> logger)
     {
         _discoveryService = discoveryService;
         _contentService = contentService;
         _quotaService = quotaService;
-        _repo = repo;
+        _leadRepo = leadRepo;
+        _brandRepo = brandRepo;
         _rateLimiter = rateLimiter;
         _logger = logger;
     }
@@ -45,7 +47,7 @@ public class LeadExtractionWorker : ILeadExtractionWorker
     {
         _logger.LogInformation("Starting lead extraction for Brand: {BrandId}", brandId);
 
-        var brand = await _repo.GetBrandByIdSystemAsync(brandId);
+        var brand = await _brandRepo.GetBrandByIdSystemAsync(brandId);
         if (brand == null)
         {
             _logger.LogWarning("Brand {BrandId} not found, cannot extract leads.", brandId);
@@ -62,7 +64,7 @@ public class LeadExtractionWorker : ILeadExtractionWorker
         if (!canDiscover)
         {
             _logger.LogWarning("Brand {BrandId} owner has exceeded their leads quota.", brandId);
-            await _repo.InsertActivityAsync(brandId, "quota_warning", "Automated lead discovery paused because lead quota is exhausted.");
+            await _brandRepo.InsertActivityAsync(brandId, "quota_warning", "Automated lead discovery paused because lead quota is exhausted.");
             return;
         }
 
@@ -76,7 +78,7 @@ public class LeadExtractionWorker : ILeadExtractionWorker
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to generate search queries for brand {BrandId}.", brandId);
-            await _repo.InsertActivityAsync(brandId, "error", $"Lead discovery failed: could not generate search queries. {ex.Message}");
+            await _brandRepo.InsertActivityAsync(brandId, "error", $"Lead discovery failed: could not generate search queries. {ex.Message}");
             return;
         }
 
@@ -108,7 +110,7 @@ public class LeadExtractionWorker : ILeadExtractionWorker
         foreach (var result in allResults)
         {
             if (string.IsNullOrEmpty(result.Url)) continue;
-            var exists = await _repo.LeadSourceUrlExistsAsync(brandId, result.Url);
+            var exists = await _leadRepo.LeadSourceUrlExistsAsync(brandId, result.Url);
             if (!exists && !uniqueResults.Any(r => r.Url == result.Url))
                 uniqueResults.Add(result);
         }
@@ -212,10 +214,10 @@ public class LeadExtractionWorker : ILeadExtractionWorker
         // 5. Bulk insert strictly curated qualified leads
         if (qualifiedLeads.Count > 0)
         {
-            await _repo.BulkInsertLeadsAsync(qualifiedLeads);
+            await _leadRepo.BulkInsertLeadsAsync(qualifiedLeads);
             await _quotaService.IncrementLeadsUsedAsync(brand.OwnerId, qualifiedLeads.Count);
             
-            await _repo.InsertActivityAsync(brandId, "lead_discovered",
+            await _brandRepo.InsertActivityAsync(brandId, "lead_discovered",
                 $"Discovered and qualified {qualifiedLeads.Count} new leads.",
                 new Dictionary<string, object> { ["count"] = qualifiedLeads.Count });
                 

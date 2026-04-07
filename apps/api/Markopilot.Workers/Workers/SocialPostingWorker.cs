@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using Hangfire;
 using Markopilot.Core.Interfaces;
 using Markopilot.Core.Models;
-using Markopilot.Infrastructure.Supabase;
 using Microsoft.Extensions.Logging;
 
 namespace Markopilot.Workers.Workers;
@@ -19,19 +18,22 @@ public class SocialPostingWorker : ISocialPostingWorker
 {
     private readonly IContentGenerationService _contentService;
     private readonly IQuotaService _quotaService;
-    private readonly SupabaseRepository _repo;
+    private readonly ISocialRepository _socialRepo;
+    private readonly IBrandRepository _brandRepo;
     private readonly ILogger<SocialPostingWorker> _logger;
     private static readonly Random _random = new Random();
 
     public SocialPostingWorker(
         IContentGenerationService contentService,
         IQuotaService quotaService,
-        SupabaseRepository repo,
+        ISocialRepository socialRepo,
+        IBrandRepository brandRepo,
         ILogger<SocialPostingWorker> logger)
     {
         _contentService = contentService;
         _quotaService = quotaService;
-        _repo = repo;
+        _socialRepo = socialRepo;
+        _brandRepo = brandRepo;
         _logger = logger;
     }
 
@@ -40,7 +42,7 @@ public class SocialPostingWorker : ISocialPostingWorker
     {
         _logger.LogInformation("Starting social posting generation for Brand: {BrandId}", brandId);
 
-        var brand = await _repo.GetBrandByIdSystemAsync(brandId);
+        var brand = await _brandRepo.GetBrandByIdSystemAsync(brandId);
         if (brand == null)
         {
             _logger.LogWarning("Brand {BrandId} not found.", brandId);
@@ -57,7 +59,7 @@ public class SocialPostingWorker : ISocialPostingWorker
         if (!canGenerate)
         {
             _logger.LogWarning("Brand {BrandId} owner has exceeded their posts quota.", brandId);
-            await _repo.InsertActivityAsync(brandId, "quota_warning", "Automated posting paused because post quota is exhausted.");
+            await _brandRepo.InsertActivityAsync(brandId, "quota_warning", "Automated posting paused because post quota is exhausted.");
             // We should also ideally insert a notification
             return;
         }
@@ -102,20 +104,20 @@ public class SocialPostingWorker : ISocialPostingWorker
                     GeneratedAt = DateTimeOffset.UtcNow
                 };
 
-                await _repo.CreatePostAsync(socialPost);
+                await _socialRepo.CreatePostAsync(socialPost);
                 successCount++;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to generate post for {Platform} for brand {BrandId}", platform, brandId);
-                await _repo.InsertActivityAsync(brandId, "error", $"Failed to generate post for {platform}: {ex.Message}");
+                await _brandRepo.InsertActivityAsync(brandId, "error", $"Failed to generate post for {platform}: {ex.Message}");
             }
         }
 
         if (successCount > 0)
         {
             await _quotaService.IncrementPostsUsedAsync(brand.OwnerId, successCount);
-            await _repo.InsertActivityAsync(brandId, "post_generated", $"Successfully queued {successCount} posts for various platforms based on pillar: {contentPillar}.");
+            await _brandRepo.InsertActivityAsync(brandId, "post_generated", $"Successfully queued {successCount} posts for various platforms based on pillar: {contentPillar}.");
         }
     }
 }

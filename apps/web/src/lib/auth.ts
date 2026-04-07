@@ -28,7 +28,7 @@ export const config: NextAuthConfig = {
 
         const { data: existingUser } = await supabase
           .from("users")
-          .select("id, display_name, photo_url, plan_name, subscription_status, onboarding_completed")
+          .select("id, display_name, photo_url, plan_name, subscription_status, onboarding_completed, subscription_id")
           .eq("email", user.email)
           .single();
 
@@ -44,7 +44,7 @@ export const config: NextAuthConfig = {
               subscription_status: "trialing",
               plan_name: "Starter"
             })
-            .select("id, plan_name, subscription_status, onboarding_completed")
+            .select("id, plan_name, subscription_status, onboarding_completed, subscription_id")
             .single();
             
           if (data) {
@@ -52,6 +52,7 @@ export const config: NextAuthConfig = {
              (user as any).planName = data.plan_name;
              (user as any).subscriptionStatus = data.subscription_status;
              (user as any).onboardingCompleted = data.onboarding_completed;
+             (user as any).hasSubscription = !!data.subscription_id;
           } else if (error) {
              console.error("Failed to create user in Supabase:", error);
           }
@@ -66,6 +67,7 @@ export const config: NextAuthConfig = {
           (user as any).planName = existingUser.plan_name;
           (user as any).subscriptionStatus = existingUser.subscription_status;
           (user as any).onboardingCompleted = existingUser.onboarding_completed;
+          (user as any).hasSubscription = !!existingUser.subscription_id;
         }
       }
       return true;
@@ -76,11 +78,13 @@ export const config: NextAuthConfig = {
         token.planName = (user as any).planName;
         token.subscriptionStatus = (user as any).subscriptionStatus;
         token.onboardingCompleted = (user as any).onboardingCompleted;
+        token.hasSubscription = (user as any).hasSubscription;
       }
       if (trigger === "update" && session) {
         if (session.planName) token.planName = session.planName;
         if (session.subscriptionStatus) token.subscriptionStatus = session.subscriptionStatus;
         if (session.onboardingCompleted !== undefined) token.onboardingCompleted = session.onboardingCompleted;
+        if (session.hasSubscription !== undefined) token.hasSubscription = session.hasSubscription;
       }
       return token;
     },
@@ -89,6 +93,7 @@ export const config: NextAuthConfig = {
       (session.user as any).planName = token.planName as string;
       (session.user as any).subscriptionStatus = token.subscriptionStatus as string;
       (session.user as any).onboardingCompleted = token.onboardingCompleted as boolean;
+      (session.user as any).hasSubscription = token.hasSubscription as boolean;
       
       if (supabaseJwtSecret) {
         const payload = {

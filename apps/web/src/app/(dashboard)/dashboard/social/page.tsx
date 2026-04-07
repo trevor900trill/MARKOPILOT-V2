@@ -112,7 +112,7 @@ export default function SocialPage() {
   const platforms = [
     { id: "x", name: "X (Twitter)", icon: Share2, color: "bg-black", textColor: "text-white" },
     { id: "linkedin", name: "LinkedIn", icon: Briefcase, color: "bg-[#0A66C2]", textColor: "text-white" },
-    { id: "instagram", name: "Instagram", icon: ImageIcon, color: "bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888]", textColor: "text-white" },
+    { id: "instagram", name: "Instagram", icon: ImageIcon, color: "bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888]", textColor: "text-white", comingSoon: true },
     { id: "tiktok", name: "TikTok", icon: Video, color: "bg-black", textColor: "text-[#00f2fe]" },
   ];
 
@@ -148,13 +148,19 @@ export default function SocialPage() {
          <div className="grid md:grid-cols-2 gap-6 animate-in fade-in zoom-in-95 duration-200">
            {platforms.map(platform => {
              const isConnected = connectedPlatforms[platform.id];
+             const isComingSoon = (platform as any).comingSoon;
+
              return (
                <div key={platform.id} className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6 flex flex-col justify-between">
                  <div className="flex justify-between items-start mb-6">
                    <div className={`w-14 h-14 ${platform.color} rounded-xl flex items-center justify-center shadow-lg`}>
                       <platform.icon size={28} className={platform.textColor} />
                    </div>
-                   {isConnected ? (
+                   {isComingSoon ? (
+                     <span className="flex items-center gap-1.5 text-xs font-medium text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-full border border-amber-400/20">
+                       Coming Soon
+                     </span>
+                   ) : isConnected ? (
                      <span className="flex items-center gap-1.5 text-xs font-medium text-[var(--success)] bg-[var(--success)]/10 px-2.5 py-1 rounded-full border border-[var(--success)]/20">
                        <CheckCircle2 size={14} /> Connected
                      </span>
@@ -168,9 +174,11 @@ export default function SocialPage() {
                  <div>
                     <h3 className="text-xl font-medium text-white mb-2">{platform.name}</h3>
                     <p className="text-sm text-[var(--text-secondary)] mb-6">
-                      {isConnected 
-                        ? "Your account is linked and ready for autonomous posting." 
-                        : `Connect your ${platform.name} account to enable AI scheduling.`}
+                      {isComingSoon
+                        ? "We're currently building the Instagram integration. Stay tuned!"
+                        : isConnected 
+                          ? "Your account is linked and ready for autonomous posting." 
+                          : `Connect your ${platform.name} account to enable AI scheduling.`}
                     </p>
                     
                     {isConnected ? (
@@ -178,8 +186,12 @@ export default function SocialPage() {
                          Disconnect Profile
                        </button>
                     ) : (
-                       <button onClick={() => handleConnect(platform.id)} disabled={loadingPlatform === platform.id} className="w-full py-2.5 rounded-xl bg-[var(--bg-surface)] border border-[var(--border)] text-white font-medium hover:border-[var(--accent-primary)] hover:text-[var(--accent-primary)] flex justify-center items-center transition disabled:opacity-50">
-                         {loadingPlatform === platform.id ? "Connecting..." : `Connect ${platform.name}`}
+                       <button 
+                         onClick={() => !isComingSoon && handleConnect(platform.id)} 
+                         disabled={loadingPlatform === platform.id || isComingSoon} 
+                         className={`w-full py-2.5 rounded-xl border font-medium flex justify-center items-center transition disabled:opacity-40 ${isComingSoon ? 'bg-[var(--bg-elevated)] border-[var(--border)] text-[var(--text-muted)]' : 'bg-[var(--bg-surface)] border-[var(--border)] text-white hover:border-[var(--accent-primary)] hover:text-[var(--accent-primary)]'}`}
+                       >
+                         {loadingPlatform === platform.id ? "Connecting..." : isComingSoon ? "Coming Soon" : `Connect ${platform.name}`}
                        </button>
                     )}
                  </div>

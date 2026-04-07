@@ -39,6 +39,11 @@ builder.Services.AddHangfireServer(options =>
 builder.Services.AddSingleton(sp =>
     new SupabaseRepository(connectionString, sp.GetRequiredService<ILogger<SupabaseRepository>>()));
 builder.Services.AddSingleton<IUserRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
+builder.Services.AddSingleton<IBrandRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
+builder.Services.AddSingleton<ISocialRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
+builder.Services.AddSingleton<ILeadRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
+builder.Services.AddSingleton<IOutreachRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
+builder.Services.AddSingleton<INotificationRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
 
 builder.Services.AddSingleton<ITokenEncryptionService>(sp =>
 {

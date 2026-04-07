@@ -1,8 +1,10 @@
 "use client";
 
 import { getSession } from "next-auth/react";
+import { toast } from "sonner";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5030/api";
+const envApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5030";
+const API_BASE_URL = envApiUrl.endsWith("/api") ? envApiUrl : `${envApiUrl}/api`;
 
 async function getToken(): Promise<string | null> {
   const session = await getSession();
@@ -15,7 +17,10 @@ async function request<T = any>(
 ): Promise<T> {
   const token = await getToken();
 
-  const res = await fetch(`${API_BASE_URL}/api${endpoint}`, {
+  // endpoint should start with a slash, e.g. "/subscriptions/checkout"
+  const url = `${API_BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
+
+  const res = await fetch(url, {
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -25,10 +30,28 @@ async function request<T = any>(
   });
 
   if (!res.ok) {
-    const errorBody = await res.json().catch(() => ({}));
-    throw new Error(
-      errorBody?.error?.message || `API Error: ${res.status}`
-    );
+    let message = `API Error: ${res.status}`;
+
+    try {
+      const contentType = res.headers.get("content-type");
+      if (contentType?.includes("application/json")) {
+        const errorBody = await res.json();
+        message = errorBody?.error?.message || errorBody?.message || message;
+      } else {
+        const textError = await res.text();
+        if (textError) {
+          // Some APIs return "Error Message" (with quotes), so we trim them for the toast
+          message = textError.replace(/^["']|["']$/g, '');
+        }
+      }
+    } catch (e) {
+      // Fallback to generic message if parsing fails
+    }
+
+    // Show visible feedback
+    toast.error(message);
+    
+    throw new Error(message);
   }
 
   // Handle 204 No Content

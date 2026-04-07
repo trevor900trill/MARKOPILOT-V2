@@ -1,5 +1,6 @@
 using Markopilot.Infrastructure.LemonSqueezy;
 using Markopilot.Api.Middleware;
+using Markopilot.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Markopilot.Api.Controllers;
@@ -9,11 +10,22 @@ namespace Markopilot.Api.Controllers;
 public class SubscriptionsController : ControllerBase
 {
     private readonly LemonSqueezyClient _lemonSqueezyClient;
+    private readonly IUserRepository _userRepo;
+    private readonly IQuotaService _quotaService;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<SubscriptionsController> _logger;
 
-    public SubscriptionsController(LemonSqueezyClient lemonSqueezyClient, ILogger<SubscriptionsController> logger)
+    public SubscriptionsController(
+        LemonSqueezyClient lemonSqueezyClient,
+        IUserRepository userRepo,
+        IQuotaService quotaService,
+        IConfiguration configuration,
+        ILogger<SubscriptionsController> logger)
     {
         _lemonSqueezyClient = lemonSqueezyClient;
+        _userRepo = userRepo;
+        _quotaService = quotaService;
+        _configuration = configuration;
         _logger = logger;
     }
 
@@ -23,11 +35,18 @@ public class SubscriptionsController : ControllerBase
         var userId = HttpContext.GetUserId();
         if (userId == Guid.Empty) throw new UnauthorizedAccessException();
         
-        // Example mapping for planId to variant IDs (would typically come from a config or db)
-        var variantId = planId == "growth" ? "growth-variant-id" : "scale-variant-id";
-        if (planId == "starter") variantId = "starter-variant-id";
+        var user = await _userRepo.GetUserByIdAsync(userId);
+        if (user == null) return NotFound(new { error = new { code = "NOT_FOUND", message = "User not found" } });
 
-        var url = await _lemonSqueezyClient.CreateCheckoutAsync(variantId, "user@example.com", userId.ToString());
+        // Get variant path from config
+        var variantId = _configuration[$"LemonSqueezy:Variants:{planId}"];
+        if (string.IsNullOrEmpty(variantId))
+        {
+            _logger.LogWarning("Plan variant not found for {PlanId}", planId);
+            return StatusCode(400, new { error = new { code = "INVALID_PLAN", message = $"Invalid plan: {planId}. Available: Starter, Growth, Scale" } });
+        }
+
+        var url = await _lemonSqueezyClient.CreateCheckoutAsync(variantId, user.Email, userId.ToString());
         return Ok(new { url });
     }
 
@@ -37,11 +56,8 @@ public class SubscriptionsController : ControllerBase
         var userId = HttpContext.GetUserId();
         if (userId == Guid.Empty) return Unauthorized();
         
-        var repo = HttpContext.RequestServices.GetRequiredService<Markopilot.Infrastructure.Supabase.SupabaseRepository>();
-        var user = await repo.GetUserByIdAsync(userId);
-        
-        var quotaService = HttpContext.RequestServices.GetRequiredService<Markopilot.Core.Interfaces.IQuotaService>();
-        var quota = await quotaService.GetQuotaStatusAsync(userId);
+        var user = await _userRepo.GetUserByIdAsync(userId);
+        var quota = await _quotaService.GetQuotaStatusAsync(userId);
 
         return Ok(new { user, quota });
     }
@@ -54,7 +70,13 @@ public class SubscriptionsController : ControllerBase
         
         try
         {
-            var url = await _lemonSqueezyClient.GetCustomerPortalUrlAsync(userId.ToString());
+            var user = await _userRepo.GetUserByIdAsync(userId);
+            if (string.IsNullOrEmpty(user?.SubscriptionId)) 
+            {
+                return BadRequest(new { error = "No active subscription found to manage." });
+            }
+
+            var url = await _lemonSqueezyClient.GetSubscriptionPortalUrlAsync(user.SubscriptionId);
             return Ok(new { url });
         }
         catch (Exception ex)

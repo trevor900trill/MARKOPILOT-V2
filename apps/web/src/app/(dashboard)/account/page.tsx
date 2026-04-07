@@ -23,9 +23,24 @@ export default function AccountPage() {
       cycleEnd: "End of month"
    };
 
-   const handleManageBilling = () => {
-      // Trigger API to generate Lemon Squeezy portal URL, then redirect
-      window.location.href = "https://app.lemonsqueezy.com/my-orders/";
+   const [isPortalLoading, setIsPortalLoading] = useState(false);
+
+   const handleManageBilling = async () => {
+      setIsPortalLoading(true);
+      try {
+         const { apiPost } = await import("@/lib/api-client");
+         const data = await apiPost<{ url: string }>("/subscriptions/billing-portal");
+         if (data?.url) {
+            window.location.href = data.url;
+         } else {
+            // Fallback just in case
+            window.location.href = "https://app.lemonsqueezy.com/my-orders/";
+         }
+      } catch (err) {
+         console.error("Failed to fetch billing portal URL:", err);
+      } finally {
+         setIsPortalLoading(false);
+      }
    };
 
    const handleDeleteAccount = () => {
@@ -95,8 +110,8 @@ export default function AccountPage() {
                      <li className="flex items-center gap-2 text-sm text-[var(--text-secondary)]"><CheckCircle2 size={16} className="text-[var(--success)]" /> Unbranded Emails</li>
                   </ul>
                </div>
-               <button onClick={handleManageBilling} className="w-full py-3 rounded-xl bg-[var(--bg-surface)] border border-[var(--border)] text-white font-medium hover:border-[var(--accent-primary)] flex justify-center items-center gap-2 transition">
-                  Manage Billing using Lemon Squeezy <ExternalLink size={16} />
+               <button onClick={handleManageBilling} disabled={isPortalLoading} className="w-full py-3 rounded-xl bg-[var(--bg-surface)] border border-[var(--border)] text-white font-medium hover:border-[var(--accent-primary)] flex justify-center items-center gap-2 transition disabled:opacity-50">
+                  {isPortalLoading ? "Generating Portal Link..." : <>Manage Billing using Lemon Squeezy <ExternalLink size={16} /></>}
                </button>
             </div>
 

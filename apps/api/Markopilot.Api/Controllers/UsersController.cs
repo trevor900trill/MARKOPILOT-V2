@@ -24,6 +24,8 @@ public class UsersController : ControllerBase
         var user = await _userRepo.GetUserByIdAsync(userId);
         if (user == null) return NotFound(new { error = new { code = "NOT_FOUND", message = "User not found" } });
 
+        var brandsUsed = await _userRepo.CountBrandsByOwnerAsync(userId);
+
         return Ok(new
         {
             id = user.Id,
@@ -38,6 +40,7 @@ public class UsersController : ControllerBase
             quotaLeadsUsed = user.QuotaLeadsUsed,
             quotaPostsUsed = user.QuotaPostsUsed,
             quotaBrandsAllowed = user.QuotaBrandsAllowed,
+            quotaBrandsUsed = brandsUsed,
             createdAt = user.CreatedAt,
         });
     }

@@ -22,6 +22,7 @@ public class AuthMiddleware
     [
         "/api/webhooks/lemon-squeezy",
         "/api/webhooks/flutterwave",
+        "/api/social/callback",
         "/hangfire",
         "/health"
     ];
@@ -84,17 +85,20 @@ public class AuthMiddleware
             }
 
             context.Items["UserId"] = Guid.Parse(userId);
-            await _next(context);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "JWT validation failed");
+            _logger.LogWarning(ex, "JWT validation failed: {Message}", ex.Message);
             context.Response.StatusCode = 401;
             await context.Response.WriteAsJsonAsync(new
             {
-                error = new { code = "UNAUTHORIZED", message = "Invalid or expired token" }
+                error = new { code = "UNAUTHORIZED", message = $"Invalid or expired token: {ex.Message}" }
             });
+            return;
         }
+
+        // Proceed to the next middleware (outside the try-catch so downstream errors don't trigger 401)
+        await _next(context);
     }
 }
 

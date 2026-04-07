@@ -15,6 +15,8 @@ export function AppSidebar() {
   const postsAllowed = user?.quotaPostsPerMonth || 30;
   const leadsUsed = user?.quotaLeadsUsed || 0;
   const leadsAllowed = user?.quotaLeadsPerMonth || 100;
+  const brandsUsed = user?.quotaBrandsUsed || 0;
+  const brandsAllowed = user?.quotaBrandsAllowed || 1;
 
   const links = [
     { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
@@ -117,6 +119,15 @@ export function AppSidebar() {
               </div>
               <div className="h-1.5 w-full bg-[var(--bg-elevated)] rounded-full overflow-hidden">
                 <div className="h-full bg-[var(--accent-primary)] rounded-full transition-all duration-700" style={{ width: `${leadsAllowed > 0 ? (leadsUsed/leadsAllowed)*100 : 0}%` }} />
+              </div>
+            </div>
+            <div>
+              <div className="flex justify-between text-[10px] text-[var(--text-muted)] mb-1">
+                 <span>Brands</span>
+                 <span>{brandsUsed} / {brandsAllowed}</span>
+              </div>
+              <div className="h-1.5 w-full bg-[var(--bg-elevated)] rounded-full overflow-hidden">
+                <div className="h-full bg-[var(--accent-primary)] rounded-full transition-all duration-700" style={{ width: `${brandsAllowed > 0 ? (brandsUsed/brandsAllowed)*100 : 0}%` }} />
               </div>
             </div>
           </div>

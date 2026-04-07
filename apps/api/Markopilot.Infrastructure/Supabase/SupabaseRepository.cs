@@ -11,7 +11,7 @@ namespace Markopilot.Infrastructure.Supabase;
 /// Uses Npgsql directly for maximum control over queries.
 /// Also implements IUserRepository for Core service access.
 /// </summary>
-public class SupabaseRepository : IUserRepository
+public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepository, ILeadRepository, IOutreachRepository, INotificationRepository
 {
     private readonly string _connectionString;
     private readonly ILogger<SupabaseRepository> _logger;
@@ -941,6 +941,40 @@ public class SupabaseRepository : IUserRepository
         await cmd.ExecuteNonQueryAsync();
     }
 
+    public async Task<List<OutreachEmail>> GetEmailsNeedingFollowUpAsync(Guid brandId, int delayDays = 3)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        // delayDays=3 means emails sent more than 3 days ago
+        await using var cmd = new NpgsqlCommand(@"
+            SELECT * FROM outreach_emails
+            WHERE brand_id = @brandId 
+              AND status = 'sent' 
+              AND follow_up_scheduled = FALSE 
+              AND sent_at <= (NOW() - make_interval(days => @delayDays))
+            ORDER BY sent_at ASC", conn);
+        cmd.Parameters.AddWithValue("brandId", brandId);
+        cmd.Parameters.AddWithValue("delayDays", delayDays);
+
+        var emails = new List<OutreachEmail>();
+        await using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+            emails.Add(MapOutreachEmail(reader));
+        return emails;
+    }
+
+    public async Task MarkFollowUpScheduledAsync(Guid emailId)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(
+            "UPDATE outreach_emails SET follow_up_scheduled = TRUE WHERE id = @id", conn);
+        cmd.Parameters.AddWithValue("id", emailId);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
     // ── BRAND OVERVIEW STATS ───────────────────────────
 
     public async Task<object> GetBrandOverviewStatsAsync(Guid brandId, Guid ownerId)
@@ -1163,13 +1197,17 @@ public class SupabaseRepository : IUserRepository
         DisplayName = r.IsDBNull(r.GetOrdinal("display_name")) ? null : r.GetString(r.GetOrdinal("display_name")),
         PhotoUrl = r.IsDBNull(r.GetOrdinal("photo_url")) ? null : r.GetString(r.GetOrdinal("photo_url")),
         OnboardingCompleted = r.GetBoolean(r.GetOrdinal("onboarding_completed")),
+        SubscriptionId = r.IsDBNull(r.GetOrdinal("subscription_id")) ? null : r.GetString(r.GetOrdinal("subscription_id")),
         SubscriptionStatus = r.GetString(r.GetOrdinal("subscription_status")),
         PlanName = r.GetString(r.GetOrdinal("plan_name")),
+        CurrentPeriodEnd = r.IsDBNull(r.GetOrdinal("current_period_end")) ? null : r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("current_period_end")),
         QuotaLeadsPerMonth = r.GetInt32(r.GetOrdinal("quota_leads_per_month")),
         QuotaPostsPerMonth = r.GetInt32(r.GetOrdinal("quota_posts_per_month")),
         QuotaBrandsAllowed = r.GetInt32(r.GetOrdinal("quota_brands_allowed")),
         QuotaLeadsUsed = r.GetInt32(r.GetOrdinal("quota_leads_used")),
         QuotaPostsUsed = r.GetInt32(r.GetOrdinal("quota_posts_used")),
+        QuotaResetDate = r.IsDBNull(r.GetOrdinal("quota_reset_date")) ? null : r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("quota_reset_date")),
+        Status = r.GetString(r.GetOrdinal("status")),
         CreatedAt = r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("created_at")),
         UpdatedAt = r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("updated_at")),
     };
@@ -1193,10 +1231,33 @@ public class SupabaseRepository : IUserRepository
         TargetPainPoints = r.IsDBNull(r.GetOrdinal("target_pain_points")) ? [] : System.Text.Json.JsonSerializer.Deserialize<List<string>>(r.GetString(r.GetOrdinal("target_pain_points"))) ?? [],
         TargetGeographies = r.IsDBNull(r.GetOrdinal("target_geographies")) ? [] : System.Text.Json.JsonSerializer.Deserialize<List<string>>(r.GetString(r.GetOrdinal("target_geographies"))) ?? [],
         ContentPillars = r.IsDBNull(r.GetOrdinal("content_pillars")) ? [] : System.Text.Json.JsonSerializer.Deserialize<List<string>>(r.GetString(r.GetOrdinal("content_pillars"))) ?? [],
+        TwitterAccessToken = r.IsDBNull(r.GetOrdinal("twitter_access_token")) ? null : r.GetString(r.GetOrdinal("twitter_access_token")),
+        TwitterRefreshToken = r.IsDBNull(r.GetOrdinal("twitter_refresh_token")) ? null : r.GetString(r.GetOrdinal("twitter_refresh_token")),
+        TwitterTokenExpiresAt = r.IsDBNull(r.GetOrdinal("twitter_token_expires_at")) ? null : r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("twitter_token_expires_at")),
+        TwitterUsername = r.IsDBNull(r.GetOrdinal("twitter_username")) ? null : r.GetString(r.GetOrdinal("twitter_username")),
         TwitterConnected = r.GetBoolean(r.GetOrdinal("twitter_connected")),
+
+        LinkedinAccessToken = r.IsDBNull(r.GetOrdinal("linkedin_access_token")) ? null : r.GetString(r.GetOrdinal("linkedin_access_token")),
+        LinkedinRefreshToken = r.IsDBNull(r.GetOrdinal("linkedin_refresh_token")) ? null : r.GetString(r.GetOrdinal("linkedin_refresh_token")),
+        LinkedinTokenExpiresAt = r.IsDBNull(r.GetOrdinal("linkedin_token_expires_at")) ? null : r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("linkedin_token_expires_at")),
+        LinkedinProfileName = r.IsDBNull(r.GetOrdinal("linkedin_profile_name")) ? null : r.GetString(r.GetOrdinal("linkedin_profile_name")),
         LinkedinConnected = r.GetBoolean(r.GetOrdinal("linkedin_connected")),
+
+        InstagramAccessToken = r.IsDBNull(r.GetOrdinal("instagram_access_token")) ? null : r.GetString(r.GetOrdinal("instagram_access_token")),
+        InstagramAccountId = r.IsDBNull(r.GetOrdinal("instagram_account_id")) ? null : r.GetString(r.GetOrdinal("instagram_account_id")),
+        InstagramUsername = r.IsDBNull(r.GetOrdinal("instagram_username")) ? null : r.GetString(r.GetOrdinal("instagram_username")),
         InstagramConnected = r.GetBoolean(r.GetOrdinal("instagram_connected")),
+
+        TiktokAccessToken = r.IsDBNull(r.GetOrdinal("tiktok_access_token")) ? null : r.GetString(r.GetOrdinal("tiktok_access_token")),
+        TiktokRefreshToken = r.IsDBNull(r.GetOrdinal("tiktok_refresh_token")) ? null : r.GetString(r.GetOrdinal("tiktok_refresh_token")),
+        TiktokTokenExpiresAt = r.IsDBNull(r.GetOrdinal("tiktok_token_expires_at")) ? null : r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("tiktok_token_expires_at")),
+        TiktokUsername = r.IsDBNull(r.GetOrdinal("tiktok_username")) ? null : r.GetString(r.GetOrdinal("tiktok_username")),
         TiktokConnected = r.GetBoolean(r.GetOrdinal("tiktok_connected")),
+
+        GmailAccessToken = r.IsDBNull(r.GetOrdinal("gmail_access_token")) ? null : r.GetString(r.GetOrdinal("gmail_access_token")),
+        GmailRefreshToken = r.IsDBNull(r.GetOrdinal("gmail_refresh_token")) ? null : r.GetString(r.GetOrdinal("gmail_refresh_token")),
+        GmailTokenExpiresAt = r.IsDBNull(r.GetOrdinal("gmail_token_expires_at")) ? null : r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("gmail_token_expires_at")),
+        GmailEmail = r.IsDBNull(r.GetOrdinal("gmail_email")) ? null : r.GetString(r.GetOrdinal("gmail_email")),
         GmailConnected = r.GetBoolean(r.GetOrdinal("gmail_connected")),
         AutomationPostsEnabled = r.GetBoolean(r.GetOrdinal("automation_posts_enabled")),
         AutomationLeadsEnabled = r.GetBoolean(r.GetOrdinal("automation_leads_enabled")),

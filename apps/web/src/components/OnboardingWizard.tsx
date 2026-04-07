@@ -4,6 +4,8 @@ import { useState } from "react";
 import { ArrowRight, Check, Sparkles, Loader2, Zap } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { apiGet, apiPost, apiPatch } from "@/lib/api-client";
+import { PLANS, DEFAULT_PLAN } from "@/lib/plans";
 
 const INDUSTRIES = [
   { value: "SaaS", label: "Software & SaaS" },
@@ -18,12 +20,6 @@ const INDUSTRIES = [
   { value: "NonProfit", label: "Non-Profit" },
   { value: "PersonalBrand", label: "Personal Brand" },
   { value: "Other", label: "Other" },
-];
-
-const PLANS = [
-  { id: "Starter", price: "$19", posts: "30 Posts", leads: "100 Leads", brands: "1 Brand" },
-  { id: "Growth", price: "$49", posts: "120 Posts", leads: "500 Leads", brands: "3 Brands", featured: true },
-  { id: "Scale", price: "$149", posts: "Unlimited Posts", leads: "2,000 Leads", brands: "10 Brands" },
 ];
 
 export function OnboardingWizard() {
@@ -46,7 +42,7 @@ export function OnboardingWizard() {
     assertiveness: "Balanced",
     empathy: "Medium",
     contentPillars: [] as string[],
-    selectedPlan: "Starter",
+    selectedPlan: DEFAULT_PLAN,
   });
 
   // Tag input helpers
@@ -57,8 +53,21 @@ export function OnboardingWizard() {
 
   const updateForm = (key: string, value: any) => setFormData(prev => ({ ...prev, [key]: value }));
 
-  const nextStep = () => setStep(s => s + 1);
-  const prevStep = () => setStep(s => s - 1);
+  const nextStep = () => {
+    // Skip Plan Selection (Step 6) if user already has brands or is already onboarded
+    if (step === 5 && (session?.user as any)?.onboardingCompleted) {
+       setStep(7);
+       return;
+    }
+    setStep(s => s + 1);
+  };
+  const prevStep = () => {
+    if (step === 7 && (session?.user as any)?.onboardingCompleted) {
+        setStep(5);
+        return;
+    }
+    setStep(s => s - 1);
+  };
 
   const handleTagKeyDown = (
     e: React.KeyboardEvent<HTMLInputElement>,
@@ -87,52 +96,44 @@ export function OnboardingWizard() {
     setIsSubmitting(true);
 
     try {
-      const token = (session as any).supabaseAccessToken;
-      const envApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5030";
-      const API_BASE_URL = envApiUrl.endsWith("/api") ? envApiUrl : `${envApiUrl}/api`;
-
       // 1. Create the Brand via .NET API
-      const brandRes = await fetch(`${API_BASE_URL}/brands`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name: formData.brandName,
-          description: formData.brandDescription,
-          websiteUrl: formData.websiteUrl,
-          industry: formData.industry,
-          industryCustom: formData.industry === "Other" ? formData.industryCustom : null,
-          targetAudienceDescription: formData.audienceDescription,
-          targetJobTitles: formData.jobTitles,
-          targetPainPoints: formData.painPoints,
-          targetGeographies: formData.geographies,
-          brandVoiceFormality: formData.formality.toLowerCase(),
-          brandVoiceHumour: formData.humour.toLowerCase(),
-          brandVoiceAssertiveness: formData.assertiveness.toLowerCase(),
-          brandVoiceEmpathy: formData.empathy.toLowerCase(),
-          contentPillars: formData.contentPillars,
-        })
+      await apiPost("/brands", {
+        name: formData.brandName,
+        description: formData.brandDescription,
+        websiteUrl: formData.websiteUrl,
+        industry: formData.industry,
+        industryCustom: formData.industry === "Other" ? formData.industryCustom : null,
+        targetAudienceDescription: formData.audienceDescription,
+        targetJobTitles: formData.jobTitles,
+        targetPainPoints: formData.painPoints,
+        targetGeographies: formData.geographies,
+        brandVoiceFormality: formData.formality.toLowerCase(),
+        brandVoiceHumour: formData.humour.toLowerCase(),
+        brandVoiceAssertiveness: formData.assertiveness.toLowerCase(),
+        brandVoiceEmpathy: formData.empathy.toLowerCase(),
+        contentPillars: formData.contentPillars,
       });
-
-      if (!brandRes.ok) throw new Error("Failed to create brand");
 
       // 2. Mark User as Onboarded via .NET API
-      const userRes = await fetch(`${API_BASE_URL}/users/onboarding-complete`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        }
-      });
-
-      if (!userRes.ok) throw new Error("Failed to update onboarding status");
+      await apiPatch("/users/onboarding-complete");
 
       // 3. Update the local session
       await update({ onboardingCompleted: true });
 
-      // 4. Move to success step
+      // 4. Handle Subscription (Redirect to LS for ALL plans to capture CC for trial)
+      // Only redirect if this is the user's first time onboarding (Global Plan Selection)
+      const wasOnboarded = (session?.user as any)?.onboardingCompleted;
+      
+      if (!wasOnboarded) {
+        const checkoutData = await apiGet<{ url: string }>(`/subscriptions/checkout?planId=${formData.selectedPlan.toLowerCase()}`);
+        
+        if (checkoutData?.url) {
+          window.location.href = checkoutData.url;
+          return; // Stop here, redirecting
+        }
+      }
+
+      // 5. Move to success step (for subsequent brands or if redirect fails)
       setStep(8);
     } catch (err) {
       console.error("Onboarding failed:", err);
@@ -352,8 +353,8 @@ export function OnboardingWizard() {
                 >
                   <div>
                     <div className="flex items-center gap-2">
-                       <span className="font-bold text-white">{plan.id}</span>
-                       {plan.featured && <span className="text-[10px] bg-[var(--accent-primary)] px-2 py-0.5 rounded-full text-white font-bold uppercase">Popular</span>}
+                      <span className="font-bold text-white">{plan.id}</span>
+                      {plan.featured && <span className="text-[10px] bg-[var(--accent-primary)] px-2 py-0.5 rounded-full text-white font-bold uppercase">Popular</span>}
                     </div>
                     <div className="text-xs text-[var(--text-secondary)]">{plan.brands}, {plan.posts}, {plan.leads}</div>
                   </div>
@@ -361,14 +362,11 @@ export function OnboardingWizard() {
                 </button>
               ))}
             </div>
-            <p className="text-center text-[var(--text-muted)] text-[10px]">All plans start with a 14-day free trial. No credit card required.</p>
+            <p className="text-center text-[var(--text-muted)] text-[10px]">All plans start with a 14-day free trial.</p>
             <div className="flex gap-4">
               <button onClick={prevStep} className="flex-1 py-4 mt-4 rounded-full border border-[var(--border)] text-[var(--text-secondary)] font-medium hover:bg-white/5">Back</button>
               <button onClick={nextStep} className="flex-[2] py-4 mt-4 rounded-full bg-[var(--accent-primary)] text-white font-medium hover:opacity-90">Continue</button>
             </div>
-            <button onClick={nextStep} className="w-full text-center text-[var(--text-muted)] text-xs hover:text-[var(--text-secondary)] transition mt-2">
-              Skip for now (continue with free trial)
-            </button>
           </div>
         )}
 
@@ -377,13 +375,13 @@ export function OnboardingWizard() {
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
             <h2 className="font-serif text-3xl text-center text-white">Ready to Launch</h2>
             <div className="p-6 rounded-2xl bg-white/5 border border-white/10 text-center space-y-4">
-               <Zap className="mx-auto text-[var(--accent-primary)]" size={32} />
-               <p className="text-gray-300">Your brand <b>{formData.brandName}</b> is ready. Once finalized, automation begins immediately.</p>
-               <div className="flex flex-wrap justify-center gap-3 text-[10px] font-mono text-[var(--accent-primary)] uppercase tracking-widest">
-                 <span className="flex items-center gap-1"><Check size={12} /> Discovery Engine</span>
-                 <span className="flex items-center gap-1"><Check size={12} /> Content Pipeline</span>
-                 <span className="flex items-center gap-1"><Check size={12} /> Outreach System</span>
-               </div>
+              <Zap className="mx-auto text-[var(--accent-primary)]" size={32} />
+              <p className="text-gray-300">Your brand <b>{formData.brandName}</b> is ready. Once finalized, automation begins immediately.</p>
+              <div className="flex flex-wrap justify-center gap-3 text-[10px] font-mono text-[var(--accent-primary)] uppercase tracking-widest">
+                <span className="flex items-center gap-1"><Check size={12} /> Discovery Engine</span>
+                <span className="flex items-center gap-1"><Check size={12} /> Content Pipeline</span>
+                <span className="flex items-center gap-1"><Check size={12} /> Outreach System</span>
+              </div>
             </div>
             <div className="flex gap-4">
               <button onClick={prevStep} className="flex-1 py-4 mt-8 rounded-full border border-[var(--border)] text-[var(--text-secondary)] font-medium hover:bg-white/5">Back</button>
