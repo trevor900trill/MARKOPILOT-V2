@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { signIn } from "next-auth/react";
 import { Check, Menu, ArrowRight, Share2, Users, Send, Rocket, Sparkles, Zap, ShieldCheck, MessageSquare, Briefcase, Camera, Video, Mail, Bot, Database } from "lucide-react";
 import { PLANS } from "@/lib/plans";
 import { useState, useEffect } from "react";
@@ -10,9 +11,6 @@ export default function LandingPage() {
   const [mounted, setMounted] = useState(false);
   const [typedText, setTypedText] = useState("");
   const fullText = "Running Itself.";
-
-  // Centralized URL to ensure absolute consistency
-  const SIGNIN_URL = "/api/auth/signin?callbackUrl=/dashboard";
 
   useEffect(() => {
     setMounted(true);
@@ -42,24 +40,35 @@ export default function LandingPage() {
     };
   }, []);
 
-  // Safe navigation renderer to prevent hydration mismatch for auth links
+  // Use signIn() helper instead of direct links to avoid CSRF issues in production
+  const handleSignIn = () => {
+    signIn("google", { callbackUrl: "/dashboard" });
+  };
+
   const NavLink = ({
     href,
     className,
     children,
-    isPrimary = false
+    isPrimary = false,
+    isAuth = false
   }: {
     href: string;
     className?: string;
     children: React.ReactNode;
     isPrimary?: boolean;
+    isAuth?: boolean;
   }) => {
-    // During hydration/SSR, we render a stable version. Once mounted, we use the final URL.
-    const safeHref = mounted ? href : "/api/auth/signin";
+    if (isAuth) {
+      return (
+        <button onClick={handleSignIn} className={className}>
+          {isPrimary && <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></span>}
+          {children}
+        </button>
+      );
+    }
 
     return (
-      <Link href={safeHref} className={className}>
-        {isPrimary && <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></span>}
+      <Link href={href} className={className}>
         {children}
       </Link>
     );
@@ -121,7 +130,7 @@ export default function LandingPage() {
             <Link href="#pricing" className="hover:text-white hover:-translate-y-0.5 transition-all drop-shadow-sm">Pricing</Link>
           </div>
           <div className="hidden md:block">
-            <NavLink href={SIGNIN_URL} className="relative group px-6 py-2.5 rounded-full overflow-hidden inline-flex items-center justify-center font-medium bg-white/10 hover:bg-white/20 border border-white/10 hover:border-white/30 transition-all text-white text-sm tracking-wide">
+            <NavLink href="#" isAuth={true} className="relative group px-6 py-2.5 rounded-full overflow-hidden inline-flex items-center justify-center font-medium bg-white/10 hover:bg-white/20 border border-white/10 hover:border-white/30 transition-all text-white text-sm tracking-wide">
               <span>Login to Dashboard</span>
             </NavLink>
           </div>
@@ -172,7 +181,7 @@ export default function LandingPage() {
           <div
             className="flex flex-col sm:flex-row items-center justify-center gap-5 pt-8 opacity-0 animate-[fadeUpIn_1s_cubic-bezier(0.16,1,0.3,1)_500ms_forwards]"
           >
-            <NavLink href={SIGNIN_URL} isPrimary className="group relative w-full sm:w-auto px-8 py-4 rounded-full bg-white text-black font-semibold text-base hover:scale-105 transition-all flex items-center justify-center gap-2 overflow-hidden shadow-[0_0_40px_rgba(255,255,255,0.2)]">
+            <NavLink href="#" isAuth={true} isPrimary className="group relative w-full sm:w-auto px-8 py-4 rounded-full bg-white text-black font-semibold text-base hover:scale-105 transition-all flex items-center justify-center gap-2 overflow-hidden shadow-[0_0_40px_rgba(255,255,255,0.2)]">
               Start Free Trial <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
             </NavLink>
             <Link href="#how-it-works" className="w-full sm:w-auto px-8 py-4 rounded-full bg-white/5 border border-white/10 text-white font-medium text-base hover:bg-white/10 hover:border-white/20 transition-all flex items-center justify-center gap-2 backdrop-blur-md hover:-translate-y-1">
@@ -389,7 +398,8 @@ export default function LandingPage() {
                     <li className={`flex items-center gap-3 text-sm ${isFeatured ? 'text-white font-medium' : 'text-gray-300 font-light'}`}><Check size={18} className="text-[var(--success)]" /> {plan.leads} / month</li>
                   </ul>
                   <NavLink
-                    href={`${SIGNIN_URL}&plan=${plan.id}`}
+                    href="#"
+                    isAuth={true}
                     className={isFeatured
                       ? "w-full block text-center py-4 rounded-xl bg-[var(--accent-primary)] text-white font-semibold hover:opacity-90 hover:scale-[1.03] transition-all shadow-lg active:scale-95 relative z-10"
                       : "w-full block text-center py-4 rounded-xl bg-white/5 border border-white/10 text-white font-medium hover:bg-white/10 transition-all active:scale-95"
@@ -410,7 +420,7 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-[#07070a] to-transparent z-0 pointer-events-none"></div>
         <div className="relative z-10 space-y-10 max-w-4xl mx-auto flex flex-col items-center">
           <h2 className="font-serif text-5xl md:text-7xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 drop-shadow-xl">Stop marketing manually.</h2>
-          <NavLink href={SIGNIN_URL} className="group inline-flex items-center gap-3 px-12 py-5 rounded-full bg-white text-black font-semibold text-lg hover:scale-[1.04] transition-all shadow-[0_0_50px_rgba(255,255,255,0.2)] active:scale-95 hover:shadow-[0_0_80px_rgba(255,255,255,0.4)]">
+          <NavLink href="#" isAuth={true} className="group inline-flex items-center gap-3 px-12 py-5 rounded-full bg-white text-black font-semibold text-lg hover:scale-[1.04] transition-all shadow-[0_0_50px_rgba(255,255,255,0.2)] active:scale-95 hover:shadow-[0_0_80px_rgba(255,255,255,0.4)]">
             Start Free Trial <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
           </NavLink>
         </div>
