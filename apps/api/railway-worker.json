@@ -3,7 +3,7 @@
   "build": {
     "builder": "DOCKERFILE",
     "dockerfilePath": "Markopilot.Workers/Dockerfile",
-    "watchPatterns": ["Markopilot.Workers/**", "Markopilot.Core/**", "Markopilot.Infrastructure/**"]
+    "watchPatterns": ["apps/api/Markopilot.Workers/**", "apps/api/Markopilot.Core/**", "apps/api/Markopilot.Infrastructure/**", "apps/api/railway-worker.json"]
   },
   "deploy": {
     "numReplicas": 1,
