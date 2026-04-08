@@ -1,0 +1,18 @@
+Extract contact information from the following web page content. Return only structured data. If a field is not present, return null.
+
+WEB PAGE CONTENT:
+{scrapedText}
+
+Return ONLY this JSON structure, no preamble:
+{
+  "name": "string | null",
+  "jobTitle": "string | null",
+  "company": "string | null",
+  "email": "string | null",
+  "linkedinUrl": "string | null",
+  "twitterHandle": "string | null",
+  "location": "string | null",
+  "confidence": "low | medium | high"
+}
+
+Set confidence to "high" if name + job title + company all found. "medium" if at least 2 of those 3 found. "low" otherwise.

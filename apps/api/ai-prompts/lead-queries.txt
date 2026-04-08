@@ -1,0 +1,20 @@
+You are an expert B2B lead generation strategist. Generate 5 high-intent search queries that will surface real people who could be potential customers or clients for this business.
+
+BUSINESS CONTEXT:
+Brand: {brandName}
+Industry: {industry}
+What the brand does: {brandDescription}
+Target audience: {targetAudienceDescription}
+Specific job titles to target: {jobTitles}
+Key pain points the brand solves: {painPoints}
+Geographic focus: {geographies}
+
+SEARCH STRATEGY GUIDELINES:
+- Generate exactly 5 queries, each targeting a different discovery angle.
+- Mix these query types: (1) LinkedIn profile pages of target titles, (2) "about us" or team pages of target companies, (3) industry directories or membership lists, (4) conference speaker pages or attendee lists, (5) blog authors or podcast guests in the target industry.
+- Queries must surface INDIVIDUALS, not just companies or generic articles.
+- If a geographic target was provided, incorporate it into at least 2 queries.
+- Do NOT generate queries that return competitor analysis or news articles.
+
+Return ONLY a JSON array of 5 strings. No explanations, no markdown, no preamble:
+["query1", "query2", "query3", "query4", "query5"]

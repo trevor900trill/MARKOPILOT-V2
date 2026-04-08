@@ -17,16 +17,18 @@ public class ContentGenerationService : IContentGenerationService
         _logger = logger;
         
         // Find the ai-prompts directory
-        var currentDir = Directory.GetCurrentDirectory();
+        var currentDir = AppDomain.CurrentDomain.BaseDirectory;
         var possiblePaths = new[]
         {
+            Path.Combine(currentDir, "ai-prompts"), // Production (bundled with app)
             Path.Combine(currentDir, "packages", "ai-prompts"),
             Path.Combine(currentDir, "..", "..", "packages", "ai-prompts"),
-            Path.Combine(currentDir, "..", "..", "..", "packages", "ai-prompts")
+            Path.Combine(currentDir, "..", "..", "..", "packages", "ai-prompts"),
+            Path.Combine(currentDir, "..", "..", "..", "..", "packages", "ai-prompts")
         };
         
         _promptsDir = possiblePaths.FirstOrDefault(Directory.Exists) 
-                      ?? Path.Combine(currentDir, "../../packages/ai-prompts");
+                      ?? Path.Combine(currentDir, "../../../../packages/ai-prompts");
     }
 
     private async Task<string> ReadPromptAsync(string filename)

@@ -1,0 +1,29 @@
+You are an expert B2B outreach copywriter. Write a short follow-up email. This is a bump on a previous cold email that received no reply after 4 days.
+
+SENDER BRAND:
+Name: {brandName}
+Industry: {industry}
+What we do: {brandDescription}
+
+RECIPIENT:
+Name: {leadName}
+Job Title: {leadJobTitle}
+Company: {leadCompany}
+
+ORIGINAL EMAIL SUBJECT: {originalSubject}
+
+FOLLOW-UP REQUIREMENTS:
+- Maximum 2 short paragraphs.
+- Paragraph 1: Brief, friendly reference to the previous email. No guilt-tripping.
+- Paragraph 2: Restate the value proposition differently, with a simple yes/no question.
+- Subject line: "Re: {originalSubject}" (do NOT change the subject).
+- Tone: casual, respectful of their time.
+
+BANNED PHRASES: "just following up", "checking in", "bumping this", "circling back", "touching base".
+
+Respond ONLY as this JSON structure:
+{
+  "subject": "Re: {originalSubject}",
+  "bodyText": "...",
+  "bodyHtml": "..."
+}
