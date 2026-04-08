@@ -58,15 +58,15 @@ export function OnboardingWizard() {
   const nextStep = () => {
     // Skip Plan Selection (Step 6) if user already has brands or is already onboarded
     if (step === 5 && (session?.user as any)?.onboardingCompleted) {
-       setStep(7);
-       return;
+      setStep(7);
+      return;
     }
     setStep(s => s + 1);
   };
   const prevStep = () => {
     if (step === 7 && (session?.user as any)?.onboardingCompleted) {
-        setStep(5);
-        return;
+      setStep(5);
+      return;
     }
     setStep(s => s - 1);
   };
@@ -116,7 +116,7 @@ export function OnboardingWizard() {
 
   const handleStep2Continue = async () => {
     if (!formData.brandDescription) return;
-    
+
     // Set a loading state purely for the "Continue" button
     setIsAutoEnhancing(true);
     try {
@@ -178,10 +178,10 @@ export function OnboardingWizard() {
       // 4. Handle Subscription (Redirect to LS for ALL plans to capture CC for trial)
       // Only redirect if this is the user's first time onboarding (Global Plan Selection)
       const wasOnboarded = (session?.user as any)?.onboardingCompleted;
-      
+
       if (!wasOnboarded) {
         const checkoutData = await apiGet<{ url: string }>(`/subscriptions/checkout?planId=${formData.selectedPlan.toLowerCase()}`);
-        
+
         if (checkoutData?.url) {
           window.location.href = checkoutData.url;
           return; // Stop here, redirecting
@@ -192,7 +192,7 @@ export function OnboardingWizard() {
       setStep(8);
     } catch (err) {
       console.error("Onboarding failed:", err);
-      alert("Failed to save your brand. Please try again.");
+      // alert("Failed to save your brand. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -239,13 +239,13 @@ export function OnboardingWizard() {
               {user.image ? <img src={user.image} className="w-full h-full object-cover" alt="Profile" referrerPolicy="no-referrer" /> : <span className="text-3xl text-[var(--text-muted)]">👋</span>}
             </div>
             <h1 className="font-serif text-4xl text-white">
-              {(session?.user as any)?.onboardingCompleted 
-                ? "Add a New Brand" 
+              {(session?.user as any)?.onboardingCompleted
+                ? "Add a New Brand"
                 : `Welcome, ${(user as any).name?.split(' ')[0] || "Pilot"}.`}
             </h1>
             <p className="text-[var(--text-secondary)] text-lg">
-              {(session?.user as any)?.onboardingCompleted 
-                ? "Ready to scale? Let's get your next brand up and running." 
+              {(session?.user as any)?.onboardingCompleted
+                ? "Ready to scale? Let's get your next brand up and running."
                 : "Let's set up your first brand in about 2 minutes."}
             </p>
             <button onClick={nextStep} className="w-full py-4 mt-8 rounded-full bg-[var(--accent-primary)] text-white font-medium hover:opacity-90 flex justify-center gap-2 items-center">
@@ -268,8 +268,8 @@ export function OnboardingWizard() {
               <div>
                 <div className="flex justify-between items-end mb-1">
                   <label className="block text-sm text-[var(--text-secondary)]">Short Description *</label>
-                  <button 
-                    onClick={handleEnhanceDescription} 
+                  <button
+                    onClick={handleEnhanceDescription}
                     disabled={isEnhancing || !formData.brandDescription}
                     className="text-[10px] flex items-center gap-1.5 text-[var(--accent-primary)] hover:opacity-80 transition disabled:opacity-40"
                   >
@@ -301,9 +301,9 @@ export function OnboardingWizard() {
             </div>
             <div className="flex gap-4">
               <button onClick={prevStep} className="flex-1 py-4 mt-8 rounded-full border border-[var(--border)] text-[var(--text-secondary)] font-medium hover:bg-white/5">Back</button>
-              <button 
-                onClick={handleStep2Continue} 
-                disabled={isAutoEnhancing || !formData.brandName.trim() || !formData.brandDescription.trim() || !formData.industry || (formData.industry === "Other" && !formData.industryCustom?.trim())} 
+              <button
+                onClick={handleStep2Continue}
+                disabled={isAutoEnhancing || !formData.brandName.trim() || !formData.brandDescription.trim() || !formData.industry || (formData.industry === "Other" && !formData.industryCustom?.trim())}
                 className="flex-[2] py-4 mt-8 rounded-full bg-[var(--accent-primary)] text-white font-medium hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex justify-center items-center gap-2"
               >
                 {isAutoEnhancing ? <><Loader2 size={18} className="animate-spin" /> Generating Suggestions...</> : "Continue"}
@@ -471,7 +471,15 @@ export function OnboardingWizard() {
                 disabled={isSubmitting}
                 className="flex-[2] py-4 mt-8 rounded-full bg-[var(--accent-primary)] text-white font-semibold hover:opacity-90 flex justify-center items-center gap-2 shadow-xl shadow-[var(--accent-glow)]/20"
               >
-                {isSubmitting ? <><Loader2 size={18} className="animate-spin" /> Finalizing...</> : <>Start My Trial <ArrowRight size={18} /></>}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" /> Finalizing...
+                  </>
+                ) : (
+                  <>
+                    {(session?.user as any)?.onboardingCompleted ? "Launch Brand" : "Start My Trial"} <ArrowRight size={18} />
+                  </>
+                )}
               </button>
             </div>
           </div>

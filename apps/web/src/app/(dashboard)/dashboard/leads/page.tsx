@@ -1,6 +1,7 @@
 "use client";
 
 import { Users, Search, Play, Filter, Download, MailPlus, Trash2, ShieldBan, ExternalLink, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 import { useState, useEffect, useCallback } from "react";
 import { useBrand } from "@/lib/brand-context";
 import { apiGet, apiPost, apiDelete } from "@/lib/api-client";
@@ -56,10 +57,10 @@ export default function LeadsPage() {
     setIsDiscovering(true);
     try {
       await apiPost(`/leads/${activeBrand.id}/run-now`);
-      alert("Discovery job has been queued in the background! Results will populate shortly.");
+      toast.success("Discovery job has been queued in the background! Results will populate shortly.");
     } catch (err) {
       console.error("Failed to trigger discovery:", err);
-      alert("Failed to trigger discovery. Please try again.");
+      toast.error("Failed to trigger discovery. Please try again.");
     } finally {
       setIsDiscovering(false);
     }
