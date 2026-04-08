@@ -207,5 +207,32 @@ public class ContentGenerationService : IContentGenerationService
             _logger.LogError(ex, "Failed to parse List<string> JSON for Search Queries: {Content}", response.Content);
             return new List<string> { response.Content };
         }
-    }    
+    }
+
+    public async Task<EnhanceOnboardingResponse> EnhanceOnboardingAsync(string description)
+    {
+        var template = await ReadPromptAsync("onboarding-enhancement.txt");
+        
+        var request = new AiCompletionRequest
+        {
+            Task = AiTask.OnboardingEnhancement,
+            SystemPrompt = template,
+            UserPrompt = $"Raw description: {description}",
+            MaxTokens = 2000
+        };
+
+        var response = await _aiService.CompleteAsync(request);
+        
+        try
+        {
+            var cleaned = CleanJsonResponse(response.Content);
+            return JsonSerializer.Deserialize<EnhanceOnboardingResponse>(cleaned, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) 
+                   ?? new EnhanceOnboardingResponse { EnhancedDescription = description };
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "Failed to parse EnhanceOnboardingResponse JSON: {Content}", response.Content);
+            return new EnhanceOnboardingResponse { EnhancedDescription = description };
+        }
+    }
 }

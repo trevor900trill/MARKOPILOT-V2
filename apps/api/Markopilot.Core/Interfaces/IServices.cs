@@ -28,6 +28,7 @@ public interface IContentGenerationService
     Task<GeneratedEmail> GenerateFollowUpEmailAsync(Brand brand, Lead lead, string originalSubject);
     Task<List<string>> SuggestContentPillarsAsync(Brand brand);
     Task<List<string>> GenerateSearchQueriesAsync(Brand brand);
+    Task<EnhanceOnboardingResponse> EnhanceOnboardingAsync(string description);
 }
 
 // ═══════════════════════════════════════════════════

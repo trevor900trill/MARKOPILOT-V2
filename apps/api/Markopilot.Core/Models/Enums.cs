@@ -7,7 +7,8 @@ public enum AiTask
     LeadScoring,
     SocialPostGeneration,
     EmailOutreachCopy,
-    ContentPillarSuggestion
+    ContentPillarSuggestion,
+    OnboardingEnhancement
 }
 
 public enum SocialPlatform

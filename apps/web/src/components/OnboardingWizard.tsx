@@ -27,6 +27,8 @@ export function OnboardingWizard() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [isAutoEnhancing, setIsAutoEnhancing] = useState(false);
   const [formData, setFormData] = useState({
     brandName: "",
     brandDescription: "",
@@ -89,6 +91,59 @@ export function OnboardingWizard() {
   const removeTag = (field: string, index: number) => {
     const current = (formData as any)[field] as string[];
     updateForm(field, current.filter((_, i) => i !== index));
+  };
+
+  const handleEnhanceDescription = async () => {
+    if (!formData.brandDescription) return;
+    setIsEnhancing(true);
+    try {
+      const data = await apiPost<{
+        enhancedDescription: string;
+      }>("/ai/enhance-onboarding", { description: formData.brandDescription });
+
+      if (data) {
+        setFormData(prev => ({
+          ...prev,
+          brandDescription: data.enhancedDescription,
+        }));
+      }
+    } catch (err) {
+      console.error("Enhancement failed:", err);
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
+
+  const handleStep2Continue = async () => {
+    if (!formData.brandDescription) return;
+    
+    // Set a loading state purely for the "Continue" button
+    setIsAutoEnhancing(true);
+    try {
+      // Call the AI API to get suggestions based on the current description
+      const data = await apiPost<{
+        suggestedJobTitles: string[];
+        suggestedPainPoints: string[];
+        suggestedGeographies: string[];
+        suggestedContentPillars: string[];
+      }>("/ai/enhance-onboarding", { description: formData.brandDescription });
+
+      if (data) {
+        setFormData(prev => ({
+          ...prev,
+          jobTitles: data.suggestedJobTitles.length > 0 ? data.suggestedJobTitles : prev.jobTitles,
+          painPoints: data.suggestedPainPoints.length > 0 ? data.suggestedPainPoints : prev.painPoints,
+          geographies: data.suggestedGeographies.length > 0 ? data.suggestedGeographies : prev.geographies,
+          contentPillars: data.suggestedContentPillars.length > 0 ? data.suggestedContentPillars : prev.contentPillars,
+        }));
+      }
+    } catch (err) {
+      console.error("Auto-enhancement failed:", err);
+      // We don't block the user from continuing if AI fails
+    } finally {
+      setIsAutoEnhancing(false);
+      nextStep();
+    }
   };
 
   const handleFinish = async () => {
@@ -211,7 +266,17 @@ export function OnboardingWizard() {
                 <input type="text" value={formData.brandName} onChange={(e) => updateForm("brandName", e.target.value)} className="w-full bg-[var(--bg-elevated)] border border-[var(--border)] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[var(--accent-primary)]" placeholder="e.g. Acme Corp" />
               </div>
               <div>
-                <label className="block text-sm text-[var(--text-secondary)] mb-1">Short Description *</label>
+                <div className="flex justify-between items-end mb-1">
+                  <label className="block text-sm text-[var(--text-secondary)]">Short Description *</label>
+                  <button 
+                    onClick={handleEnhanceDescription} 
+                    disabled={isEnhancing || !formData.brandDescription}
+                    className="text-[10px] flex items-center gap-1.5 text-[var(--accent-primary)] hover:opacity-80 transition disabled:opacity-40"
+                  >
+                    {isEnhancing ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
+                    {isEnhancing ? "Enhancing..." : "Enhance with AI"}
+                  </button>
+                </div>
                 <textarea value={formData.brandDescription} onChange={(e) => updateForm("brandDescription", e.target.value)} className="w-full bg-[var(--bg-elevated)] border border-[var(--border)] rounded-xl px-4 py-3 text-white h-24 focus:outline-none focus:border-[var(--accent-primary)]" placeholder="What does your company do?" />
               </div>
               <div>
@@ -236,7 +301,13 @@ export function OnboardingWizard() {
             </div>
             <div className="flex gap-4">
               <button onClick={prevStep} className="flex-1 py-4 mt-8 rounded-full border border-[var(--border)] text-[var(--text-secondary)] font-medium hover:bg-white/5">Back</button>
-              <button onClick={nextStep} disabled={!formData.brandName || !formData.brandDescription || !formData.industry || (formData.industry === "Other" && !formData.industryCustom)} className="flex-[2] py-4 mt-8 rounded-full bg-[var(--accent-primary)] text-white font-medium hover:opacity-90 disabled:opacity-50">Continue</button>
+              <button 
+                onClick={handleStep2Continue} 
+                disabled={isAutoEnhancing || !formData.brandName.trim() || !formData.brandDescription.trim() || !formData.industry || (formData.industry === "Other" && !formData.industryCustom?.trim())} 
+                className="flex-[2] py-4 mt-8 rounded-full bg-[var(--accent-primary)] text-white font-medium hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex justify-center items-center gap-2"
+              >
+                {isAutoEnhancing ? <><Loader2 size={18} className="animate-spin" /> Generating Suggestions...</> : "Continue"}
+              </button>
             </div>
           </div>
         )}

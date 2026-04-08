@@ -8,6 +8,7 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 const supabaseJwtSecret = process.env.SUPABASE_JWT_SECRET || "";
 
 export const config: NextAuthConfig = {
+  trustHost: true,
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
