@@ -17,6 +17,7 @@ public class AiController : ControllerBase
         _logger = logger;
     }
 
+    // Deployment trigger: force rebuild of API service
     [HttpPost("enhance-onboarding")]
     public async Task<IActionResult> EnhanceOnboarding([FromBody] EnhanceOnboardingRequest request)
     {
