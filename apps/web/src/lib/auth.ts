@@ -14,7 +14,7 @@ export const config: NextAuthConfig = {
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
       authorization: { params: { scope: "openid profile email", prompt: "consent", access_type: "offline", response_type: "code" } },
-      checks: ["pkce"], // Fixes the missing issuer error in production behind proxies
+      checks: ["none"], // Bypasses proxy-dropped cookie issues (PKCE/State verification failures)
     }),
   ],
   session: { strategy: "jwt" },
