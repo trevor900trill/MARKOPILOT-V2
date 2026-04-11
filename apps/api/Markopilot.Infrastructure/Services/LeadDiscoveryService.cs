@@ -11,6 +11,7 @@ using DnsClient;
 using HtmlAgilityPack;
 using Markopilot.Core.Interfaces;
 using Markopilot.Core.Models;
+using Markopilot.Infrastructure.Search;
 using Microsoft.Extensions.Logging;
 
 namespace Markopilot.Infrastructure.Services;
