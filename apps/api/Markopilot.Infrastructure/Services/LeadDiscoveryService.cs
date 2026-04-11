@@ -351,7 +351,7 @@ Return ONLY this JSON, no preamble:
                     var greeting = await reader.ReadLineAsync();
                     if (greeting == null || !greeting.StartsWith("220")) continue;
 
-                    await writer.WriteLineAsync("HELO markopilot.com");
+                    await writer.WriteLineAsync("HELO mail.markopilot.com");
                     var heloResponse = await reader.ReadLineAsync();
                     if (heloResponse == null || !heloResponse.StartsWith("250")) continue;
 
@@ -359,17 +359,37 @@ Return ONLY this JSON, no preamble:
                     var mailFromResponse = await reader.ReadLineAsync();
                     if (mailFromResponse == null || !mailFromResponse.StartsWith("250")) continue;
 
+                    // ── CATCH-ALL BURN TEST ───────────────────────
+                    // Probe a randomized address to see if the server accepts everything.
+                    var randomProbe = $"verifier_test_{Guid.NewGuid().ToString("N").Substring(0, 8)}@{domain}";
+                    await writer.WriteLineAsync($"RCPT TO:<{randomProbe}>");
+                    var probeResponse = await reader.ReadLineAsync();
+                    
+                    bool isCatchAll = probeResponse != null && probeResponse.StartsWith("250");
+                    if (isCatchAll)
+                    {
+                        _logger.LogWarning("Domain {Domain} identified as Catch-All", domain);
+                        // If catch-all, we return the most likely permutation but mark it as such
+                        var likely = permutations.FirstOrDefault();
+                        await writer.WriteLineAsync("QUIT");
+                        return likely; // The worker will see it's from a catch-all domain via validation status
+                    }
+
                     foreach (var email in permutations)
                     {
                         _logger.LogInformation("Checking email {Email}", email);
                         await writer.WriteLineAsync($"RCPT TO:<{email}>");
                         var rcptResponse = await reader.ReadLineAsync();
                         _logger.LogInformation("Email {Email} response: {Response}", email, rcptResponse);
+                        
                         if (rcptResponse != null && rcptResponse.StartsWith("250"))
                         {
                             await writer.WriteLineAsync("QUIT");
                             return email;
                         }
+                        
+                        // If we get a hard fail (550), we can potentially skip others for this MX if it's reputable,
+                        // but usually it's better to finish the loop if we're already connected.
                     }
 
                     await writer.WriteLineAsync("QUIT");

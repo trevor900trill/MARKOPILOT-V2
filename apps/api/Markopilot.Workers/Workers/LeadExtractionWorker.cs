@@ -122,6 +122,9 @@ public class LeadExtractionWorker : ILeadExtractionWorker
         // 4. Processing Phase: Scraping, AI Extraction, Validation, Scoring
         var qualifiedLeads = new List<Lead>();
         int dailyLimit = brand.AutomationLeadsPerDay > 0 ? brand.AutomationLeadsPerDay : 50;
+        int leadsFoundForPerformance = 0;
+        int highQualityCount = 0;
+        int totalScore = 0;
 
         _logger.LogInformation("Processing {Count} unique results for brand {BrandId}. Daily limit: {DailyLimit}", uniqueResults.Count, brandId, dailyLimit);
         
@@ -134,13 +137,11 @@ public class LeadExtractionWorker : ILeadExtractionWorker
                 
                 if (string.IsNullOrWhiteSpace(scrapedText))
                 {
-                    // Fallback to safe scraping via Jina Reader/HttpClient
                     scrapedText = await _discoveryService.ScrapePageAsync(result.Url);
                 }
 
                 if (string.IsNullOrWhiteSpace(scrapedText))
                 {
-                    // Absolute last resort: just use title and snippet
                     scrapedText = result.Title + "\n" + result.Snippet + "\n" + result.Url;
                 }
 
@@ -148,17 +149,32 @@ public class LeadExtractionWorker : ILeadExtractionWorker
                 var entity = await _discoveryService.ExtractEntityAsync(scrapedText);
                 if (entity == null || entity.Confidence == "low") continue;
 
+                // ── GLOBAL DEDUPLICATION BY FINGERPRINT ─────
+                var fingerprint = GenerateFingerprint(entity);
+                var existingLead = await _leadRepo.GetLeadByFingerprintAsync(fingerprint, TimeSpan.FromDays(7));
+                
+                if (existingLead != null)
+                {
+                    _logger.LogInformation("Found duplicate lead globally (extracted {Time} ago). Reusing data for brand {BrandId}.", 
+                        existingLead.DiscoveredAt, brandId);
+                    
+                    var cloned = CloneLeadForBrand(existingLead, brandId, result.Url);
+                    qualifiedLeads.Add(cloned);
+                    
+                    leadsFoundForPerformance++;
+                    if (cloned.LeadScore > 60) highQualityCount++;
+                    totalScore += cloned.LeadScore;
+                    continue;
+                }
+
                 _logger.LogInformation("Extracted entity: {Name} at {Company}", entity.Name, entity.Company);
 
                 // 3. Intelligent Email Discovery
                 if (string.IsNullOrWhiteSpace(entity.Email) && !string.IsNullOrWhiteSpace(entity.Name) && !string.IsNullOrWhiteSpace(entity.Company))
                 {
-                    // Use intelligent domain discovery instead of just appending .com
                     var domain = await _discoveryService.DiscoverDomainAsync(entity.Company);
-                    
                     if (string.IsNullOrEmpty(domain))
                     {
-                        // Fallback to primitive guess if discovery fails
                         domain = entity.Company.ToLowerInvariant().Replace(" ", "").Replace(",", "").Replace("inc", "").Replace("llc", "") + ".com";
                     }
 
@@ -166,40 +182,34 @@ public class LeadExtractionWorker : ILeadExtractionWorker
                     entity.Email = await _discoveryService.DiscoverEmailAsync(entity.Name, entity.Company, domain);
                 }
 
-                // Only consider leads that have actionable contact information
                 if (string.IsNullOrWhiteSpace(entity.Email) && string.IsNullOrWhiteSpace(entity.LinkedinUrl))
                 {
                     continue;
                 }
 
-                // If email exists, actively validate MX records
+                // 4. Verification & Scoring
+                var emailStatus = "unverified";
                 if (!string.IsNullOrWhiteSpace(entity.Email))
                 {
                     var isEmailValid = await _discoveryService.ValidateEmailAsync(entity.Email);
                     if (!isEmailValid)
                     {
                         _logger.LogDebug("Invalid or bouncing email rejected: {Email}", entity.Email);
-                        entity.Email = null; // Blank it out, maybe they have LinkedIn URL to survive qualification
-                        if (string.IsNullOrWhiteSpace(entity.LinkedinUrl))
-                        {
-                            continue; // Unreachable lead
-                        }
+                        entity.Email = null; 
+                        if (string.IsNullOrWhiteSpace(entity.LinkedinUrl)) continue;
+                    }
+                    else
+                    {
+                        emailStatus = "verified";
+                        // Note: DiscoverEmailAsync logic potentially identifies catch-all, 
+                        // but ValidateEmailAsync (SMTP ping) can also do it.
                     }
                 }
 
                 var scoreResult = await _discoveryService.ScoreLeadAsync(brand, entity, result.Url);
                 if (scoreResult.Score < 30) continue;
 
-                var linkedinUrl = entity.LinkedinUrl?.Trim();
-                if (!string.IsNullOrWhiteSpace(linkedinUrl))
-                {
-                    if (!linkedinUrl.StartsWith("http")) linkedinUrl = "https://" + linkedinUrl;
-                    if (linkedinUrl.Contains("linkedin.com") && !linkedinUrl.Contains("www.linkedin.com"))
-                    {
-                        linkedinUrl = linkedinUrl.Replace("https://linkedin.com", "https://www.linkedin.com")
-                                                 .Replace("http://linkedin.com", "https://www.linkedin.com");
-                    }
-                }
+                var normalizedLinkedin = NormalizeLinkedinUrl(entity.LinkedinUrl);
 
                 qualifiedLeads.Add(new Lead
                 {
@@ -211,7 +221,9 @@ public class LeadExtractionWorker : ILeadExtractionWorker
                     JobTitle = entity.JobTitle,
                     Company = entity.Company,
                     Email = entity.Email,
-                    LinkedinUrl = linkedinUrl,
+                    EmailStatus = emailStatus,
+                    Fingerprint = fingerprint,
+                    LinkedinUrl = normalizedLinkedin,
                     TwitterHandle = entity.TwitterHandle,
                     Location = entity.Location,
                     AiSummary = scoreResult.Summary,
@@ -220,6 +232,10 @@ public class LeadExtractionWorker : ILeadExtractionWorker
                     DiscoveredAt = DateTimeOffset.UtcNow,
                     UpdatedAt = DateTimeOffset.UtcNow
                 });
+
+                leadsFoundForPerformance++;
+                if (scoreResult.Score > 60) highQualityCount++;
+                totalScore += scoreResult.Score;
             }
             catch (Exception ex)
             {
@@ -227,9 +243,23 @@ public class LeadExtractionWorker : ILeadExtractionWorker
             }
         }
 
+        // 5. Log performance for first query (simplification for beta)
+        if (searchQueries.Count > 0 && leadsFoundForPerformance > 0)
+        {
+            await _brandRepo.LogQueryPerformanceAsync(new SearchQueryHistory
+            {
+                BrandId = brandId,
+                QueryText = searchQueries[0],
+                LeadsGenerated = leadsFoundForPerformance,
+                HighQualityCount = highQualityCount,
+                AverageLeadScore = (double)totalScore / leadsFoundForPerformance,
+                LastRunAt = DateTimeOffset.UtcNow
+            });
+        }
+
         _logger.LogInformation("{Count} leads passed complete qualification.", qualifiedLeads.Count);
 
-        // 5. Bulk insert strictly curated qualified leads
+        // 6. Bulk insert strictly curated qualified leads
         if (qualifiedLeads.Count > 0)
         {
             await _leadRepo.BulkInsertLeadsAsync(qualifiedLeads);
@@ -241,5 +271,54 @@ public class LeadExtractionWorker : ILeadExtractionWorker
                 
             _logger.LogInformation("Inserted {Count} successfully sourced leads for brand {BrandId}.", qualifiedLeads.Count, brandId);
         }
+    }
+
+    private string GenerateFingerprint(ExtractedEntity entity)
+    {
+        var raw = !string.IsNullOrWhiteSpace(entity.Email) 
+            ? entity.Email.ToLowerInvariant().Trim() 
+            : $"{entity.Name?.ToLowerInvariant().Trim()}|{entity.Company?.ToLowerInvariant().Trim()}";
+            
+        using var sha256 = System.Security.Cryptography.SHA256.Create();
+        var bytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(raw));
+        return Convert.ToHexString(bytes);
+    }
+
+    private Lead CloneLeadForBrand(Lead existing, Guid brandId, string sourceUrl)
+    {
+        return new Lead
+        {
+            Id = Guid.NewGuid(),
+            BrandId = brandId,
+            DiscoveredVia = existing.DiscoveredVia,
+            SourceUrl = sourceUrl,
+            Name = existing.Name,
+            JobTitle = existing.JobTitle,
+            Company = existing.Company,
+            Email = existing.Email,
+            EmailStatus = existing.EmailStatus,
+            Fingerprint = existing.Fingerprint,
+            LinkedinUrl = existing.LinkedinUrl,
+            TwitterHandle = existing.TwitterHandle,
+            Location = existing.Location,
+            AiSummary = existing.AiSummary,
+            LeadScore = existing.LeadScore,
+            Status = "new",
+            DiscoveredAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+    }
+
+    private string? NormalizeLinkedinUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return null;
+        var linkedinUrl = url.Trim();
+        if (!linkedinUrl.StartsWith("http")) linkedinUrl = "https://" + linkedinUrl;
+        if (linkedinUrl.Contains("linkedin.com") && !linkedinUrl.Contains("www.linkedin.com"))
+        {
+            linkedinUrl = linkedinUrl.Replace("https://linkedin.com", "https://www.linkedin.com")
+                                     .Replace("http://linkedin.com", "https://www.linkedin.com");
+        }
+        return linkedinUrl;
     }
 }

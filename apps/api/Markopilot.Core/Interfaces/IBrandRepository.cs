@@ -51,4 +51,8 @@ public interface IBrandRepository
     /// <summary>Delete a brand and all associated data.</summary>
     /// <remarks>Used by: API</remarks>
     Task<bool> DeleteBrandAsync(Guid brandId, Guid ownerId);
+
+    // ── Global Discovery Intelligence ────────────
+    Task LogQueryPerformanceAsync(SearchQueryHistory history);
+    Task<List<SearchQueryHistory>> GetTopPerformingQueriesAsync(Guid brandId, int limit = 5);
 }

@@ -8,12 +8,14 @@ namespace Markopilot.Infrastructure.AI;
 public class ContentGenerationService : IContentGenerationService
 {
     private readonly IAiRoutingService _aiService;
+    private readonly IBrandRepository _brandRepo;
     private readonly ILogger<ContentGenerationService> _logger;
     private readonly string _promptsDir;
 
-    public ContentGenerationService(IAiRoutingService aiService, ILogger<ContentGenerationService> logger)
+    public ContentGenerationService(IAiRoutingService aiService, IBrandRepository brandRepo, ILogger<ContentGenerationService> logger)
     {
         _aiService = aiService;
+        _brandRepo = brandRepo;
         _logger = logger;
         
         // Find the ai-prompts directory
@@ -183,6 +185,12 @@ public class ContentGenerationService : IContentGenerationService
 
     public async Task<List<string>> GenerateSearchQueriesAsync(Brand brand)
     {
+        // 1. Fetch top performing queries for this brand to provide few-shot examples
+        var topQueries = await _brandRepo.GetTopPerformingQueriesAsync(brand.Id, 3);
+        var historyContext = topQueries.Any() 
+            ? "\n\nPast successful queries for this brand:\n" + string.Join("\n", topQueries.Select(q => $"- {q.QueryText} (Score: {q.AverageLeadScore:F1})"))
+            : "";
+
         var template = await ReadPromptAsync("lead-queries.txt");
         var systemContent = template
             .Replace("{{brandName}}", brand.Name)
@@ -193,7 +201,7 @@ public class ContentGenerationService : IContentGenerationService
         {
             Task = AiTask.LeadQueryGeneration,
             SystemPrompt = systemContent,
-            UserPrompt = "Please generate 5 search queries to find leads.",
+            UserPrompt = $"Please generate 5 search queries to find leads.{historyContext}",
             MaxTokens = 600
         };
 
@@ -201,8 +209,8 @@ public class ContentGenerationService : IContentGenerationService
         
         try
         {
-            var res = JsonSerializer.Deserialize<List<string>>(response.Content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            return res ?? new List<string>();
+            var cleaned = CleanJsonResponse(response.Content);
+            return JsonSerializer.Deserialize<List<string>>(cleaned, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
         }
         catch (JsonException ex)
         {

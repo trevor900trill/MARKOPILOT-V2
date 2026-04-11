@@ -118,6 +118,17 @@ public class BrandsController : ControllerBase
         return Ok(new { data = result.Items, total = result.Total, page, pageSize, totalPages = (int)Math.Ceiling(result.Total / (double)pageSize) });
     }
 
+    [HttpGet("{brandId:guid}/discovery/performance")]
+    public async Task<IActionResult> GetDiscoveryPerformance(Guid brandId)
+    {
+        var userId = HttpContext.GetUserId();
+        var brand = await _repo.GetBrandByIdAsync(brandId, userId);
+        if (brand == null) return NotFound(new { error = new { code = "NOT_FOUND", message = "Brand not found" } });
+
+        var history = await _repo.GetTopPerformingQueriesAsync(brandId, 5);
+        return Ok(history);
+    }
+
     private void ScheduleLeadExtractionWorker(Core.Models.Brand brand)
     {
         var jobId = $"brand-leads-gen-{brand.Id}";
@@ -129,15 +140,17 @@ public class BrandsController : ControllerBase
 
         try
         {
-            // Autonomous discovery runs unconditionally at 02:00 UTC daily for eligible overarching limits
-            var cron = "0 2 * * *";
+            // Autonomous discovery runs once daily at ~02:00 UTC.
+            // We stagger the exact minute based on the BrandId to avoid "thundering herd" API rate limiting.
+            var minuteOffset = Math.Abs(brand.Id.GetHashCode() % 60);
+            var cron = $"{minuteOffset} 2 * * *";
 
             RecurringJob.AddOrUpdate<Markopilot.Core.Interfaces.ILeadExtractionWorker>(
                 jobId,
                 worker => worker.ExecuteAsync(brand.Id),
                 cron);
             
-            _logger.LogInformation("Scheduled lead extraction job for brand {BrandId} with cron: {Cron}", brand.Id, cron);
+            _logger.LogInformation("Scheduled lead extraction job for brand {BrandId} with staggered cron: {Cron}", brand.Id, cron);
         }
         catch (Exception ex)
         {

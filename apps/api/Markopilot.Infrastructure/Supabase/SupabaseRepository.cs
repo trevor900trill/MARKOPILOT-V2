@@ -250,6 +250,61 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         return result > 0;
     }
 
+    public async Task LogQueryPerformanceAsync(SearchQueryHistory history)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            INSERT INTO search_query_history (brand_id, query_text, leads_generated, high_quality_count, average_lead_score, last_run_at)
+            VALUES (@brandId, @query, @leads, @highQual, @avgScore, @lastRun)
+            ON CONFLICT (brand_id, query_text) DO UPDATE SET
+                leads_generated = search_query_history.leads_generated + EXCLUDED.leads_generated,
+                high_quality_count = search_query_history.high_quality_count + EXCLUDED.high_quality_count,
+                average_lead_score = (search_query_history.average_lead_score + EXCLUDED.average_lead_score) / 2.0,
+                last_run_at = EXCLUDED.last_run_at", conn);
+
+        cmd.Parameters.AddWithValue("brandId", history.BrandId);
+        cmd.Parameters.AddWithValue("query", history.QueryText);
+        cmd.Parameters.AddWithValue("leads", history.LeadsGenerated);
+        cmd.Parameters.AddWithValue("highQual", history.HighQualityCount);
+        cmd.Parameters.AddWithValue("avgScore", history.AverageLeadScore);
+        cmd.Parameters.AddWithValue("lastRun", history.LastRunAt);
+
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task<List<SearchQueryHistory>> GetTopPerformingQueriesAsync(Guid brandId, int limit = 5)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            SELECT * FROM search_query_history 
+            WHERE brand_id = @brandId 
+            ORDER BY high_quality_count DESC, average_lead_score DESC
+            LIMIT @limit", conn);
+        cmd.Parameters.AddWithValue("brandId", brandId);
+        cmd.Parameters.AddWithValue("limit", limit);
+
+        var history = new List<SearchQueryHistory>();
+        await using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            history.Add(new SearchQueryHistory
+            {
+                Id = reader.GetGuid(reader.GetOrdinal("id")),
+                BrandId = reader.GetGuid(reader.GetOrdinal("brand_id")),
+                QueryText = reader.GetString(reader.GetOrdinal("query_text")),
+                LeadsGenerated = reader.GetInt32(reader.GetOrdinal("leads_generated")),
+                HighQualityCount = reader.GetInt32(reader.GetOrdinal("high_quality_count")),
+                AverageLeadScore = reader.GetDouble(reader.GetOrdinal("average_lead_score")),
+                LastRunAt = reader.GetDateTime(reader.GetOrdinal("last_run_at"))
+            });
+        }
+        return history;
+    }
+
     public async Task<List<Brand>> GetBrandsByOwnerAsync(Guid ownerId)
     {
         await using var conn = CreateConnection();
@@ -358,8 +413,8 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         {
             var cmd = new NpgsqlBatchCommand(@"
                 INSERT INTO leads (id, brand_id, discovered_via, source_url, name, job_title,
-                    company, email, linkedin_url, twitter_handle, location, ai_summary, lead_score, status)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                    company, email, linkedin_url, twitter_handle, location, ai_summary, lead_score, status, email_status, fingerprint)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
                 ON CONFLICT DO NOTHING");
 
             cmd.Parameters.AddWithValue(lead.Id == Guid.Empty ? Guid.NewGuid() : lead.Id);
@@ -376,12 +431,32 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
             cmd.Parameters.AddWithValue((object?)lead.AiSummary ?? DBNull.Value);
             cmd.Parameters.AddWithValue(lead.LeadScore);
             cmd.Parameters.AddWithValue(lead.Status);
+            cmd.Parameters.AddWithValue(lead.EmailStatus);
+            cmd.Parameters.AddWithValue((object?)lead.Fingerprint ?? DBNull.Value);
 
             batch.BatchCommands.Add(cmd);
         }
 
         await batch.ExecuteNonQueryAsync();
         _logger.LogInformation("Bulk inserted {Count} leads", leads.Count);
+    }
+
+    public async Task<Lead?> GetLeadByFingerprintAsync(string fingerprint, TimeSpan maxAge)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            SELECT * FROM leads 
+            WHERE fingerprint = @fingerprint 
+              AND discovered_at >= @cutoff
+            ORDER BY discovered_at DESC
+            LIMIT 1", conn);
+        cmd.Parameters.AddWithValue("fingerprint", fingerprint);
+        cmd.Parameters.AddWithValue("cutoff", DateTimeOffset.UtcNow.Subtract(maxAge));
+
+        await using var reader = await cmd.ExecuteReaderAsync();
+        return await reader.ReadAsync() ? MapLead(reader) : null;
     }
 
     public async Task<bool> LeadSourceUrlExistsAsync(Guid brandId, string sourceUrl)
@@ -1310,6 +1385,8 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         AiSummary = r.IsDBNull(r.GetOrdinal("ai_summary")) ? null : r.GetString(r.GetOrdinal("ai_summary")),
         LeadScore = r.GetInt32(r.GetOrdinal("lead_score")),
         Status = r.GetString(r.GetOrdinal("status")),
+        EmailStatus = r.IsDBNull(r.GetOrdinal("email_status")) ? "unverified" : r.GetString(r.GetOrdinal("email_status")),
+        Fingerprint = r.IsDBNull(r.GetOrdinal("fingerprint")) ? null : r.GetString(r.GetOrdinal("fingerprint")),
         DiscoveredAt = r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("discovered_at")),
         UpdatedAt = r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("updated_at")),
     };

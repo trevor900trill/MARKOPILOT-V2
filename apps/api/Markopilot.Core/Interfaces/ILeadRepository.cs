@@ -27,6 +27,10 @@ public interface ILeadRepository
     /// <remarks>Used by: Workers (LeadExtractionWorker)</remarks>
     Task<bool> LeadSourceUrlExistsAsync(Guid brandId, string url);
 
+    /// <summary>Find the most recent extraction of a lead globally (any brand) by fingerprint.</summary>
+    /// <remarks>Used by: Workers (LeadExtractionWorker — 7-day global dedup)</remarks>
+    Task<Lead?> GetLeadByFingerprintAsync(string fingerprint, TimeSpan maxAge);
+
     // ── Update ───────────────────────────────────
     /// <summary>Update the status of a lead (e.g., new → contacted → interested → disqualified).</summary>
     /// <remarks>Used by: API, Workers (OutreachWorker — marks leads as 'interested' on reply)</remarks>

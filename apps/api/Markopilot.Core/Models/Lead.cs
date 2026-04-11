@@ -16,6 +16,8 @@ public class Lead
     public string? AiSummary { get; set; }
     public int LeadScore { get; set; }
     public string Status { get; set; } = "new";
+    public string EmailStatus { get; set; } = "unverified";
+    public string? Fingerprint { get; set; }
     public DateTimeOffset DiscoveredAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 }
