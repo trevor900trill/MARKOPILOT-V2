@@ -64,6 +64,7 @@ builder.Services.AddSingleton<Markopilot.Core.Interfaces.IContentGenerationServi
 builder.Services.AddHttpClient<Markopilot.Core.Interfaces.ISearchClient, Markopilot.Infrastructure.Search.SerperClient>();
 builder.Services.AddHttpClient<Markopilot.Core.Interfaces.ISearchClient, Markopilot.Infrastructure.Search.ExaClient>();
 builder.Services.AddHttpClient<Markopilot.Core.Interfaces.IOutreachService, Markopilot.Infrastructure.Email.OutreachService>();
+builder.Services.AddHttpClient<Markopilot.Infrastructure.Search.JinaReaderClient>();
 builder.Services.AddHttpClient<Markopilot.Core.Interfaces.ILeadDiscoveryService, Markopilot.Infrastructure.Services.LeadDiscoveryService>()
     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
     {
