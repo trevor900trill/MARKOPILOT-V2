@@ -73,7 +73,8 @@ public class LeadDiscoveryService : ILeadDiscoveryService
         // Fallback to basic HttpClient scraping if Jina fails
         try
         {
-            var response = await _httpClient.GetAsync(url);
+            var request = CreateBrowserLikeRequest(url);
+            var response = await _httpClient.SendAsync(request);
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning("Failed to scrape {Url}. Status: {StatusCode}", url, response.StatusCode);
@@ -414,5 +415,27 @@ Return ONLY this JSON, no preamble:
         }
 
         return null;
+    }
+
+    private HttpRequestMessage CreateBrowserLikeRequest(string url)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, url);
+        
+        // Use a modern, varied chrome User-Agent
+        request.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36");
+        
+        // Standard browser headers that many bot-detectors look for
+        request.Headers.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8");
+        request.Headers.Add("Accept-Language", "en-US,en;q=0.9");
+        request.Headers.Add("Range", "bytes=0-100000"); // Request first 100KB to save time/bandwidth
+        
+        // Modern browser navigation headers
+        request.Headers.Add("Upgrade-Insecure-Requests", "1");
+        request.Headers.TryAddWithoutValidation("Sec-Fetch-Dest", "document");
+        request.Headers.TryAddWithoutValidation("Sec-Fetch-Mode", "navigate");
+        request.Headers.TryAddWithoutValidation("Sec-Fetch-Site", "none");
+        request.Headers.TryAddWithoutValidation("Sec-Fetch-User", "?1");
+        
+        return request;
     }
 }
