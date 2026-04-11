@@ -47,7 +47,13 @@ public class ExaClient : ISearchClient
             throw new Exception("ExaAi rate limit exceeded (max 100 per minute).");
         }
 
-        var payload = new { query = query, numResults = maxResults, type = "neural" };
+        var payload = new 
+        { 
+            query = query, 
+            numResults = maxResults, 
+            type = "neural",
+            contents = new { text = new { maxCharacters = 5000 } }
+        };
         var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
         var response = await _httpClient.PostAsync("search", content);
@@ -68,13 +74,25 @@ public class ExaClient : ISearchClient
             {
                 var title = item.TryGetProperty("title", out var t) ? t.GetString() : "";
                 var url = item.TryGetProperty("url", out var u) ? u.GetString() : "";
-                var text = item.TryGetProperty("text", out var tx) ? tx.GetString() : "";
+                var summary = item.TryGetProperty("text", out var tx) ? tx.GetString() : "";
+                
+                // Exa returns full content in the results[].text field if contents.text is true
+                // In some versions it might be under results[].contents.text, checking both
+                string? rawContent = summary;
+                if (item.TryGetProperty("contents", out var contentsObj))
+                {
+                    if (contentsObj.TryGetProperty("text", out var fullText))
+                    {
+                        rawContent = fullText.GetString();
+                    }
+                }
 
                 results.Add(new SearchResult
                 {
                     Title = title ?? string.Empty,
                     Url = url ?? string.Empty,
-                    Snippet = text ?? string.Empty
+                    Snippet = summary ?? string.Empty,
+                    RawContent = rawContent
                 });
             }
         }

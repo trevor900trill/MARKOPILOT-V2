@@ -129,25 +129,41 @@ public class LeadExtractionWorker : ILeadExtractionWorker
         {
             try
             {
-                // Commented out to avoid 999 errors from ..
-                // var scrapedText = await _discoveryService.ScrapePageAsync(result.Url);
-                // if (string.IsNullOrWhiteSpace(scrapedText))
-                // {
-                //     scrapedText = result.Snippet;
-                // }
-                var scrapedText = result.Title + "\n" + result.Snippet + "\n" + result.Url;
+                // 1. Get high-quality page context
+                string scrapedText = result.RawContent ?? string.Empty;
+                
+                if (string.IsNullOrWhiteSpace(scrapedText))
+                {
+                    // Fallback to safe scraping via Jina Reader/HttpClient
+                    scrapedText = await _discoveryService.ScrapePageAsync(result.Url);
+                }
 
+                if (string.IsNullOrWhiteSpace(scrapedText))
+                {
+                    // Absolute last resort: just use title and snippet
+                    scrapedText = result.Title + "\n" + result.Snippet + "\n" + result.Url;
+                }
+
+                // 2. Extract structured lead data from the rich text
                 var entity = await _discoveryService.ExtractEntityAsync(scrapedText);
                 if (entity == null || entity.Confidence == "low") continue;
 
-                _logger.LogInformation("Checking entity {Entity}", System.Text.Json.JsonSerializer.Serialize(entity));
+                _logger.LogInformation("Extracted entity: {Name} at {Company}", entity.Name, entity.Company);
 
+                // 3. Intelligent Email Discovery
                 if (string.IsNullOrWhiteSpace(entity.Email) && !string.IsNullOrWhiteSpace(entity.Name) && !string.IsNullOrWhiteSpace(entity.Company))
                 {
-                    // Basic heuristic to guess domain if it's missing (can be improved later with a company search API)
-                    var assumedDomain = entity.Company.ToLowerInvariant().Replace(" ", "").Replace(",", "").Replace("inc", "").Replace("llc", "") + ".com";
-                    _logger.LogInformation("Attempting to discover email for {Name} at {Domain}", entity.Name, assumedDomain);
-                    entity.Email = await _discoveryService.DiscoverEmailAsync(entity.Name, entity.Company, assumedDomain);
+                    // Use intelligent domain discovery instead of just appending .com
+                    var domain = await _discoveryService.DiscoverDomainAsync(entity.Company);
+                    
+                    if (string.IsNullOrEmpty(domain))
+                    {
+                        // Fallback to primitive guess if discovery fails
+                        domain = entity.Company.ToLowerInvariant().Replace(" ", "").Replace(",", "").Replace("inc", "").Replace("llc", "") + ".com";
+                    }
+
+                    _logger.LogInformation("Attempting to discover email for {Name} at {Domain}", entity.Name, domain);
+                    entity.Email = await _discoveryService.DiscoverEmailAsync(entity.Name, entity.Company, domain);
                 }
 
                 // Only consider leads that have actionable contact information

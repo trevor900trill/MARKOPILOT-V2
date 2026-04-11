@@ -52,6 +52,7 @@ public interface ILeadDiscoveryService
     // ── Email Validation & Discovery ─────────────
     Task<bool> ValidateEmailAsync(string email);
     Task<string?> DiscoverEmailAsync(string name, string company, string domain);
+    Task<string?> DiscoverDomainAsync(string companyName);
 }
 
 // ═══════════════════════════════════════════════════

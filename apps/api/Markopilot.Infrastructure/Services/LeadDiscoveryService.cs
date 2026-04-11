@@ -20,17 +20,20 @@ public class LeadDiscoveryService : ILeadDiscoveryService
     private readonly IEnumerable<ISearchClient> _searchClients;
     private readonly IAiRoutingService _aiService;
     private readonly HttpClient _httpClient;
+    private readonly JinaReaderClient _jinaClient;
     private readonly ILogger<LeadDiscoveryService> _logger;
 
     public LeadDiscoveryService(
         IEnumerable<ISearchClient> searchClients,
         IAiRoutingService aiService,
         HttpClient httpClient,
+        JinaReaderClient jinaClient,
         ILogger<LeadDiscoveryService> logger)
     {
         _searchClients = searchClients;
         _aiService = aiService;
         _httpClient = httpClient;
+        _jinaClient = jinaClient;
         _logger = logger;
         _httpClient.Timeout = TimeSpan.FromSeconds(10);
     }
@@ -57,6 +60,16 @@ public class LeadDiscoveryService : ILeadDiscoveryService
 
     public async Task<string> ScrapePageAsync(string url)
     {
+        if (string.IsNullOrWhiteSpace(url)) return string.Empty;
+
+        // Try Jina Reader first (optimized for LLMs and harder to block)
+        var jinaContent = await _jinaClient.FetchContentAsync(url);
+        if (!string.IsNullOrWhiteSpace(jinaContent))
+        {
+            return jinaContent.Length > 10000 ? jinaContent.Substring(0, 10000) : jinaContent;
+        }
+
+        // Fallback to basic HttpClient scraping if Jina fails
         try
         {
             var response = await _httpClient.GetAsync(url);
@@ -299,8 +312,12 @@ Return ONLY this JSON, no preamble:
             $"{first[0]}{last}@{domain}",
             $"{first}_{last}@{domain}",
             $"{last}@{domain}",
-            $"{first[0]}.{last}@{domain}"
-        }.Distinct().Where(e => !e.StartsWith("@")).ToList();
+            $"{first[0]}.{last}@{domain}",
+            $"{first}.{last[0]}@{domain}",
+            $"{first}{last[0]}@{domain}",
+            $"{last}.{first}@{domain}",
+            $"{first[0]}{last[0]}@{domain}"
+        }.Distinct().Where(e => !e.StartsWith("@") && !e.Contains("..")).ToList();
 
         try
         {
@@ -366,6 +383,33 @@ Return ONLY this JSON, no preamble:
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "DiscoverEmailAsync failed for {Domain}", domain);
+        }
+
+        return null;
+    }
+
+    public async Task<string?> DiscoverDomainAsync(string companyName)
+    {
+        if (string.IsNullOrWhiteSpace(companyName)) return null;
+
+        try
+        {
+            // Use Serper as the default provider for domain discovery as it has the best "official website" detection
+            var client = _searchClients.FirstOrDefault(c => string.Equals(c.Provider, "serper", StringComparison.OrdinalIgnoreCase)) ?? _searchClients.FirstOrDefault();
+            if (client == null) return null;
+
+            var results = await client.SearchAsync($"{companyName} official website", 1);
+            if (results.Count > 0)
+            {
+                var uri = new Uri(results[0].Url);
+                var domain = uri.Host;
+                if (domain.StartsWith("www.")) domain = domain.Substring(4);
+                return domain;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning("Domain discovery failed for {Company}: {Message}", companyName, ex.Message);
         }
 
         return null;

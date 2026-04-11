@@ -78,6 +78,7 @@ builder.Services.AddHttpClient<Markopilot.Core.Interfaces.ISearchClient, Markopi
 builder.Services.AddHttpClient<Markopilot.Core.Interfaces.ISearchClient, Markopilot.Infrastructure.Search.ExaClient>();
 builder.Services.AddHttpClient<Markopilot.Infrastructure.LemonSqueezy.LemonSqueezyClient>();
 builder.Services.AddHttpClient<Markopilot.Core.Interfaces.IAiRoutingService, Markopilot.Infrastructure.OpenRouter.AiRoutingService>();
+builder.Services.AddHttpClient<Markopilot.Infrastructure.Search.JinaReaderClient>();
 builder.Services.AddHttpClient<Markopilot.Core.Interfaces.ILeadDiscoveryService, Markopilot.Infrastructure.Services.LeadDiscoveryService>()
     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
     {
