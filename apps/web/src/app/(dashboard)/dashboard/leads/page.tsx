@@ -170,52 +170,29 @@ export default function LeadsPage() {
       </div>
 
       {/* Analytics Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-8 flex flex-col gap-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-[var(--bg-elevated)] border border-[var(--border)] p-5 rounded-2xl">
-              <h3 className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-medium mb-1">Total Leads Mined</h3>
-              <p className="text-2xl font-serif text-white">{totalLeads}</p>
-            </div>
-            <div className="bg-[var(--bg-elevated)] border border-[var(--border)] p-5 rounded-2xl">
-              <h3 className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-medium mb-1">High Quality (&gt;80)</h3>
-              <p className="text-2xl font-serif text-white">{highQualityCount}</p>
-            </div>
-            <div className="bg-[var(--bg-elevated)] border border-[var(--border)] p-5 rounded-2xl">
-              <h3 className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-medium mb-1">Awaiting Outreach</h3>
-              <p className="text-2xl font-serif text-white">{awaitingOutreach}</p>
-            </div>
-            <div className="bg-[var(--bg-elevated)] border border-[var(--border)] p-5 rounded-2xl">
-              <h3 className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-medium mb-1">Discovery Limits</h3>
-              <div className="flex items-end gap-2">
-                <p className="text-2xl font-serif text-white">{user?.quotaLeadsUsed ?? 0}<span className="text-[var(--text-muted)] text-base">/{user?.quotaLeadsPerMonth ?? 100}</span></p>
-                <span className="text-xs text-[var(--text-muted)] mb-1">this month</span>
-              </div>
-            </div>
-          </div>
-
-          <DiscoveryInsights performance={performance} isLoading={isPerformanceLoading} />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-[var(--bg-elevated)] border border-[var(--border)] p-5 rounded-2xl">
+          <h3 className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-medium mb-1">Total Leads Mined</h3>
+          <p className="text-2xl font-serif text-white">{totalLeads}</p>
         </div>
-
-        <div className="lg:col-span-4 bg-[var(--bg-elevated)] border border-[var(--border)] p-6 rounded-2xl bg-gradient-to-br from-[#1a1a1e] to-[var(--bg-elevated)]">
-            <h3 className="text-white font-serif text-lg mb-4 flex items-center gap-2">
-              <Sparkles className="text-[var(--accent-primary)]" size={18} />
-              Optimization Tip
-            </h3>
-            <div className="space-y-4">
-              <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-                Your AI agents are currently biasing queries toward <span className="text-white font-medium">high-intent social signals</span>.
-              </p>
-              <div className="p-3 rounded-xl bg-green-500/5 border border-green-500/10">
-                <p className="text-[10px] text-green-400 font-bold uppercase tracking-widest mb-1">Observation</p>
-                <p className="text-xs text-white/80 italic">&quot;Queries mentioning 'Problem/Solution' fit in the snippet are yielding 40% higher lead scores.&quot;</p>
-              </div>
-              <button className="w-full py-2 bg-[var(--bg-surface)] border border-[var(--border)] text-white/50 text-xs rounded-xl hover:text-white transition">
-                Tune Pipeline Logic
-              </button>
-            </div>
+        <div className="bg-[var(--bg-elevated)] border border-[var(--border)] p-5 rounded-2xl">
+          <h3 className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-medium mb-1">High Quality (&gt;80)</h3>
+          <p className="text-2xl font-serif text-white">{highQualityCount}</p>
+        </div>
+        <div className="bg-[var(--bg-elevated)] border border-[var(--border)] p-5 rounded-2xl">
+          <h3 className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-medium mb-1">Awaiting Outreach</h3>
+          <p className="text-2xl font-serif text-white">{awaitingOutreach}</p>
+        </div>
+        <div className="bg-[var(--bg-elevated)] border border-[var(--border)] p-5 rounded-2xl">
+          <h3 className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-medium mb-1">Discovery Limits</h3>
+          <div className="flex items-end gap-2">
+            <p className="text-2xl font-serif text-white">{user?.quotaLeadsUsed ?? 0}<span className="text-[var(--text-muted)] text-base">/{user?.quotaLeadsPerMonth ?? 100}</span></p>
+            <span className="text-xs text-[var(--text-muted)] mb-1">this month</span>
+          </div>
         </div>
       </div>
+
+      <DiscoveryInsights performance={performance} isLoading={isPerformanceLoading} />
 
       {/* Main Table Area */}
       <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl overflow-hidden flex flex-col">
