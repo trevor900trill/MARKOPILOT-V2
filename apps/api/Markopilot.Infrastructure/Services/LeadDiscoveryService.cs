@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Net.Sockets;
 using System.IO;
 using DnsClient;
+using DnsClient.Protocol;
 using HtmlAgilityPack;
 using Markopilot.Core.Interfaces;
 using Markopilot.Core.Models;
