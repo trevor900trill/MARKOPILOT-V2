@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Hangfire;
 using Markopilot.Core.Interfaces;
 using Markopilot.Core.Models;
+using Markopilot.Core.Utilities;
 using Markopilot.Infrastructure.Email;
 using Microsoft.Extensions.Logging;
 

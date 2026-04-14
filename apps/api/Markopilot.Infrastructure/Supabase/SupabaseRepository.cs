@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Markopilot.Core.Interfaces;
 using Markopilot.Core.Models;
+using Markopilot.Core.Utilities;
 using Microsoft.Extensions.Logging;
 using Npgsql;
 
