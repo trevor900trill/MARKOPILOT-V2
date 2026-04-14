@@ -89,11 +89,3 @@ public class QuotaStatus
     public bool PostsExceeded => PostsUsed >= PostsAllowed;
     public bool BrandsExceeded => BrandsUsed >= BrandsAllowed;
 }
-
-public enum EmailVerificationStatus
-{
-    Unverified,
-    Verified,
-    CatchAll,
-    Invalid
-}
