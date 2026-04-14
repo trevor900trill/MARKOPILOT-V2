@@ -169,43 +169,9 @@ public class LeadExtractionWorker : ILeadExtractionWorker
 
                 _logger.LogInformation("Extracted entity: {Name} at {Company}", entity.Name, entity.Company);
 
-                // 3. Intelligent Email Discovery
-                if (string.IsNullOrWhiteSpace(entity.Email) && !string.IsNullOrWhiteSpace(entity.Name) && !string.IsNullOrWhiteSpace(entity.Company))
-                {
-                    var domain = await _discoveryService.DiscoverDomainAsync(entity.Company);
-                    if (string.IsNullOrEmpty(domain))
-                    {
-                        domain = entity.Company.ToLowerInvariant().Replace(" ", "").Replace(",", "").Replace("inc", "").Replace("llc", "") + ".com";
-                    }
-
-                    _logger.LogInformation("Attempting to discover email for {Name} at {Domain}", entity.Name, domain);
-                    entity.Email = await _discoveryService.DiscoverEmailAsync(entity.Name, entity.Company, domain);
-                }
-
-                if (string.IsNullOrWhiteSpace(entity.Email) && string.IsNullOrWhiteSpace(entity.LinkedinUrl))
-                {
-                    continue;
-                }
-
-                // 4. Verification & Scoring
-                var emailStatus = "unverified";
-                if (!string.IsNullOrWhiteSpace(entity.Email))
-                {
-                    var isEmailValid = await _discoveryService.ValidateEmailAsync(entity.Email);
-                    if (!isEmailValid)
-                    {
-                        _logger.LogDebug("Invalid or bouncing email rejected: {Email}", entity.Email);
-                        entity.Email = null; 
-                        if (string.IsNullOrWhiteSpace(entity.LinkedinUrl)) continue;
-                    }
-                    else
-                    {
-                        emailStatus = "verified";
-                        // Note: DiscoverEmailAsync logic potentially identifies catch-all, 
-                        // but ValidateEmailAsync (SMTP ping) can also do it.
-                    }
-                }
-
+                // 3. Identification Phase (Email discovery moved to EmailEnrichmentWorker)
+                // We just store the entity name/company/source for now.
+                
                 var scoreResult = await _discoveryService.ScoreLeadAsync(brand, entity, result.Url);
                 if (scoreResult.Score < 30) continue;
 
@@ -221,7 +187,7 @@ public class LeadExtractionWorker : ILeadExtractionWorker
                     JobTitle = entity.JobTitle,
                     Company = entity.Company,
                     Email = entity.Email,
-                    EmailStatus = emailStatus,
+                    EmailStatus = string.IsNullOrWhiteSpace(entity.Email) ? "unverified" : "extracted",
                     Fingerprint = fingerprint,
                     LinkedinUrl = normalizedLinkedin,
                     TwitterHandle = entity.TwitterHandle,

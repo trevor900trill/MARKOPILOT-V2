@@ -11,7 +11,7 @@ namespace Markopilot.Infrastructure.Supabase;
 /// Uses Npgsql directly for maximum control over queries.
 /// Also implements IUserRepository for Core service access.
 /// </summary>
-public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepository, ILeadRepository, IOutreachRepository, INotificationRepository
+public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepository, ILeadRepository, IOutreachRepository, INotificationRepository, IEmailPatternRepository
 {
     private readonly string _connectionString;
     private readonly ILogger<SupabaseRepository> _logger;
@@ -470,6 +470,163 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         cmd.Parameters.AddWithValue("url", sourceUrl);
 
         return (bool)(await cmd.ExecuteScalarAsync())!;
+    }
+
+    // ── LEADS: EMAIL ENRICHMENT ───────────────────────
+
+    public async Task<List<Lead>> GetLeadsNeedingEmailEnrichmentAsync(int limit = 20)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            SELECT * FROM leads
+            WHERE email IS NULL
+              AND name IS NOT NULL
+              AND company IS NOT NULL
+              AND (
+                  email_status != 'unfindable'
+                  OR email_enrichment_attempted_at < NOW() - INTERVAL '30 days'
+              )
+            ORDER BY discovered_at DESC
+            LIMIT @limit", conn);
+        cmd.Parameters.AddWithValue("limit", limit);
+
+        var leads = new List<Lead>();
+        await using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+            leads.Add(MapLead(reader));
+        return leads;
+    }
+
+    public async Task UpdateLeadEmailAsync(Guid leadId, string? email, string emailStatus, double confidence, string? source, bool isCatchAll, string? verificationStatus = null)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            UPDATE leads SET
+                email = @email,
+                email_status = @emailStatus,
+                email_confidence = @confidence,
+                email_source = @source,
+                is_catch_all = @isCatchAll,
+                verification_status = @verificationStatus,
+                last_verified_at = CASE WHEN @email IS NOT NULL THEN NOW() ELSE last_verified_at END,
+                email_enrichment_attempted_at = NOW(),
+                updated_at = NOW()
+            WHERE id = @id", conn);
+        cmd.Parameters.AddWithValue("id", leadId);
+        cmd.Parameters.AddWithValue("email", (object?)email ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("emailStatus", emailStatus);
+        cmd.Parameters.AddWithValue("confidence", confidence);
+        cmd.Parameters.AddWithValue("source", (object?)source ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("isCatchAll", isCatchAll);
+        cmd.Parameters.AddWithValue("verificationStatus", (object?)verificationStatus ?? DBNull.Value);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    // ── DOMAIN EMAIL PATTERNS ─────────────────────────
+
+    public async Task<DomainEmailPattern?> GetPatternByDomainAsync(string domain)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(
+            "SELECT * FROM domain_email_patterns WHERE domain = @domain", conn);
+        cmd.Parameters.AddWithValue("domain", domain.ToLowerInvariant());
+
+        await using var reader = await cmd.ExecuteReaderAsync();
+        if (!await reader.ReadAsync()) return null;
+
+        return new DomainEmailPattern
+        {
+            Id = reader.GetGuid(reader.GetOrdinal("id")),
+            Domain = reader.GetString(reader.GetOrdinal("domain")),
+            Pattern = reader.GetString(reader.GetOrdinal("pattern")),
+            ConfirmedCount = reader.GetInt32(reader.GetOrdinal("confirmed_count")),
+            IsCatchAll = reader.GetBoolean(reader.GetOrdinal("is_catch_all")),
+            MailProvider = reader.IsDBNull(reader.GetOrdinal("mail_provider")) ? null : reader.GetString(reader.GetOrdinal("mail_provider")),
+            MxRecords = reader.IsDBNull(reader.GetOrdinal("mx_records")) ? null : reader.GetString(reader.GetOrdinal("mx_records")),
+            PatternWeightsJson = reader.IsDBNull(reader.GetOrdinal("pattern_weights_json")) ? null : reader.GetString(reader.GetOrdinal("pattern_weights_json")),
+            VerificationCount = reader.GetInt32(reader.GetOrdinal("verification_count")),
+            BounceCount = reader.GetInt32(reader.GetOrdinal("bounce_count")),
+            SuccessCount = reader.GetInt32(reader.GetOrdinal("success_count")),
+            LastConfirmedAt = reader.GetFieldValue<DateTimeOffset>(reader.GetOrdinal("last_confirmed_at")),
+            CreatedAt = reader.GetFieldValue<DateTimeOffset>(reader.GetOrdinal("created_at")),
+        };
+    }
+
+    public async Task UpsertPatternAsync(DomainEmailPattern pattern)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            INSERT INTO domain_email_patterns (domain, pattern, is_catch_all, mail_provider, mx_records, pattern_weights_json)
+            VALUES (@domain, @pattern, @isCatchAll, @provider, @mx, @weights::jsonb)
+            ON CONFLICT (domain) DO UPDATE SET
+                pattern = EXCLUDED.pattern,
+                is_catch_all = EXCLUDED.is_catch_all,
+                mail_provider = EXCLUDED.mail_provider,
+                mx_records = EXCLUDED.mx_records,
+                pattern_weights_json = CASE 
+                    WHEN EXCLUDED.pattern_weights_json = '{}'::jsonb THEN domain_email_patterns.pattern_weights_json 
+                    ELSE EXCLUDED.pattern_weights_json 
+                END,
+                confirmed_count = domain_email_patterns.confirmed_count + 1,
+                last_confirmed_at = NOW()", conn);
+
+        cmd.Parameters.AddWithValue("domain", pattern.Domain.ToLowerInvariant());
+        cmd.Parameters.AddWithValue("pattern", pattern.Pattern);
+        cmd.Parameters.AddWithValue("isCatchAll", pattern.IsCatchAll);
+        cmd.Parameters.AddWithValue("provider", (object?)pattern.MailProvider ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("mx", (object?)pattern.MxRecords ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("weights", (object?)pattern.PatternWeightsJson ?? "{}");
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task RecordOutcomeAsync(string domain, string pattern, bool isSuccess)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        // 1. Get existing data to update the JSON
+        var existing = await GetPatternByDomainAsync(domain);
+        if (existing == null) return;
+
+        var weights = existing.Weights;
+        if (!weights.ContainsKey(pattern)) weights[pattern] = new PatternWeight();
+        
+        if (isSuccess) weights[pattern].Successes++;
+        else weights[pattern].Bounces++;
+        
+        existing.Weights = weights;
+
+        // 2. Perform the update
+        var column = isSuccess ? "success_count" : "bounce_count";
+        await using var cmd = new NpgsqlCommand($@"
+            UPDATE domain_email_patterns 
+            SET {column} = {column} + 1, 
+                verification_count = verification_count + 1, 
+                pattern_weights_json = @weights::jsonb,
+                updated_at = NOW()
+            WHERE domain = @domain", conn);
+            
+        cmd.Parameters.AddWithValue("domain", domain.ToLowerInvariant());
+        cmd.Parameters.AddWithValue("weights", existing.PatternWeightsJson ?? "{}");
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task<int> GetTotalLearnedDomainsAsync()
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(
+            "SELECT COUNT(*) FROM domain_email_patterns", conn);
+        return Convert.ToInt32(await cmd.ExecuteScalarAsync());
     }
 
     // ── OUTREACH EMAILS ───────────────────────────────
@@ -1275,6 +1432,18 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         return Convert.ToInt32(await cmd.ExecuteScalarAsync());
     }
 
+    public async Task UpdateBrandBounceCheckAtAsync(Guid brandId, DateTimeOffset lastCheck)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(
+            "UPDATE brands SET last_bounce_check_at = @lastCheck WHERE id = @id", conn);
+        cmd.Parameters.AddWithValue("id", brandId);
+        cmd.Parameters.AddWithValue("lastCheck", lastCheck);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
     // ── MAPPERS ───────────────────────────────────────
 
     private static User MapUser(NpgsqlDataReader r) => new()
@@ -1347,6 +1516,7 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         GmailTokenExpiresAt = r.IsDBNull(r.GetOrdinal("gmail_token_expires_at")) ? null : r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("gmail_token_expires_at")),
         GmailEmail = r.IsDBNull(r.GetOrdinal("gmail_email")) ? null : r.GetString(r.GetOrdinal("gmail_email")),
         GmailConnected = r.GetBoolean(r.GetOrdinal("gmail_connected")),
+        LastBounceCheckAt = r.IsDBNull(r.GetOrdinal("last_bounce_check_at")) ? null : r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("last_bounce_check_at")),
         AutomationPostsEnabled = r.GetBoolean(r.GetOrdinal("automation_posts_enabled")),
         AutomationLeadsEnabled = r.GetBoolean(r.GetOrdinal("automation_leads_enabled")),
         AutomationOutreachEnabled = r.GetBoolean(r.GetOrdinal("automation_outreach_enabled")),
@@ -1386,7 +1556,13 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         LeadScore = r.GetInt32(r.GetOrdinal("lead_score")),
         Status = r.GetString(r.GetOrdinal("status")),
         EmailStatus = r.IsDBNull(r.GetOrdinal("email_status")) ? "unverified" : r.GetString(r.GetOrdinal("email_status")),
+        EmailConfidence = r.IsDBNull(r.GetOrdinal("email_confidence")) ? 0.0 : r.GetDouble(r.GetOrdinal("email_confidence")),
+        EmailSource = r.IsDBNull(r.GetOrdinal("email_source")) ? null : r.GetString(r.GetOrdinal("email_source")),
+        IsCatchAll = r.IsDBNull(r.GetOrdinal("is_catch_all")) ? false : r.GetBoolean(r.GetOrdinal("is_catch_all")),
+        VerificationStatus = r.IsDBNull(r.GetOrdinal("verification_status")) ? null : r.GetString(r.GetOrdinal("verification_status")),
+        LastVerifiedAt = r.IsDBNull(r.GetOrdinal("last_verified_at")) ? null : r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("last_verified_at")),
         Fingerprint = r.IsDBNull(r.GetOrdinal("fingerprint")) ? null : r.GetString(r.GetOrdinal("fingerprint")),
+        EmailEnrichmentAttemptedAt = r.IsDBNull(r.GetOrdinal("email_enrichment_attempted_at")) ? null : r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("email_enrichment_attempted_at")),
         DiscoveredAt = r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("discovered_at")),
         UpdatedAt = r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("updated_at")),
     };

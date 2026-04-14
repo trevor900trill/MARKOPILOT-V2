@@ -8,4 +8,5 @@ public interface IOutreachService
     bool ValidateSpamScore(string emailBody, out string reason);
     Task<bool> DispatchRFC2822EmailAsync(Brand brand, string toEmail, string subject, string bodyText, string bodyHtml);
     Task<bool> HasRecipientRepliedAsync(Brand brand, string recipientEmail, DateTimeOffset since);
+    Task<List<string>> GetBouncedEmailsAsync(Brand brand, DateTimeOffset since);
 }

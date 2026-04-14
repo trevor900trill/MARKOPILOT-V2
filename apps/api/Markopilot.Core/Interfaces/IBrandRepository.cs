@@ -55,4 +55,5 @@ public interface IBrandRepository
     // ── Global Discovery Intelligence ────────────
     Task LogQueryPerformanceAsync(SearchQueryHistory history);
     Task<List<SearchQueryHistory>> GetTopPerformingQueriesAsync(Guid brandId, int limit = 5);
+    Task UpdateBrandBounceCheckAtAsync(Guid brandId, DateTimeOffset lastCheck);
 }

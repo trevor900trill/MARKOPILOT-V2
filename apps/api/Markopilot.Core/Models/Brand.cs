@@ -59,6 +59,7 @@ public class Brand
     public DateTimeOffset? GmailTokenExpiresAt { get; set; }
     public string? GmailEmail { get; set; }
     public bool GmailConnected { get; set; }
+    public DateTimeOffset? LastBounceCheckAt { get; set; }
 
     public string Status { get; set; } = "active";
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;

@@ -40,4 +40,17 @@ public interface ILeadRepository
     /// <summary>GDPR delete: removes a lead and all associated outreach emails.</summary>
     /// <remarks>Used by: API</remarks>
     Task DeleteLeadAndOutreachAsync(Guid brandId, Guid leadId, Guid ownerId);
+
+    // ── Email Enrichment ────────────────────────
+    /// <summary>
+    /// Fetch leads that have no email and are eligible for enrichment.
+    /// Skips leads marked 'unfindable' unless 30+ days have passed since last attempt.
+    /// </summary>
+    /// <remarks>Used by: Workers (EmailEnrichmentWorker)</remarks>
+    Task<List<Lead>> GetLeadsNeedingEmailEnrichmentAsync(int limit = 20);
+
+    /// <summary>
+    /// Update a lead's email address and all enrichment metadata.
+    /// </summary>
+    Task UpdateLeadEmailAsync(Guid leadId, string? email, string emailStatus, double confidence, string? source, bool isCatchAll, string? verificationStatus = null);
 }

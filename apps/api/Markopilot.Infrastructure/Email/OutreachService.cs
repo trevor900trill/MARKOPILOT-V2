@@ -98,15 +98,7 @@ public class OutreachService : IOutreachService
         if (string.IsNullOrEmpty(brand.GmailAccessToken))
             throw new InvalidOperationException("No access token available");
 
-        string accessToken;
-        if (brand.GmailTokenExpiresAt.HasValue && brand.GmailTokenExpiresAt.Value <= DateTimeOffset.UtcNow.AddMinutes(5))
-        {
-            accessToken = await RefreshTokenAsync(brand);
-        }
-        else
-        {
-            accessToken = _encryptionService.Decrypt(brand.GmailAccessToken);
-        }
+        string accessToken = await GetValidAccessTokenAsync(brand);
 
         var message = CreateRFC2822Message(brand, toEmail, subject, bodyText, bodyHtml);
 
@@ -131,15 +123,7 @@ public class OutreachService : IOutreachService
         if (string.IsNullOrEmpty(brand.GmailAccessToken))
             return false;
 
-        string accessToken;
-        if (brand.GmailTokenExpiresAt.HasValue && brand.GmailTokenExpiresAt.Value <= DateTimeOffset.UtcNow.AddMinutes(5))
-        {
-            accessToken = await RefreshTokenAsync(brand);
-        }
-        else
-        {
-            accessToken = _encryptionService.Decrypt(brand.GmailAccessToken);
-        }
+        string accessToken = await GetValidAccessTokenAsync(brand);
 
         // Search for any messages from the recipient that arrived AFTER we sent our first email
         var query = $"from:{recipientEmail} after:{since.ToUnixTimeSeconds()}";
@@ -160,6 +144,74 @@ public class OutreachService : IOutreachService
         }
 
         return false;
+    }
+
+    public async Task<List<string>> GetBouncedEmailsAsync(Brand brand, DateTimeOffset since)
+    {
+        if (string.IsNullOrEmpty(brand.GmailAccessToken))
+            return new List<string>();
+
+        string accessToken = await GetValidAccessTokenAsync(brand);
+
+        var query = $"from:mailer-daemon after:{since.ToUnixTimeSeconds()}";
+        var url = $"https://gmail.googleapis.com/gmail/v1/users/me/messages?q={Uri.EscapeDataString(query)}&maxResults=20";
+
+        var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await _httpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode) return new List<string>();
+
+        var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
+        var bouncedEmails = new List<string>();
+
+        if (json.TryGetProperty("messages", out var messages))
+        {
+            foreach (var message in messages.EnumerateArray())
+            {
+                var id = message.GetProperty("id").GetString();
+                var msgDetail = await GetMessageDetailAsync(accessToken, id!);
+                var recipient = ExtractFailedRecipient(msgDetail);
+                if (recipient != null) bouncedEmails.Add(recipient);
+            }
+        }
+
+        return bouncedEmails;
+    }
+
+    private async Task<string> GetValidAccessTokenAsync(Brand brand)
+    {
+        if (brand.GmailTokenExpiresAt.HasValue && brand.GmailTokenExpiresAt.Value <= DateTimeOffset.UtcNow.AddMinutes(5))
+        {
+            return await RefreshTokenAsync(brand);
+        }
+        return _encryptionService.Decrypt(brand.GmailAccessToken!);
+    }
+
+    private async Task<JsonElement> GetMessageDetailAsync(string accessToken, string messageId)
+    {
+        var url = $"https://gmail.googleapis.com/gmail/v1/users/me/messages/{messageId}";
+        var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        return JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
+    }
+
+    private string? ExtractFailedRecipient(JsonElement msg)
+    {
+        var snippet = msg.GetProperty("snippet").GetString() ?? "";
+        // Extract the first email address that isn't the mailer-daemon itself
+        var matches = System.Text.RegularExpressions.Regex.Matches(snippet, @"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}");
+        foreach (System.Text.RegularExpressions.Match match in matches)
+        {
+            if (!match.Value.Contains("mailer-daemon", StringComparison.OrdinalIgnoreCase) && 
+                !match.Value.Contains("googlemail.com", StringComparison.OrdinalIgnoreCase))
+            {
+                return match.Value;
+            }
+        }
+        return null;
     }
 
     private string CreateRFC2822Message(Brand brand, string toEmail, string subject, string bodyText, string bodyHtml)

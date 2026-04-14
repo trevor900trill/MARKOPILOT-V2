@@ -17,7 +17,19 @@ public class Lead
     public int LeadScore { get; set; }
     public string Status { get; set; } = "new";
     public string EmailStatus { get; set; } = "unverified";
+    public double EmailConfidence { get; set; }
+    public string? EmailSource { get; set; }
+    public bool IsCatchAll { get; set; }
+    public string? VerificationStatus { get; set; }
+    public DateTimeOffset? LastVerifiedAt { get; set; }
     public string? Fingerprint { get; set; }
+
+    /// <summary>
+    /// Timestamp of the last email enrichment attempt by EmailEnrichmentWorker.
+    /// Used for 30-day cooldown on 'unfindable' leads before retrying.
+    /// </summary>
+    public DateTimeOffset? EmailEnrichmentAttemptedAt { get; set; }
+
     public DateTimeOffset DiscoveredAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 }

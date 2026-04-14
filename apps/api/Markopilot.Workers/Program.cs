@@ -44,6 +44,7 @@ builder.Services.AddSingleton<ISocialRepository>(sp => sp.GetRequiredService<Sup
 builder.Services.AddSingleton<ILeadRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
 builder.Services.AddSingleton<IOutreachRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
 builder.Services.AddSingleton<INotificationRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
+builder.Services.AddSingleton<IEmailPatternRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
 
 builder.Services.AddSingleton<ITokenEncryptionService>(sp =>
 {
@@ -73,6 +74,9 @@ builder.Services.AddHttpClient<Markopilot.Core.Interfaces.ILeadDiscoveryService,
 builder.Services.AddTransient<Markopilot.Core.Interfaces.ILeadExtractionWorker, Markopilot.Workers.Workers.LeadExtractionWorker>();
 builder.Services.AddTransient<Markopilot.Core.Interfaces.ISocialPostingWorker, Markopilot.Workers.Workers.SocialPostingWorker>();
 builder.Services.AddTransient<Markopilot.Core.Interfaces.IOutreachWorker, Markopilot.Workers.Workers.OutreachWorker>();
+builder.Services.AddHttpClient<Markopilot.Infrastructure.Email.HunterIoClient>();
+builder.Services.AddTransient<Markopilot.Core.Interfaces.IEmailEnrichmentWorker, Markopilot.Workers.Workers.EmailEnrichmentWorker>();
+builder.Services.AddTransient<Markopilot.Core.Interfaces.IBounceProcessorWorker, Markopilot.Workers.Workers.BounceProcessorWorker>();
 
 var host = builder.Build();
 
@@ -83,6 +87,18 @@ using (var scope = host.Services.CreateScope())
         "GlobalOutreachWorker",
         worker => worker.ExecuteAsync(),
         "*/30 * * * *");
+
+    // Email enrichment: runs every hour, picks up leads missing emails
+    jobManager.AddOrUpdate<Markopilot.Core.Interfaces.IEmailEnrichmentWorker>(
+        "GlobalEmailEnrichmentWorker",
+        worker => worker.ExecuteAsync(),
+        "0 * * * *"); // Top of every hour
+
+    // Bounce Processor: runs every 4 hours
+    jobManager.AddOrUpdate<Markopilot.Core.Interfaces.IBounceProcessorWorker>(
+        "BounceProcessorWorker",
+        worker => worker.ExecuteAsync(),
+        "0 */4 * * *");
 }
 
 host.Run();

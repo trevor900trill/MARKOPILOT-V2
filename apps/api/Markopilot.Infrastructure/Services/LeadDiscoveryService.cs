@@ -274,31 +274,50 @@ Return ONLY this JSON, no preamble:
         }
     }
 
-    public async Task<bool> ValidateEmailAsync(string email)
+    public async Task<EmailVerificationResult> ValidateEmailAsync(string email)
     {
-        if (string.IsNullOrWhiteSpace(email)) return false;
-
-        // Basic Regex checks
-        if (!Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+        var result = new EmailVerificationResult { Email = email, Source = "smtp" };
+        if (string.IsNullOrWhiteSpace(email) || !Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
         {
-            return false;
+            result.Status = EmailVerificationStatus.Invalid;
+            result.Confidence = 0.0;
+            return result;
         }
 
         try
         {
             var domain = email.Split('@').Last();
             var lookup = new LookupClient();
-            var result = await lookup.QueryAsync(domain, QueryType.MX);
-            return result.Answers.MxRecords().Any();
+            var lookupResult = await lookup.QueryAsync(domain, QueryType.MX);
+            var mxRecords = lookupResult.Answers.MxRecords().OrderBy(mx => mx.Preference).ToList();
+
+            if (!mxRecords.Any())
+            {
+                result.Status = EmailVerificationStatus.Invalid;
+                result.Confidence = 0.0;
+                return result;
+            }
+
+            // Identify provider from first MX record
+            var topMx = mxRecords[0].Exchange.Value;
+            result.Provider = DetectProvider(topMx);
+
+            // Connect and check
+            var verification = await InternalSmtpCheckAsync(email, mxRecords, domain);
+            result.Status = verification.Status;
+            result.Confidence = verification.Confidence;
+            result.IsCatchAll = verification.IsCatchAll;
+            return result;
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed MX lookup for {Email}", email);
-            return false;
+            _logger.LogWarning(ex, "Failed SMTP validation for {Email}", email);
+            result.Status = EmailVerificationStatus.Unknown;
+            return result;
         }
     }
 
-    public async Task<string?> DiscoverEmailAsync(string name, string company, string domain)
+    public async Task<EmailVerificationResult?> DiscoverEmailAsync(string name, string company, string domain)
     {
         if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(domain)) return null;
 
@@ -324,82 +343,27 @@ Return ONLY this JSON, no preamble:
         try
         {
             var lookup = new LookupClient();
-            var result = await lookup.QueryAsync(domain, QueryType.MX);
-            var mxRecords = result.Answers.MxRecords().OrderBy(mx => mx.Preference).ToList();
+            var lookupResult = await lookup.QueryAsync(domain, QueryType.MX);
+            var mxRecords = lookupResult.Answers.MxRecords().OrderBy(mx => mx.Preference).ToList();
 
             if (!mxRecords.Any()) return null;
 
-            foreach (var mx in mxRecords)
+            var provider = DetectProvider(mxRecords[0].Exchange.Value);
+
+            // ── CATCH-ALL MULTI-PROBE ───────────────────────
+            // Test 2 random emails to ensure consistency
+            var probes = new[] { 
+                $"verifier_test_{Guid.NewGuid():N}.{Guid.NewGuid():N}"[..12] + $"@{domain}",
+                $"probe_{DateTime.UtcNow.Ticks}@{domain}"
+            };
+
+            var verification = await InternalSmtpCheckAsync(permutations, mxRecords, domain, probes);
+            
+            if (verification != null)
             {
-                var mxDomain = mx.Exchange.Value;
-                if (mxDomain.EndsWith(".")) mxDomain = mxDomain.Substring(0, mxDomain.Length - 1);
-
-                try
-                {
-                    using var client = new TcpClient();
-                    // Connect with short timeout
-                    var connectTask = client.ConnectAsync(mxDomain, 25);
-                    if (await Task.WhenAny(connectTask, Task.Delay(5000)) != connectTask)
-                    {
-                        continue; // Timeout, try next MX
-                    }
-                    
-                    using var stream = client.GetStream();
-                    using var reader = new StreamReader(stream);
-                    using var writer = new StreamWriter(stream) { AutoFlush = true };
-
-                    var greeting = await reader.ReadLineAsync();
-                    if (greeting == null || !greeting.StartsWith("220")) continue;
-
-                    await writer.WriteLineAsync("HELO mail.markopilot.com");
-                    var heloResponse = await reader.ReadLineAsync();
-                    if (heloResponse == null || !heloResponse.StartsWith("250")) continue;
-
-                    await writer.WriteLineAsync("MAIL FROM:<ping@markopilot.com>");
-                    var mailFromResponse = await reader.ReadLineAsync();
-                    if (mailFromResponse == null || !mailFromResponse.StartsWith("250")) continue;
-
-                    // ── CATCH-ALL BURN TEST ───────────────────────
-                    // Probe a randomized address to see if the server accepts everything.
-                    var randomProbe = $"verifier_test_{Guid.NewGuid().ToString("N").Substring(0, 8)}@{domain}";
-                    await writer.WriteLineAsync($"RCPT TO:<{randomProbe}>");
-                    var probeResponse = await reader.ReadLineAsync();
-                    
-                    bool isCatchAll = probeResponse != null && probeResponse.StartsWith("250");
-                    if (isCatchAll)
-                    {
-                        _logger.LogWarning("Domain {Domain} identified as Catch-All", domain);
-                        // If catch-all, we return the most likely permutation but mark it as such
-                        var likely = permutations.FirstOrDefault();
-                        await writer.WriteLineAsync("QUIT");
-                        return likely; // The worker will see it's from a catch-all domain via validation status
-                    }
-
-                    foreach (var email in permutations)
-                    {
-                        _logger.LogInformation("Checking email {Email}", email);
-                        await writer.WriteLineAsync($"RCPT TO:<{email}>");
-                        var rcptResponse = await reader.ReadLineAsync();
-                        _logger.LogInformation("Email {Email} response: {Response}", email, rcptResponse);
-                        
-                        if (rcptResponse != null && rcptResponse.StartsWith("250"))
-                        {
-                            await writer.WriteLineAsync("QUIT");
-                            return email;
-                        }
-                        
-                        // If we get a hard fail (550), we can potentially skip others for this MX if it's reputable,
-                        // but usually it's better to finish the loop if we're already connected.
-                    }
-
-                    await writer.WriteLineAsync("QUIT");
-                    break; // Checked all permutations on primary MX, no need to check fallback MXs
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogDebug(ex, "Failed to connect/verify via MX {MxDomain}", mxDomain);
-                    continue; // Try next MX on error
-                }
+                verification.Provider = provider;
+                verification.Source = "smtp";
+                return verification;
             }
         }
         catch (Exception ex)
@@ -407,6 +371,105 @@ Return ONLY this JSON, no preamble:
             _logger.LogWarning(ex, "DiscoverEmailAsync failed for {Domain}", domain);
         }
 
+        return null;
+    }
+
+    private string DetectProvider(string mxDomain)
+    {
+        mxDomain = mxDomain.ToLowerInvariant();
+        if (mxDomain.Contains("google.com") || mxDomain.Contains("aspmx.l.google.com")) return "google";
+        if (mxDomain.Contains("outlook.com") || mxDomain.Contains("outlook.com")) return "outlook";
+        if (mxDomain.Contains("mimecast.com")) return "mimecast";
+        if (mxDomain.Contains("pphosted.com")) return "proofpoint";
+        if (mxDomain.Contains("secureserver.net")) return "godaddy";
+        return "custom";
+    }
+
+    private async Task<EmailVerificationResult> InternalSmtpCheckAsync(string targetEmail, List<MxRecord> mxRecords, string domain, string[]? probes = null)
+    {
+        var result = await InternalSmtpCheckAsync(new List<string> { targetEmail }, mxRecords, domain, probes);
+        return result ?? new EmailVerificationResult { Email = targetEmail, Status = EmailVerificationStatus.Unknown };
+    }
+
+    private async Task<EmailVerificationResult?> InternalSmtpCheckAsync(List<string> candidateEmails, List<MxRecord> mxRecords, string domain, string[]? probes = null)
+    {
+        foreach (var mx in mxRecords)
+        {
+            var mxDomain = mx.Exchange.Value;
+            if (mxDomain.EndsWith(".")) mxDomain = mxDomain[..^1];
+
+            try
+            {
+                using var client = new TcpClient();
+                var connectTask = client.ConnectAsync(mxDomain, 25);
+                if (await Task.WhenAny(connectTask, Task.Delay(5000)) != connectTask) continue;
+                
+                using var stream = client.GetStream();
+                using var reader = new StreamReader(stream);
+                using var writer = new StreamWriter(stream) { AutoFlush = true };
+
+                var greeting = await reader.ReadLineAsync();
+                if (greeting == null || !greeting.StartsWith("220")) continue;
+
+                await writer.WriteLineAsync("HELO mail.markopilot.com");
+                await reader.ReadLineAsync();
+
+                await writer.WriteLineAsync("MAIL FROM:<ping@markopilot.com>");
+                await reader.ReadLineAsync();
+
+                // ── CATCH-ALL BURN TEST ───────────────────────
+                bool isCatchAll = false;
+                if (probes != null)
+                {
+                    int acceptedProbes = 0;
+                    foreach (var probe in probes)
+                    {
+                        await writer.WriteLineAsync($"RCPT TO:<{probe}>");
+                        var probeResponse = await reader.ReadLineAsync();
+                        if (probeResponse != null && probeResponse.StartsWith("250")) acceptedProbes++;
+                    }
+                    isCatchAll = acceptedProbes == probes.Length;
+                }
+
+                if (isCatchAll)
+                {
+                    _logger.LogInformation("Domain {Domain} identified as Catch-All", domain);
+                    await writer.WriteLineAsync("QUIT");
+                    return new EmailVerificationResult 
+                    { 
+                        Email = candidateEmails.First(), 
+                        Status = EmailVerificationStatus.Risky, 
+                        Confidence = 0.4, 
+                        IsCatchAll = true 
+                    };
+                }
+
+                foreach (var email in candidateEmails)
+                {
+                    // Add jitter between attempts to look human
+                    await Task.Delay(Random.Shared.Next(300, 800));
+
+                    await writer.WriteLineAsync($"RCPT TO:<{email}>");
+                    var rcptResponse = await reader.ReadLineAsync();
+                    
+                    if (rcptResponse != null && rcptResponse.StartsWith("250"))
+                    {
+                        await writer.WriteLineAsync("QUIT");
+                        return new EmailVerificationResult 
+                        { 
+                            Email = email, 
+                            Status = EmailVerificationStatus.Valid, 
+                            Confidence = 0.9, 
+                            IsCatchAll = false 
+                        };
+                    }
+                }
+
+                await writer.WriteLineAsync("QUIT");
+                return new EmailVerificationResult { Email = candidateEmails.First(), Status = EmailVerificationStatus.Invalid, Confidence = 0.0 };
+            }
+            catch { continue; }
+        }
         return null;
     }
 

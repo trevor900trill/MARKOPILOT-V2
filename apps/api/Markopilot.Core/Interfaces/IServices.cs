@@ -50,8 +50,8 @@ public interface ILeadDiscoveryService
     Task<LeadScoreResult> ScoreLeadAsync(Brand brand, ExtractedEntity entity, string sourceUrl);
 
     // ── Email Validation & Discovery ─────────────
-    Task<bool> ValidateEmailAsync(string email);
-    Task<string?> DiscoverEmailAsync(string name, string company, string domain);
+    Task<EmailVerificationResult> ValidateEmailAsync(string email);
+    Task<EmailVerificationResult?> DiscoverEmailAsync(string name, string company, string domain);
     Task<string?> DiscoverDomainAsync(string companyName);
 }
 
@@ -137,6 +137,28 @@ public interface ISocialPostingWorker
 /// Executed by: Workers (OutreachWorker)
 /// </summary>
 public interface IOutreachWorker
+{
+    Task ExecuteAsync();
+}
+
+/// <summary>
+/// Runs the background email enrichment pipeline for leads missing email addresses.
+/// Uses a three-stage approach: pattern cache → SMTP permutation → Hunter.io fallback.
+/// Scheduled by: Workers (Program.cs recurring job — every hour)
+/// Executed by: Workers (EmailEnrichmentWorker)
+/// </summary>
+public interface IEmailEnrichmentWorker
+{
+    Task ExecuteAsync();
+}
+
+/// <summary>
+/// Scans connected Gmail accounts for non-delivery reports (bounces) to provide
+/// negative feedback to the email enrichment patterns.
+/// Scheduled by: Workers (Program.cs recurring job — every 4 hours)
+/// Executed by: Workers (BounceProcessorWorker)
+/// </summary>
+public interface IBounceProcessorWorker
 {
     Task ExecuteAsync();
 }

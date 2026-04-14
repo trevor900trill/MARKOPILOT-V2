@@ -7,6 +7,8 @@ using Markopilot.Core.Interfaces;
 using Markopilot.Core.Models;
 using Microsoft.Extensions.Logging;
 
+using Markopilot.Core.Utilities;
+
 namespace Markopilot.Workers.Workers;
 
 public class OutreachWorker : IOutreachWorker
@@ -16,6 +18,7 @@ public class OutreachWorker : IOutreachWorker
     private readonly IOutreachRepository _outreachRepo;
     private readonly ILeadRepository _leadRepo;
     private readonly IBrandRepository _brandRepo;
+    private readonly IEmailPatternRepository _patternRepo;
     private readonly ILogger<OutreachWorker> _logger;
 
     public OutreachWorker(
@@ -24,6 +27,7 @@ public class OutreachWorker : IOutreachWorker
         IOutreachRepository outreachRepo,
         ILeadRepository leadRepo,
         IBrandRepository brandRepo,
+        IEmailPatternRepository patternRepo,
         ILogger<OutreachWorker> logger)
     {
         _outreachService = outreachService;
@@ -31,6 +35,7 @@ public class OutreachWorker : IOutreachWorker
         _outreachRepo = outreachRepo;
         _leadRepo = leadRepo;
         _brandRepo = brandRepo;
+        _patternRepo = patternRepo;
         _logger = logger;
     }
 
@@ -130,20 +135,34 @@ public class OutreachWorker : IOutreachWorker
                     try
                     {
                         _logger.LogInformation("Processing follow-up for email {EmailId} from Lead {LeadId}.", original.Id, original.LeadId);
-                        // 1. Check for replies first
+                        
+                        // 1. Fetch lead for feedback and generation
+                        var lead = original.LeadId.HasValue ? await _leadRepo.GetLeadByIdAsync(brand.Id, original.LeadId.Value, brand.OwnerId) : null;
+
+                        // 2. Check for replies first
                         if (await _outreachService.HasRecipientRepliedAsync(brand, original.RecipientEmail, original.SentAt ?? DateTimeOffset.UtcNow))
                         {
                             await _outreachRepo.MarkFollowUpScheduledAsync(original.Id);
-                            if (original.LeadId.HasValue)
+                            if (lead != null)
                             {
-                                await _leadRepo.UpdateLeadStatusAsync(original.LeadId.Value, "interested");
+                                await _leadRepo.UpdateLeadStatusAsync(lead.Id, "interested");
                                 await _brandRepo.InsertActivityAsync(brand.Id, "lead_replied", $"Recipient {original.RecipientEmail} replied! Automated follow-ups stopped.");
+
+                                // ── FEEDBACK LOOP: Boost pattern confidence ─────
+                                if (!string.IsNullOrEmpty(lead.Email))
+                                {
+                                    var (f, l) = EmailUtils.ParseName(lead.Name);
+                                    var domain = lead.Email.Split('@').Last();
+                                    var matchedPattern = EmailUtils.IdentifyPattern(lead.Email, f, l, domain);
+                                    if (matchedPattern != null)
+                                    {
+                                        await _patternRepo.RecordOutcomeAsync(domain, matchedPattern, true);
+                                    }
+                                }
                             }
                             continue;
                         }
 
-                        // 2. Generate follow-up nudge
-                        var lead = original.LeadId.HasValue ? await _leadRepo.GetLeadByIdAsync(brand.Id, original.LeadId.Value, brand.OwnerId) : null;
                         if (lead == null)
                         {
                             await _outreachRepo.MarkFollowUpScheduledAsync(original.Id); // Skip if lead missing
