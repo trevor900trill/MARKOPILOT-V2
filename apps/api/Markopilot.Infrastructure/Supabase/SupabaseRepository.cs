@@ -518,12 +518,12 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
                 updated_at = NOW()
             WHERE id = @id", conn);
         cmd.Parameters.AddWithValue("id", leadId);
-        cmd.Parameters.AddWithValue("email", (object?)email ?? DBNull.Value);
+        cmd.Parameters.Add(new NpgsqlParameter("email", NpgsqlTypes.NpgsqlDbType.Text) { Value = (object?)email ?? DBNull.Value });
         cmd.Parameters.AddWithValue("emailStatus", emailStatus);
         cmd.Parameters.AddWithValue("confidence", confidence);
-        cmd.Parameters.AddWithValue("source", (object?)source ?? DBNull.Value);
+        cmd.Parameters.Add(new NpgsqlParameter("source", NpgsqlTypes.NpgsqlDbType.Text) { Value = (object?)source ?? DBNull.Value });
         cmd.Parameters.AddWithValue("isCatchAll", isCatchAll);
-        cmd.Parameters.AddWithValue("verificationStatus", (object?)verificationStatus ?? DBNull.Value);
+        cmd.Parameters.Add(new NpgsqlParameter("verificationStatus", NpgsqlTypes.NpgsqlDbType.Text) { Value = (object?)verificationStatus ?? DBNull.Value });
         await cmd.ExecuteNonQueryAsync();
     }
 
