@@ -487,7 +487,7 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
               AND company IS NOT NULL
               AND (
                   email_status != 'unfindable'
-                  OR email_enrichment_attempted_at < NOW() - INTERVAL '30 days'
+                  AND email_enrichment_attempted_at < NOW() - INTERVAL '30 days'
               )
             ORDER BY discovered_at DESC
             LIMIT @limit", conn);
