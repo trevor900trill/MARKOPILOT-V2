@@ -338,18 +338,21 @@ Return ONLY this JSON, no preamble:
             {
                 var results = await SearchAsync(query);
                 if (results.Count == 0) continue;
+                _logger.LogInformation("Found {Count} results for query: {Query}", results.Count, query);
 
                 // Scrape top 3 results max
                 foreach (var result in results.Take(3))
                 {
                     try
                     {
+                        _logger.LogInformation("Scraping {Url}", result.Url);
                         var content = await ScrapePageAsync(result.Url);
                         if (string.IsNullOrWhiteSpace(content)) continue;
 
                         var matches = emailRegex.Matches(content);
                         foreach (Match match in matches)
                         {
+                            _logger.LogInformation("Found email: {Email}", match.Value);
                             var foundEmail = match.Value.ToLowerInvariant();
                             // Filter out generic addresses
                             if (!foundEmail.StartsWith("info@") && !foundEmail.StartsWith("support@") &&

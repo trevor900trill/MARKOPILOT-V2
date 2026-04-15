@@ -157,10 +157,11 @@ public class EmailEnrichmentWorker : IEmailEnrichmentWorker
                 }
 
                 // ══ STAGE 2.5: Web Email Search (Free Hunter) ════
+                _logger.LogInformation("Web scraping for {Name} @ {Domain}...", lead.Name, domain);
                 var webEmail = await _discoveryService.SearchForEmailAsync(lead.Name!, lead.Company!, domain);
                 if (!string.IsNullOrWhiteSpace(webEmail))
                 {
-                    _logger.LogInformation("Stage 2.5: Web scrape found {Email} for {Name}", webEmail, lead.Name);
+                    _logger.LogInformation("Web scrape found {Email} for {Name}", webEmail, lead.Name);
                     
                     // Validate the scraped email via SMTP if possible
                     var validation = await _discoveryService.ValidateEmailAsync(webEmail);
