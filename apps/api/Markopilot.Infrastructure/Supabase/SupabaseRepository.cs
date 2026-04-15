@@ -485,10 +485,11 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
             WHERE email IS NULL
               AND name IS NOT NULL
               AND company IS NOT NULL
-              AND (
-                  email_status != 'unfindable'
-                  AND email_enrichment_attempted_at < NOW() - INTERVAL '30 days'
-              )
+              AND (email_status IS NULL OR email_status != 'unfindable')
+              -- AND (
+              --    email_enrichment_attempted_at IS NULL
+              --    OR email_enrichment_attempted_at < NOW() - INTERVAL '30 days'
+              -- )
             ORDER BY discovered_at DESC
             LIMIT @limit", conn);
         cmd.Parameters.AddWithValue("limit", limit);
