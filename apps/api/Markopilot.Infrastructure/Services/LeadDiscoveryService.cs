@@ -318,6 +318,65 @@ Return ONLY this JSON, no preamble:
         }
     }
 
+    public async Task<string?> SearchForEmailAsync(string name, string company, string domain)
+    {
+        if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(domain)) return null;
+
+        var emailRegex = new Regex(@"[a-zA-Z0-9._%+-]+@" + Regex.Escape(domain), RegexOptions.IgnoreCase);
+
+        // Google dork queries — targeting publicly exposed emails
+        var queries = new[]
+        {
+            $"\"{name}\" \"@{domain}\" email",
+            $"\"{name}\" \"{company}\" email contact",
+            $"site:{domain} \"{name}\" email",
+        };
+
+        foreach (var query in queries)
+        {
+            try
+            {
+                var results = await SearchAsync(query);
+                if (results.Count == 0) continue;
+
+                // Scrape top 3 results max
+                foreach (var result in results.Take(3))
+                {
+                    try
+                    {
+                        var content = await ScrapePageAsync(result.Url);
+                        if (string.IsNullOrWhiteSpace(content)) continue;
+
+                        var matches = emailRegex.Matches(content);
+                        foreach (Match match in matches)
+                        {
+                            var foundEmail = match.Value.ToLowerInvariant();
+                            // Filter out generic addresses
+                            if (!foundEmail.StartsWith("info@") && !foundEmail.StartsWith("support@") &&
+                                !foundEmail.StartsWith("contact@") && !foundEmail.StartsWith("hello@") &&
+                                !foundEmail.StartsWith("admin@") && !foundEmail.StartsWith("sales@") &&
+                                !foundEmail.StartsWith("noreply@") && !foundEmail.StartsWith("no-reply@"))
+                            {
+                                _logger.LogInformation("Web scrape found email {Email} from {Url}", foundEmail, result.Url);
+                                return foundEmail;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogDebug(ex, "Failed to scrape {Url} for email search", result.Url);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Search query failed: {Query}", query);
+            }
+        }
+
+        return null;
+    }
+
     public async Task<EmailVerificationResult?> DiscoverEmailAsync(string name, string company, string domain)
     {
         if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(domain)) return null;

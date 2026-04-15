@@ -53,6 +53,12 @@ public interface ILeadDiscoveryService
     Task<EmailVerificationResult> ValidateEmailAsync(string email);
     Task<EmailVerificationResult?> DiscoverEmailAsync(string name, string company, string domain);
     Task<string?> DiscoverDomainAsync(string companyName);
+    
+    /// <summary>
+    /// Web-scrape public sources (Google, company pages) to find an email for a person.
+    /// This is the "free Hunter.io" — uses Serper + Jina to Google-dork for email addresses.
+    /// </summary>
+    Task<string?> SearchForEmailAsync(string name, string company, string domain);
 }
 
 // ═══════════════════════════════════════════════════

@@ -156,6 +156,23 @@ public class EmailEnrichmentWorker : IEmailEnrichmentWorker
                     continue;
                 }
 
+                // ══ STAGE 2.5: Web Email Search (Free Hunter) ════
+                var webEmail = await _discoveryService.SearchForEmailAsync(lead.Name!, lead.Company!, domain);
+                if (!string.IsNullOrWhiteSpace(webEmail))
+                {
+                    _logger.LogInformation("Stage 2.5: Web scrape found {Email} for {Name}", webEmail, lead.Name);
+                    
+                    // Validate the scraped email via SMTP if possible
+                    var validation = await _discoveryService.ValidateEmailAsync(webEmail);
+                    double confidence = validation.Status == EmailVerificationStatus.Valid ? 0.85 : 0.6;
+                    string status = confidence >= 0.8 ? "verified" : "enriched";
+                    
+                    await _leadRepo.UpdateLeadEmailAsync(lead.Id, webEmail, status, confidence, "web_scrape", validation.IsCatchAll, validation.Status.ToString());
+                    await UpdatePatternIntelligence(domain, new EmailVerificationResult { Email = webEmail, Source = "web_scrape", Provider = validation.Provider ?? "unknown", IsCatchAll = validation.IsCatchAll }, first, last);
+                    await _brandRepo.InsertActivityAsync(lead.BrandId, "lead_enrichment", $"Web scrape found {webEmail} with {confidence:P0} confidence.");
+                    continue;
+                }
+
                 // ══ STAGE 3: Hunter.io Fallback ═══════════════════
                 if (_hunterClient.IsConfigured)
                 {
@@ -163,8 +180,11 @@ public class EmailEnrichmentWorker : IEmailEnrichmentWorker
                     if (!string.IsNullOrWhiteSpace(hunterEmail))
                     {
                         var status = "enriched";
-                        var confidence = 0.7; // Hunter default without SMTP verify here
+                        var confidence = 0.7;
                         await _leadRepo.UpdateLeadEmailAsync(lead.Id, hunterEmail, status, confidence, "hunter", false);
+                        
+                        // Feed Hunter results back into pattern learning
+                        await UpdatePatternIntelligence(domain, new EmailVerificationResult { Email = hunterEmail, Source = "hunter", Provider = "unknown" }, first, last);
                         continue;
                     }
                 }
