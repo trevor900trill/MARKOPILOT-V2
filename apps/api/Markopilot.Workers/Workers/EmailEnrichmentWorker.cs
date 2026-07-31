@@ -108,7 +108,7 @@ public class EmailEnrichmentWorker : IEmailEnrichmentWorker
                             Email = email, 
                             Status = EmailVerificationStatus.Valid, 
                             Source = "identity_inference",
-                            Provider = patternCache.MailProvider
+                            Provider = patternCache.MailProvider ?? "unknown"
                         };
                     }
                 }
@@ -125,7 +125,7 @@ public class EmailEnrichmentWorker : IEmailEnrichmentWorker
                             Status = EmailVerificationStatus.Risky, 
                             Source = "pattern_cache",
                             IsCatchAll = true,
-                            Provider = patternCache.MailProvider
+                            Provider = patternCache?.MailProvider ?? "unknown"
                         };
                     }
                 }

@@ -12,7 +12,7 @@ namespace Markopilot.Infrastructure.OpenRouter;
 public class AiRoutingService : IAiRoutingService
 {
     private readonly HttpClient _httpClient;
-    private readonly string _apiKey;
+    private readonly string? _apiKey;
     private readonly ILogger<AiRoutingService> _logger;
 
     public AiRoutingService(HttpClient httpClient, IConfiguration configuration, ILogger<AiRoutingService> logger)
