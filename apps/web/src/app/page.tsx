@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { signIn } from "next-auth/react";
-import { Check, Menu, ArrowRight, Share2, Users, Send, Rocket, Sparkles, Zap, ShieldCheck, MessageSquare, Briefcase, Camera, Video, Mail, Bot, Database } from "lucide-react";
+import { Check, Menu, ArrowRight, Share2, Users, Send, Rocket, Sparkles, Zap, ShieldCheck, MessageSquare, Briefcase, Camera, Video, Mail, Bot, Database, Wand2, Film, Eye } from "lucide-react";
 import { PLANS } from "@/lib/plans";
 import { useState, useEffect } from "react";
 
@@ -245,6 +245,8 @@ export default function LandingPage() {
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Video size={28} /> TikTok</div>
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Mail size={28} /> Gmail SMTP</div>
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Bot size={28} /> OpenAI Engines</div>
+              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Wand2 size={28} /> Replicate (Flux)</div>
+              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Film size={28} /> Creatomate API</div>
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Database size={28} /> Supabase</div>
             </div>
             {/* Duplicated for seamless infinite looping */}
@@ -255,6 +257,8 @@ export default function LandingPage() {
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Video size={28} /> TikTok</div>
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Mail size={28} /> Gmail SMTP</div>
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Bot size={28} /> OpenAI Engines</div>
+              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Wand2 size={28} /> Replicate (Flux)</div>
+              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Film size={28} /> Creatomate API</div>
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Database size={28} /> Supabase</div>
             </div>
           </div>
@@ -272,26 +276,91 @@ export default function LandingPage() {
               <Share2 size={24} className="relative z-10 text-[var(--accent-primary)]" />
             </div>
             <h2 className="font-serif text-[clamp(32px,4vw,48px)] leading-[1.1] text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">
-              Autonomous Publishing Topology
+              Multi-Modal Autonomous Social Posting
             </h2>
             <p className="text-lg text-gray-400 leading-relaxed font-light">
-              Connect your X, LinkedIn, Instagram, and TikTok accounts. Markopilot generates platform-optimised copy using AI, schedules it based on your content pillars, and publishes automatically. Never stare at a blank calendar again.
+              Connect your X, LinkedIn, Instagram, and TikTok accounts. Markopilot doesn't just write text — powered by <strong className="text-white font-normal">Replicate (Flux 1.1)</strong> and <strong className="text-white font-normal">Creatomate</strong>, it generates stunning contextual images for Instagram and engaging short-form videos for TikTok.
             </p>
             <ul className="space-y-4 mt-6">
-              <li className="flex items-center gap-3 text-gray-300 font-medium text-sm"><Check size={18} className="text-[var(--success)]" /> AI Image & Copy Generation</li>
+              <li className="flex items-center gap-3 text-gray-300 font-medium text-sm"><Check size={18} className="text-[var(--success)]" /> AI Copy, Images, and Video Generation</li>
               <li className="flex items-center gap-3 text-gray-300 font-medium text-sm"><Check size={18} className="text-[var(--success)]" /> Fully Automated Scheduling Pipelines</li>
             </ul>
           </div>
-          <div className="flex-1 w-full aspect-square relative group">
-            <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-primary)]/20 to-purple-600/20 rounded-[32px] blur-3xl opacity-50 group-hover:opacity-100 transition duration-1000 -z-10"></div>
-            <div className="relative w-full h-full rounded-[32px] border border-white/10 bg-black overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-transform duration-500 hover:scale-[1.03]">
-              <div className="absolute inset-0 opacity-[0.8] mix-blend-luminosity group-hover:mix-blend-normal transition-all duration-1000">
-                <img src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1974&auto=format&fit=crop" alt="Social Apps Network UI" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2000ms] ease-out pointer-events-none" />
+          <div className="flex-1 w-full aspect-square relative group perspective-[1000px]">
+            <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-primary)]/30 to-fuchsia-600/20 rounded-[32px] blur-3xl opacity-50 group-hover:opacity-100 transition duration-1000 -z-10"></div>
+            
+            {/* Main Container */}
+            <div className="relative w-full h-full rounded-[32px] border border-white/10 bg-[#0a0a0f] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-transform duration-700 group-hover:scale-[1.02] flex items-center justify-center p-4 sm:p-8">
+              
+              {/* Abstract Background pattern */}
+              <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay pointer-events-none"></div>
+              <div className="absolute inset-0 bg-gradient-to-tr from-[var(--accent-primary)]/10 via-transparent to-pink-500/10 pointer-events-none"></div>
+
+              <div className="relative w-full h-full flex items-center justify-center gap-4 sm:gap-6 z-10">
+                 
+                 {/* Left Phone: Instagram Image Gen */}
+                 <div className="w-40 sm:w-48 h-72 sm:h-80 bg-[#111116] border border-white/10 rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.8)] relative overflow-hidden transform -rotate-6 translate-y-4 group-hover:rotate-0 group-hover:translate-y-0 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]">
+                    <div className="absolute top-0 inset-x-0 h-8 bg-black flex justify-center items-center z-10">
+                       <div className="w-12 h-3 bg-[#222] rounded-full"></div>
+                    </div>
+                    {/* IG Header */}
+                    <div className="mt-10 px-3 flex items-center gap-2">
+                       <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-fuchsia-600 p-[1.5px]">
+                          <div className="w-full h-full bg-black rounded-full border border-black"></div>
+                       </div>
+                       <div className="h-2 w-16 bg-white/20 rounded-full"></div>
+                    </div>
+                    {/* IG Image Placeholder */}
+                    <div className="mt-3 w-full aspect-square relative overflow-hidden group/img">
+                       <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop" className="w-full h-full object-cover opacity-70 group-hover/img:scale-110 transition-transform duration-[2000ms]" alt="AI Gen"/>
+                       <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[2px]">
+                          <div className="bg-white/10 border border-white/20 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-2 text-[9px] font-mono text-white shadow-xl">
+                             <Wand2 size={10} className="text-purple-400" /> Flux 1.1 Pro
+                          </div>
+                       </div>
+                    </div>
+                    <div className="px-3 mt-4 space-y-2">
+                       <div className="h-2 w-3/4 bg-white/20 rounded-full"></div>
+                       <div className="h-2 w-1/2 bg-white/10 rounded-full"></div>
+                    </div>
+                 </div>
+
+                 {/* Right Phone: TikTok Video Gen */}
+                 <div className="w-40 sm:w-48 h-72 sm:h-80 bg-[#111116] border border-white/10 rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.8)] relative overflow-hidden transform rotate-6 -translate-y-4 group-hover:rotate-0 group-hover:translate-y-0 transition-all duration-700 delay-100 ease-[cubic-bezier(0.16,1,0.3,1)]">
+                    <div className="absolute top-0 inset-x-0 h-8 bg-black flex justify-center items-center z-10">
+                       <div className="w-12 h-3 bg-[#222] rounded-full"></div>
+                    </div>
+                    <div className="absolute inset-0 bg-black">
+                       <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2000&auto=format&fit=crop" className="w-full h-full object-cover opacity-50" alt="Video Background" />
+                       <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/30"></div>
+                    </div>
+                    {/* TikTok overlay */}
+                    <div className="absolute right-2 bottom-20 flex flex-col gap-3">
+                       <div className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md border border-white/5 flex items-center justify-center"><Check size={14} className="text-white"/></div>
+                       <div className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md border border-white/5 flex items-center justify-center"><MessageSquare size={12} className="text-white"/></div>
+                       <div className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md border border-white/5 flex items-center justify-center"><Share2 size={12} className="text-white"/></div>
+                    </div>
+                    <div className="absolute bottom-6 left-3 right-14">
+                       <div className="h-2 w-16 bg-white/80 rounded-full mb-3"></div>
+                       <div className="h-1.5 w-full bg-white/40 rounded-full mb-1.5"></div>
+                       <div className="h-1.5 w-2/3 bg-white/40 rounded-full"></div>
+                    </div>
+                    
+                    {/* Creatomate Processing Badge */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                        <div className="bg-black/60 border border-white/20 backdrop-blur-md px-4 py-3 rounded-2xl flex flex-col items-center gap-2 shadow-2xl">
+                           <Film size={18} className="text-[#00f2fe] animate-pulse" />
+                           <span className="text-[9px] font-mono text-white tracking-widest uppercase">Rendering</span>
+                        </div>
+                    </div>
+                 </div>
+
               </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-[#07070a] via-black/40 to-transparent"></div>
-              <div className="absolute bottom-6 left-6 right-6 p-4 rounded-xl backdrop-blur-md bg-white/10 border border-white/20 translate-y-4 group-hover:translate-y-0 opacity-80 group-hover:opacity-100 transition-all duration-500">
-                <p className="font-mono text-sm text-white mb-1 drop-shadow-md flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-[var(--accent-primary)] animate-pulse"></span>Queue Synchronised</p>
-                <p className="text-xs text-gray-300 leading-tight">Successfully routed payloads to 4 connected networking interfaces mapping optimal execution paths.</p>
+
+              {/* Status Overlay */}
+              <div className="absolute bottom-6 left-6 right-6 p-4 rounded-xl backdrop-blur-md bg-white/5 border border-white/10 translate-y-4 group-hover:translate-y-0 opacity-80 group-hover:opacity-100 transition-all duration-500 z-20 shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
+                <p className="font-mono text-sm text-white mb-1 drop-shadow-md flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-[var(--accent-primary)] animate-pulse"></span>Media Pipelines Active</p>
+                <p className="text-xs text-gray-300 leading-tight">Prompting Flux 1.1 Pro via Replicate... Compiling MP4 via Creatomate API... Dispatching to socials.</p>
               </div>
             </div>
           </div>
@@ -338,14 +407,14 @@ export default function LandingPage() {
               <Send size={24} className="relative z-10 text-emerald-400" />
             </div>
             <h2 className="font-serif text-[clamp(32px,4vw,48px)] leading-[1.1] text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">
-              Automated Email Outreach
+              AI Outreach: Autonomous or Human-in-the-Loop
             </h2>
             <p className="text-lg text-gray-400 leading-relaxed font-light">
-              Connect your Gmail account. We draft highly personalised, 3-paragraph cold outreach emails referencing the lead's company and your value prop. Sent directly from your outbox with controlled cadence to ensure high deliverability.
+              We draft highly personalised cold emails referencing the lead's company and your value prop. Want full control? Enable <strong className="text-white font-normal">Review Mode</strong> to approve, edit, or reject AI drafts in a beautiful queue. Want scale? Switch to fully autonomous dispatch.
             </p>
             <ul className="space-y-4 mt-6">
-              <li className="flex items-center gap-3 text-gray-300 font-medium text-sm"><Check size={18} className="text-emerald-400" /> Strict Deliverability Governors</li>
-              <li className="flex items-center gap-3 text-gray-300 font-medium text-sm"><Check size={18} className="text-emerald-400" /> GDPR Built-in Suppression Layers</li>
+              <li className="flex items-center gap-3 text-gray-300 font-medium text-sm"><Check size={18} className="text-emerald-400" /> Human-in-the-Loop Review Queue</li>
+              <li className="flex items-center gap-3 text-gray-300 font-medium text-sm"><Check size={18} className="text-emerald-400" /> Smart Deliverability Governors</li>
             </ul>
           </div>
           <div className="flex-1 w-full aspect-square relative group">
@@ -355,9 +424,9 @@ export default function LandingPage() {
                 <img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=2034&auto=format&fit=crop" alt="Outreach Server Interface UI" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2000ms] ease-out pointer-events-none" />
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-[#07070a] via-black/40 to-transparent"></div>
-              <div className="absolute bottom-6 left-6 right-6 p-4 rounded-xl backdrop-blur-md bg-white/10 border border-white/20 translate-y-4 group-hover:translate-y-0 opacity-80 group-hover:opacity-100 transition-all duration-500">
-                <p className="font-mono text-sm text-white mb-1 drop-shadow-md flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>Relay Active</p>
-                <p className="text-xs text-gray-300 leading-tight">SMTP packet injected correctly with 0% bounce-back probability evaluated on active outbound lines.</p>
+              <div className="absolute bottom-6 left-6 right-6 p-4 rounded-xl backdrop-blur-md bg-amber-500/10 border border-amber-500/20 translate-y-4 group-hover:translate-y-0 opacity-80 group-hover:opacity-100 transition-all duration-500">
+                <p className="font-mono text-sm text-white mb-1 drop-shadow-md flex items-center gap-2"><Eye size={14} className="text-amber-400" /> Pending Review</p>
+                <p className="text-xs text-amber-200/80 leading-tight">Review Mode is active. 14 emails are currently held in the queue awaiting your final approval before SMTP injection.</p>
               </div>
             </div>
           </div>
