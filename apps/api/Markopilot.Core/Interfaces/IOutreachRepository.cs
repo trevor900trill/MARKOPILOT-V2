@@ -53,4 +53,24 @@ public interface IOutreachRepository
     /// <summary>Cancel a queued outreach email (sets status to 'cancelled').</summary>
     /// <remarks>Used by: API</remarks>
     Task CancelOutreachEmailAsync(Guid emailId, Guid ownerId);
+
+    // ── Review Mode ─────────────────────────────
+    /// <summary>Get emails pending user approval (status = 'pending_approval').</summary>
+    /// <remarks>Used by: API (OutreachController — review queue)</remarks>
+    Task<(List<OutreachEmail> Items, int Total)> GetPendingApprovalEmailsAsync(Guid brandId, Guid ownerId, int page = 1, int pageSize = 20);
+
+    /// <summary>
+    /// Approve a draft email, optionally applying edits to subject/body.
+    /// Sets status back to 'queued' so the worker dispatches it on next run.
+    /// </summary>
+    /// <remarks>Used by: API</remarks>
+    Task ApproveOutreachEmailAsync(Guid emailId, Guid ownerId, string? editedSubject = null, string? editedBodyText = null, string? editedBodyHtml = null);
+
+    /// <summary>Bulk approve multiple draft emails at once (no edits, just approve all).</summary>
+    /// <remarks>Used by: API</remarks>
+    Task BulkApproveOutreachEmailsAsync(List<Guid> emailIds, Guid ownerId);
+
+    /// <summary>Reject a pending email (sets status to 'rejected').</summary>
+    /// <remarks>Used by: API</remarks>
+    Task RejectOutreachEmailAsync(Guid emailId, Guid ownerId);
 }

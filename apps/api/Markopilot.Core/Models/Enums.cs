@@ -8,7 +8,8 @@ public enum AiTask
     SocialPostGeneration,
     EmailOutreachCopy,
     ContentPillarSuggestion,
-    OnboardingEnhancement
+    OnboardingEnhancement,
+    ImagePromptGeneration
 }
 
 public enum SocialPlatform

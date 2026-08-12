@@ -207,6 +207,7 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
                 automation_outreach_enabled = @autoOutreach,
                 automation_outreach_daily_limit = @outreachLimit,
                 automation_outreach_delay_hours = @outreachDelay,
+                require_email_approval = @requireApproval,
                 updated_at = NOW()
             WHERE id = @id AND owner_id = @ownerId
             RETURNING *", conn);
@@ -232,6 +233,7 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         cmd.Parameters.AddWithValue("autoOutreach", brand.AutomationOutreachEnabled);
         cmd.Parameters.AddWithValue("outreachLimit", brand.AutomationOutreachDailyLimit);
         cmd.Parameters.AddWithValue("outreachDelay", brand.AutomationOutreachDelayHours);
+        cmd.Parameters.AddWithValue("requireApproval", brand.RequireEmailApproval);
         await using var reader = await cmd.ExecuteReaderAsync();
         await reader.ReadAsync();
         return MapBrand(reader);
@@ -1170,6 +1172,118 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         await cmd.ExecuteNonQueryAsync();
     }
 
+    // ── Review Mode Methods ──────────────────────────
+
+    public async Task<(List<OutreachEmail> Items, int Total)> GetPendingApprovalEmailsAsync(Guid brandId, Guid ownerId, int page = 1, int pageSize = 20)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        var offset = (page - 1) * pageSize;
+
+        await using var countCmd = new NpgsqlCommand(@"
+            SELECT COUNT(*) FROM outreach_emails
+            WHERE brand_id = @brandId AND status = 'pending_approval'
+            AND brand_id IN (SELECT id FROM brands WHERE owner_id = @ownerId)", conn);
+        countCmd.Parameters.AddWithValue("brandId", brandId);
+        countCmd.Parameters.AddWithValue("ownerId", ownerId);
+        var total = Convert.ToInt32(await countCmd.ExecuteScalarAsync());
+
+        await using var cmd = new NpgsqlCommand(@"
+            SELECT * FROM outreach_emails
+            WHERE brand_id = @brandId AND status = 'pending_approval'
+            AND brand_id IN (SELECT id FROM brands WHERE owner_id = @ownerId)
+            ORDER BY generated_at DESC
+            LIMIT @limit OFFSET @offset", conn);
+        cmd.Parameters.AddWithValue("brandId", brandId);
+        cmd.Parameters.AddWithValue("ownerId", ownerId);
+        cmd.Parameters.AddWithValue("limit", pageSize);
+        cmd.Parameters.AddWithValue("offset", offset);
+
+        await using var reader = await cmd.ExecuteReaderAsync();
+        var items = new List<OutreachEmail>();
+        while (await reader.ReadAsync()) items.Add(MapOutreachEmail(reader));
+        return (items, total);
+    }
+
+    public async Task ApproveOutreachEmailAsync(Guid emailId, Guid ownerId, string? editedSubject = null, string? editedBodyText = null, string? editedBodyHtml = null)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        // If edits are provided, update content AND set status to queued
+        if (!string.IsNullOrEmpty(editedSubject) || !string.IsNullOrEmpty(editedBodyText))
+        {
+            await using var cmd = new NpgsqlCommand(@"
+                UPDATE outreach_emails SET
+                    status = 'queued',
+                    subject = COALESCE(@subject, subject),
+                    body_text = COALESCE(@bodyText, body_text),
+                    body_html = COALESCE(@bodyHtml, body_html)
+                WHERE id = @id AND status = 'pending_approval'
+                AND brand_id IN (SELECT id FROM brands WHERE owner_id = @ownerId)", conn);
+            cmd.Parameters.AddWithValue("id", emailId);
+            cmd.Parameters.AddWithValue("ownerId", ownerId);
+            cmd.Parameters.AddWithValue("subject", (object?)editedSubject ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("bodyText", (object?)editedBodyText ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("bodyHtml", (object?)editedBodyHtml ?? DBNull.Value);
+            await cmd.ExecuteNonQueryAsync();
+        }
+        else
+        {
+            // Just approve without edits
+            await using var cmd = new NpgsqlCommand(@"
+                UPDATE outreach_emails SET status = 'queued'
+                WHERE id = @id AND status = 'pending_approval'
+                AND brand_id IN (SELECT id FROM brands WHERE owner_id = @ownerId)", conn);
+            cmd.Parameters.AddWithValue("id", emailId);
+            cmd.Parameters.AddWithValue("ownerId", ownerId);
+            await cmd.ExecuteNonQueryAsync();
+        }
+    }
+
+    public async Task BulkApproveOutreachEmailsAsync(List<Guid> emailIds, Guid ownerId)
+    {
+        if (emailIds.Count == 0) return;
+
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            UPDATE outreach_emails SET status = 'queued'
+            WHERE id = ANY(@ids) AND status = 'pending_approval'
+            AND brand_id IN (SELECT id FROM brands WHERE owner_id = @ownerId)", conn);
+        cmd.Parameters.AddWithValue("ids", emailIds.ToArray());
+        cmd.Parameters.AddWithValue("ownerId", ownerId);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task RejectOutreachEmailAsync(Guid emailId, Guid ownerId)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            UPDATE outreach_emails SET status = 'rejected'
+            WHERE id = @id AND status = 'pending_approval'
+            AND brand_id IN (SELECT id FROM brands WHERE owner_id = @ownerId)", conn);
+        cmd.Parameters.AddWithValue("id", emailId);
+        cmd.Parameters.AddWithValue("ownerId", ownerId);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task UpdateLeadEmailEnrichmentAttemptedAsync(Guid leadId)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            UPDATE leads SET email_enrichment_attempted_at = NOW()
+            WHERE id = @id", conn);
+        cmd.Parameters.AddWithValue("id", leadId);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
     public async Task UpdateOutreachEmailContentAsync(Guid emailId, string subject, string bodyText, string bodyHtml)
     {
         await using var conn = CreateConnection();
@@ -1522,6 +1636,7 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         AutomationPostsEnabled = r.GetBoolean(r.GetOrdinal("automation_posts_enabled")),
         AutomationLeadsEnabled = r.GetBoolean(r.GetOrdinal("automation_leads_enabled")),
         AutomationOutreachEnabled = r.GetBoolean(r.GetOrdinal("automation_outreach_enabled")),
+        RequireEmailApproval = !r.IsDBNull(r.GetOrdinal("require_email_approval")) && r.GetBoolean(r.GetOrdinal("require_email_approval")),
         CreatedAt = r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("created_at")),
         UpdatedAt = r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("updated_at")),
     };

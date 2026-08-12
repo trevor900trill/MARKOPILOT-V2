@@ -73,10 +73,10 @@ public static class EmailUtils
         if (weights == null || weights.Count == 0) return "{first}.{last}";
 
         // 2. Epsilon-Greedy Exploration
-        if (new Random().NextDouble() < epsilon)
+        if (Random.Shared.NextDouble() < epsilon)
         {
             // Explore: Pick a random pattern from the templates
-            return PatternTemplates[new Random().Next(0, PatternTemplates.Count)].Name;
+            return PatternTemplates[Random.Shared.Next(0, PatternTemplates.Count)].Name;
         }
 
         // 3. Exploit: Pick the one with highest confidence and at least some usage
@@ -86,6 +86,30 @@ public static class EmailUtils
             .FirstOrDefault();
             
         return best.Key ?? "{first}.{last}";
+    }
+
+    /// <summary>
+    /// Strips common honorifics, suffixes, and prefixes from names to improve pattern matching.
+    /// "Dr. Jane Smith Jr." → "Jane Smith"
+    /// </summary>
+    public static string NormalizeName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return name;
+
+        var prefixes = new[] { "dr.", "dr", "mr.", "mr", "mrs.", "mrs", "ms.", "ms", "prof.", "prof", "eng.", "eng" };
+        var suffixes = new[] { "jr.", "jr", "sr.", "sr", "ii", "iii", "iv", "phd", "ph.d.", "md", "m.d.", "esq", "esq." };
+
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList();
+
+        // Remove leading prefixes
+        while (parts.Count > 1 && prefixes.Contains(parts[0].ToLowerInvariant()))
+            parts.RemoveAt(0);
+
+        // Remove trailing suffixes
+        while (parts.Count > 1 && suffixes.Contains(parts[^1].ToLowerInvariant().TrimEnd(',')))
+            parts.RemoveAt(parts.Count - 1);
+
+        return string.Join(" ", parts);
     }
 }
 

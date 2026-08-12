@@ -49,7 +49,9 @@ public class EmailEnrichmentWorker : IEmailEnrichmentWorker
         _hunterClient = hunterClient;
         _brandRepo = brandRepo;
         _logger = logger;
-    }    [AutomaticRetry(Attempts = 2)]
+    }    private static readonly SemaphoreSlim _concurrencyGate = new(3); // Max 3 concurrent enrichments
+
+    [AutomaticRetry(Attempts = 2)]
     public async Task ExecuteAsync()
     {
         _logger.LogInformation("Starting Hunter-Level Email Enrichment run.");
@@ -57,146 +59,185 @@ public class EmailEnrichmentWorker : IEmailEnrichmentWorker
         var leads = await _leadRepo.GetLeadsNeedingEmailEnrichmentAsync(15); // Smaller batches for stealth
         if (leads.Count == 0) return;
 
-        foreach (var lead in leads)
+        // Process leads concurrently (max 3) for throughput while maintaining per-domain stealth
+        var tasks = leads.Select(lead => ProcessLeadAsync(lead));
+        await Task.WhenAll(tasks);
+    }
+
+    private async Task ProcessLeadAsync(Lead lead)
+    {
+        await _concurrencyGate.WaitAsync();
+        try
         {
-            try
+            // ── STEALTH: Random jitter between leads ──────────
+            await Task.Delay(Random.Shared.Next(2000, 5000));
+
+            var (first, last) = ParseName(lead.Name!);
+            if (string.IsNullOrEmpty(first)) return;
+
+            var domain = await DiscoverDomainForLead(lead);
+            if (string.IsNullOrEmpty(domain))
             {
-                // ── STEALTH: Random jitter between leads ──────────
-                await Task.Delay(Random.Shared.Next(2000, 5000));
-
-                var (first, last) = ParseName(lead.Name!);
-                if (string.IsNullOrEmpty(first)) continue;
-
-                var domain = await DiscoverDomainForLead(lead);
-                if (string.IsNullOrEmpty(domain))
-                {
-                    await _leadRepo.UpdateLeadEmailAsync(lead.Id, null, "unfindable", 0, null, false);
-                    continue;
-                }
-
-                _logger.LogInformation("Enriching {Name} @ {Domain}...", lead.Name, domain);
-
-                // ══ STAGE 1: Probabilistic Pattern Inference ══════
-                var patternCache = await _patternRepo.GetPatternByDomainAsync(domain);
-                
-                // 1. Calculate historical confidence and staleness
-                float patternConfidence = 0;
-                bool isStale = true;
-                if (patternCache != null)
-                {
-                    var bestWeights = patternCache.Weights.Values.OrderByDescending(v => v.Confidence).FirstOrDefault();
-                    patternConfidence = bestWeights?.Confidence ?? 0;
-                    isStale = patternCache.LastConfirmedAt < DateTimeOffset.UtcNow.AddDays(-30);
-                }
-
-                // 2. Select pattern (with exploration)
-                var bestPattern = EmailUtils.PickBestPattern(patternCache?.Weights);
-                
-                // ══ STAGE 2: Discovery Strategy Selection ═════════
-                EmailVerificationResult? discoveryResult = null;
-                
-                // HIGH INTELLIGENCE: If we have a very high confidence pattern and it's not stale,
-                // SKIP SMTP to maximize stealth and performance.
-                if (patternConfidence > 0.9f && !isStale && patternCache != null)
-                {
-                    _logger.LogInformation("Intelligence-Gate: High confidence ({Conf:P1}) for {Domain}. Skipping SMTP.", patternConfidence, domain);
-                    var email = EmailUtils.GenerateEmailFromPattern(bestPattern, first, last, domain);
-                    if (email != null)
-                    {
-                        discoveryResult = new EmailVerificationResult 
-                        { 
-                            Email = email, 
-                            Status = EmailVerificationStatus.Valid, 
-                            Source = "identity_inference",
-                            Provider = patternCache.MailProvider ?? "unknown"
-                        };
-                    }
-                }
-                // STEALTH: If we already know it's a catch-all, SKIP SMTP probes
-                else if (patternCache?.IsCatchAll == true)
-                {
-                    _logger.LogInformation("Domain {Domain} is a known Catch-All. Using pattern inference.", domain);
-                    var email = EmailUtils.GenerateEmailFromPattern(bestPattern, first, last, domain);
-                    if (email != null)
-                    {
-                        discoveryResult = new EmailVerificationResult 
-                        { 
-                            Email = email, 
-                            Status = EmailVerificationStatus.Risky, 
-                            Source = "pattern_cache",
-                            IsCatchAll = true,
-                            Provider = patternCache?.MailProvider ?? "unknown"
-                        };
-                    }
-                }
-                else
-                {
-                    // NORMAL: Perform SMTP discovery
-                    discoveryResult = await _discoveryService.DiscoverEmailAsync(lead.Name!, lead.Company!, domain);
-                }
-                
-                if (discoveryResult != null)
-                {
-                    // Calculate final confidence
-                    double confidence = CalculateConfidence(discoveryResult, patternCache, first, last, domain);
-                    
-                    // ARCHITECTURE ENFORCEMENT: Catch-all leads can NEVER be 'verified'
-                    string status = (confidence >= 0.8 && !discoveryResult.IsCatchAll) ? "verified" : (discoveryResult.IsCatchAll ? "risky" : "enriched");
-
-                    _logger.LogInformation("Discovery Success: {Email} | Confidence: {Conf:P1} | Source: {Src}", 
-                        discoveryResult.Email, confidence, discoveryResult.Source);
-
-                    await _leadRepo.UpdateLeadEmailAsync(lead.Id, discoveryResult.Email, status, confidence, discoveryResult.Source, discoveryResult.IsCatchAll, discoveryResult.Status.ToString());
-                    
-                    // Update global pattern intelligence
-                    await UpdatePatternIntelligence(domain, discoveryResult, first, last);
-                    
-                    await _brandRepo.InsertActivityAsync(lead.BrandId, "lead_enrichment", 
-                        $"Found {discoveryResult.Email} ({discoveryResult.Source}) with {confidence:P0} confidence.");
-                    continue;
-                }
-
-                // ══ STAGE 2.5: Web Email Search (Free Hunter) ════
-                _logger.LogInformation("Web scraping for {Name} @ {Domain}...", lead.Name, domain);
-                var webEmail = await _discoveryService.SearchForEmailAsync(lead.Name!, lead.Company!, domain);
-                if (!string.IsNullOrWhiteSpace(webEmail))
-                {
-                    _logger.LogInformation("Web scrape found {Email} for {Name}", webEmail, lead.Name);
-                    
-                    // Validate the scraped email via SMTP if possible
-                    var validation = await _discoveryService.ValidateEmailAsync(webEmail);
-                    double confidence = validation.Status == EmailVerificationStatus.Valid ? 0.85 : 0.6;
-                    string status = confidence >= 0.8 ? "verified" : "enriched";
-                    
-                    await _leadRepo.UpdateLeadEmailAsync(lead.Id, webEmail, status, confidence, "web_scrape", validation.IsCatchAll, validation.Status.ToString());
-                    await UpdatePatternIntelligence(domain, new EmailVerificationResult { Email = webEmail, Source = "web_scrape", Provider = validation.Provider ?? "unknown", IsCatchAll = validation.IsCatchAll }, first, last);
-                    await _brandRepo.InsertActivityAsync(lead.BrandId, "lead_enrichment", $"Web scrape found {webEmail} with {confidence:P0} confidence.");
-                    continue;
-                }
-
-                // ══ STAGE 3: Hunter.io Fallback ═══════════════════
-                if (_hunterClient.IsConfigured)
-                {
-                    var hunterEmail = await _hunterClient.EmailFinderAsync(domain, first, last);
-                    if (!string.IsNullOrWhiteSpace(hunterEmail))
-                    {
-                        var status = "enriched";
-                        var confidence = 0.7;
-                        await _leadRepo.UpdateLeadEmailAsync(lead.Id, hunterEmail, status, confidence, "hunter", false);
-                        
-                        // Feed Hunter results back into pattern learning
-                        await UpdatePatternIntelligence(domain, new EmailVerificationResult { Email = hunterEmail, Source = "hunter", Provider = "unknown" }, first, last);
-                        continue;
-                    }
-                }
-
-                // Failed all stages
-                await _leadRepo.UpdateLeadEmailAsync(lead.Id, null, "unfindable", 0, "exhausted", false);
+                await _leadRepo.UpdateLeadEmailAsync(lead.Id, null, "unfindable", 0, null, false);
+                return;
             }
-            catch (Exception ex)
+
+            _logger.LogInformation("Enriching {Name} @ {Domain}...", lead.Name, domain);
+
+            // ══ STAGE 1: Probabilistic Pattern Inference ══════
+            var patternCache = await _patternRepo.GetPatternByDomainAsync(domain);
+            
+            // 1. Calculate historical confidence and staleness
+            float patternConfidence = 0;
+            bool isStale = true;
+            if (patternCache != null)
             {
-                _logger.LogError(ex, "Failed enrichment for lead {LeadId}", lead.Id);
+                var bestWeights = patternCache.Weights.Values.OrderByDescending(v => v.Confidence).FirstOrDefault();
+                patternConfidence = bestWeights?.Confidence ?? 0;
+                isStale = patternCache.LastConfirmedAt < DateTimeOffset.UtcNow.AddDays(-30);
             }
+
+            // 2. Select pattern (with exploration)
+            var bestPattern = EmailUtils.PickBestPattern(patternCache?.Weights);
+            
+            // ══ STAGE 2: Discovery Strategy Selection ═════════
+            EmailVerificationResult? discoveryResult = null;
+            
+            // HIGH INTELLIGENCE: If we have a very high confidence pattern and it's not stale,
+            // SKIP SMTP to maximize stealth and performance.
+            if (patternConfidence > 0.9f && !isStale && patternCache != null)
+            {
+                _logger.LogInformation("Intelligence-Gate: High confidence ({Conf:P1}) for {Domain}. Skipping SMTP.", patternConfidence, domain);
+                var email = EmailUtils.GenerateEmailFromPattern(bestPattern, first, last, domain);
+                if (email != null)
+                {
+                    discoveryResult = new EmailVerificationResult 
+                    { 
+                        Email = email, 
+                        Status = EmailVerificationStatus.Valid, 
+                        Source = "identity_inference",
+                        Provider = patternCache.MailProvider ?? "unknown"
+                    };
+                }
+            }
+            // STEALTH: If we already know it's a catch-all, SKIP SMTP probes
+            else if (patternCache?.IsCatchAll == true)
+            {
+                _logger.LogInformation("Domain {Domain} is a known Catch-All. Using pattern inference.", domain);
+                var email = EmailUtils.GenerateEmailFromPattern(bestPattern, first, last, domain);
+                if (email != null)
+                {
+                    discoveryResult = new EmailVerificationResult 
+                    { 
+                        Email = email, 
+                        Status = EmailVerificationStatus.Risky, 
+                        Source = "pattern_cache",
+                        IsCatchAll = true,
+                        Provider = patternCache?.MailProvider ?? "unknown"
+                    };
+                }
+            }
+            else
+            {
+                // NORMAL: Perform SMTP discovery
+                discoveryResult = await _discoveryService.DiscoverEmailAsync(lead.Name!, lead.Company!, domain);
+            }
+            
+            if (discoveryResult != null)
+            {
+                // Calculate final confidence
+                double confidence = CalculateConfidence(discoveryResult, patternCache, first, last, domain);
+                
+                // ARCHITECTURE ENFORCEMENT: Catch-all leads can NEVER be 'verified'
+                string status = (confidence >= 0.8 && !discoveryResult.IsCatchAll) ? "verified" : (discoveryResult.IsCatchAll ? "risky" : "enriched");
+
+                _logger.LogInformation("Discovery Success: {Email} | Confidence: {Conf:P1} | Source: {Src}", 
+                    discoveryResult.Email, confidence, discoveryResult.Source);
+
+                await _leadRepo.UpdateLeadEmailAsync(lead.Id, discoveryResult.Email, status, confidence, discoveryResult.Source, discoveryResult.IsCatchAll, discoveryResult.Status.ToString());
+                await _leadRepo.UpdateLeadEmailEnrichmentAttemptedAsync(lead.Id);
+                
+                // Update global pattern intelligence
+                await UpdatePatternIntelligence(domain, discoveryResult, first, last);
+                
+                await _brandRepo.InsertActivityAsync(lead.BrandId, "lead_enrichment", 
+                    $"Found {discoveryResult.Email} ({discoveryResult.Source}) with {confidence:P0} confidence.");
+                return;
+            }
+
+            // ══ STAGE 2.5: Web Email Search (Free Hunter) ════
+            _logger.LogInformation("Web scraping for {Name} @ {Domain}...", lead.Name, domain);
+            var webEmail = await _discoveryService.SearchForEmailAsync(lead.Name!, lead.Company!, domain);
+            if (!string.IsNullOrWhiteSpace(webEmail))
+            {
+                _logger.LogInformation("Web scrape found {Email} for {Name}", webEmail, lead.Name);
+                
+                // Validate the scraped email via SMTP if possible
+                var validation = await _discoveryService.ValidateEmailAsync(webEmail);
+                double confidence = validation.Status == EmailVerificationStatus.Valid ? 0.85 : 0.6;
+                string status = confidence >= 0.8 ? "verified" : "enriched";
+                
+                await _leadRepo.UpdateLeadEmailAsync(lead.Id, webEmail, status, confidence, "web_scrape", validation.IsCatchAll, validation.Status.ToString());
+                await _leadRepo.UpdateLeadEmailEnrichmentAttemptedAsync(lead.Id);
+                await UpdatePatternIntelligence(domain, new EmailVerificationResult { Email = webEmail, Source = "web_scrape", Provider = validation.Provider ?? "unknown", IsCatchAll = validation.IsCatchAll }, first, last);
+                await _brandRepo.InsertActivityAsync(lead.BrandId, "lead_enrichment", $"Web scrape found {webEmail} with {confidence:P0} confidence.");
+                return;
+            }
+
+            // ══ STAGE 3: Hunter.io Fallback ═══════════════════
+            if (_hunterClient.IsConfigured)
+            {
+                // 3a. Try cheaper DomainSearch first — learns pattern + may find the email directly
+                var domainResult = await _hunterClient.DomainSearchAsync(domain);
+                if (domainResult.Emails.Count > 0)
+                {
+                    // Feed the domain pattern into our learning cache (free intelligence)
+                    if (!string.IsNullOrEmpty(domainResult.Pattern))
+                    {
+                        var patternObj = await _patternRepo.GetPatternByDomainAsync(domain)
+                            ?? new DomainEmailPattern { Domain = domain };
+                        patternObj.Pattern = domainResult.Pattern;
+                        await _patternRepo.UpsertPatternAsync(patternObj);
+                    }
+
+                    // Check if any returned email matches our target person
+                    var targetEmails = domainResult.Emails
+                        .Where(e => e.Contains(first, StringComparison.OrdinalIgnoreCase) ||
+                                    e.Contains(last, StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+
+                    if (targetEmails.Count > 0)
+                    {
+                        var hunterEmail = targetEmails.First();
+                        await _leadRepo.UpdateLeadEmailAsync(lead.Id, hunterEmail, "enriched", 0.75, "hunter_domain", false);
+                        await _leadRepo.UpdateLeadEmailEnrichmentAttemptedAsync(lead.Id);
+                        await UpdatePatternIntelligence(domain, new EmailVerificationResult { Email = hunterEmail, Source = "hunter_domain", Provider = "unknown" }, first, last);
+                        return;
+                    }
+                }
+
+                // 3b. Fall back to the more expensive EmailFinder only if DomainSearch didn't match
+                var finderEmail = await _hunterClient.EmailFinderAsync(domain, first, last);
+                if (!string.IsNullOrWhiteSpace(finderEmail))
+                {
+                    await _leadRepo.UpdateLeadEmailAsync(lead.Id, finderEmail, "enriched", 0.7, "hunter", false);
+                    await _leadRepo.UpdateLeadEmailEnrichmentAttemptedAsync(lead.Id);
+                    await UpdatePatternIntelligence(domain, new EmailVerificationResult { Email = finderEmail, Source = "hunter", Provider = "unknown" }, first, last);
+                    return;
+                }
+            }
+
+            // Failed all stages
+            await _leadRepo.UpdateLeadEmailAsync(lead.Id, null, "unfindable", 0, "exhausted", false);
+            await _leadRepo.UpdateLeadEmailEnrichmentAttemptedAsync(lead.Id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed enrichment for lead {LeadId}", lead.Id);
+        }
+        finally
+        {
+            _concurrencyGate.Release();
         }
     }
 
@@ -263,7 +304,11 @@ public class EmailEnrichmentWorker : IEmailEnrichmentWorker
         patternObj.Pattern = matchedPattern;
         patternObj.IsCatchAll = result.IsCatchAll;
         patternObj.MailProvider = result.Provider;
-        patternObj.VerificationCount++; // Record that we attempted this domain
+        patternObj.VerificationCount++;
+
+        // BUG FIX: SuccessCount was never incremented, breaking confidence scoring
+        if (result.Status == EmailVerificationStatus.Valid)
+            patternObj.SuccessCount++;
 
         // Ensure this specific pattern exists in the dynamic weights map
         var weights = patternObj.Weights;

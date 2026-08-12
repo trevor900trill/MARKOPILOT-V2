@@ -9,6 +9,7 @@ public class SocialPost
     public string GeneratedCopy { get; set; } = string.Empty;
     public List<string> Hashtags { get; set; } = [];
     public string? MediaUrl { get; set; }
+    public string? MediaType { get; set; } // "image", "video", or null (text-only)
     public DateTimeOffset ScheduledFor { get; set; }
     public string Status { get; set; } = "queued";
     public DateTimeOffset? PublishedAt { get; set; }

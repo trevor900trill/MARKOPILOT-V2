@@ -10,6 +10,8 @@ type Post = {
   platform: string;
   contentPillar: string;
   generatedCopy: string;
+  mediaUrl?: string;
+  mediaType?: string; // "image" | "video" | null
   scheduledFor: string;
   status: string;
   publishedAt?: string;
@@ -113,7 +115,7 @@ export default function SocialPage() {
     { id: "x", name: "X (Twitter)", icon: Share2, color: "bg-black", textColor: "text-white" },
     { id: "linkedin", name: "LinkedIn", icon: Briefcase, color: "bg-[#0A66C2]", textColor: "text-white" },
     { id: "instagram", name: "Instagram", icon: ImageIcon, color: "bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888]", textColor: "text-white", comingSoon: true },
-    { id: "tiktok", name: "TikTok", icon: Video, color: "bg-black", textColor: "text-[#00f2fe]" },
+    { id: "tiktok", name: "TikTok", icon: Video, color: "bg-black", textColor: "text-[#00f2fe]", comingSoon: true },
   ];
 
   const queuedPosts = posts.filter(p => p.status === "queued");
@@ -222,15 +224,29 @@ export default function SocialPage() {
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
                   {queuedPosts.map(post => (
-                    <tr key={post.id} className="hover:bg-white/5 transition group">
+                     <tr key={post.id} className="hover:bg-white/5 transition group">
                        <td className="px-6 py-4">
                           <span className="capitalize text-white bg-[var(--bg-primary)] px-3 py-1 rounded border border-[var(--border)] inline-flex items-center gap-2">
-                             {post.platform.toLowerCase() === 'linkedin' ? <Briefcase size={14}/> : <Share2 size={14}/>}
+                             {post.platform === 'linkedin' ? <Briefcase size={14}/> : post.platform === 'instagram' ? <ImageIcon size={14}/> : post.platform === 'tiktok' ? <Video size={14}/> : <Share2 size={14}/>}
                              {post.platform}
                           </span>
                        </td>
                        <td className="px-6 py-4">
-                          <p className="text-[var(--text-secondary)] line-clamp-2">{post.generatedCopy}</p>
+                          <div className="flex items-start gap-3">
+                             {post.mediaUrl && (
+                               <div className="flex-shrink-0 w-10 h-10 rounded-lg overflow-hidden border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center">
+                                 {post.mediaType === 'video' ? (
+                                   <div className="relative w-full h-full bg-neutral-900 flex items-center justify-center">
+                                     <Video size={16} className="text-[var(--text-muted)]" />
+                                     <span className="absolute bottom-0.5 right-0.5 text-[8px] font-bold text-white bg-black/60 px-1 rounded">MP4</span>
+                                   </div>
+                                 ) : (
+                                   <img src={post.mediaUrl} alt="" className="w-full h-full object-cover" />
+                                 )}
+                               </div>
+                             )}
+                             <p className="text-[var(--text-secondary)] line-clamp-2 flex-1">{post.generatedCopy}</p>
+                          </div>
                        </td>
                        <td className="px-6 py-4">
                           <div className="flex items-center gap-2 text-[var(--text-secondary)]">
@@ -271,12 +287,29 @@ export default function SocialPage() {
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
                   {publishedPosts.map(post => (
-                    <tr key={post.id} className="hover:bg-white/5 transition">
+                     <tr key={post.id} className="hover:bg-white/5 transition">
                        <td className="px-6 py-4">
-                          <span className="capitalize text-[var(--text-muted)]">{post.platform}</span>
+                          <span className="capitalize text-white bg-[var(--bg-primary)] px-3 py-1 rounded border border-[var(--border)] inline-flex items-center gap-2">
+                             {post.platform === 'linkedin' ? <Briefcase size={14}/> : post.platform === 'instagram' ? <ImageIcon size={14}/> : post.platform === 'tiktok' ? <Video size={14}/> : <Share2 size={14}/>}
+                             {post.platform}
+                          </span>
                        </td>
                        <td className="px-6 py-4">
-                          <p className="text-[var(--text-secondary)] line-clamp-1">{post.generatedCopy}</p>
+                          <div className="flex items-start gap-3">
+                             {post.mediaUrl && (
+                               <div className="flex-shrink-0 w-10 h-10 rounded-lg overflow-hidden border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center">
+                                 {post.mediaType === 'video' ? (
+                                   <div className="relative w-full h-full bg-neutral-900 flex items-center justify-center">
+                                     <Video size={16} className="text-[var(--text-muted)]" />
+                                     <span className="absolute bottom-0.5 right-0.5 text-[8px] font-bold text-white bg-black/60 px-1 rounded">MP4</span>
+                                   </div>
+                                 ) : (
+                                   <img src={post.mediaUrl} alt="" className="w-full h-full object-cover" />
+                                 )}
+                               </div>
+                             )}
+                             <p className="text-[var(--text-secondary)] line-clamp-1 flex-1">{post.generatedCopy}</p>
+                          </div>
                        </td>
                        <td className="px-6 py-4 text-[var(--text-muted)]">
                           {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : new Date(post.scheduledFor).toLocaleDateString()}

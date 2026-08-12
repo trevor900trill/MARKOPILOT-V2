@@ -113,12 +113,23 @@ public class OutreachWorker : IOutreachWorker
                             await _outreachRepo.UpdateOutreachEmailContentAsync(email.Id, email.Subject, email.BodyText, email.BodyHtml);
                         }
 
-                        // Dispatch to Gmail
-                        await _outreachService.DispatchRFC2822EmailAsync(brand, email.RecipientEmail, email.Subject, email.BodyText, email.BodyHtml);
-                        
-                        // Mark as sent
-                        await _outreachRepo.UpdateOutreachEmailStatusAsync(email.Id, "sent");
-                        await _brandRepo.InsertActivityAsync(brand.Id, "email_sent", $"Sent outreach email to {email.RecipientEmail}.");
+                        // ── Review Mode Gate ────────────────────────
+                        if (brand.RequireEmailApproval)
+                        {
+                            // Save as draft for user review instead of sending
+                            await _outreachRepo.UpdateOutreachEmailStatusAsync(email.Id, "pending_approval");
+                            await _brandRepo.InsertActivityAsync(brand.Id, "email_draft",
+                                $"Email to {email.RecipientEmail} is ready for review.");
+                            _logger.LogInformation("Email {EmailId} saved for review (brand has RequireEmailApproval=true).", email.Id);
+                        }
+                        else
+                        {
+                            // Fully autonomous — dispatch immediately via Gmail
+                            await _outreachService.DispatchRFC2822EmailAsync(brand, email.RecipientEmail, email.Subject, email.BodyText, email.BodyHtml);
+                            await _outreachRepo.UpdateOutreachEmailStatusAsync(email.Id, "sent");
+                            await _brandRepo.InsertActivityAsync(brand.Id, "email_sent",
+                                $"Sent outreach email to {email.RecipientEmail}.");
+                        }
                     }
                 }
                 else

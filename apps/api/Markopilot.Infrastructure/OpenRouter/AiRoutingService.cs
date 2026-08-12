@@ -43,6 +43,7 @@ public class AiRoutingService : IAiRoutingService
             AiTask.SocialPostGeneration => "google/gemini-2.0-flash-001",
             AiTask.EmailOutreachCopy => "google/gemini-2.5-flash",
             AiTask.ContentPillarSuggestion => "meta-llama/llama-3.3-70b-instruct",
+            AiTask.ImagePromptGeneration => "google/gemini-2.0-flash-001",
             _ => "google/gemini-2.5-flash"
         };
     }

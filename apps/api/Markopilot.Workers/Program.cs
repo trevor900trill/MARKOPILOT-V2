@@ -2,7 +2,9 @@ using Hangfire;
 using Hangfire.PostgreSql;
 using Markopilot.Core.Interfaces;
 using Markopilot.Core.Services;
+using Markopilot.Infrastructure.Social;
 using Markopilot.Infrastructure.Supabase;
+using Markopilot.Workers.Workers;
 using StackExchange.Redis;
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -78,6 +80,26 @@ builder.Services.AddHttpClient<Markopilot.Infrastructure.Email.HunterIoClient>()
 builder.Services.AddTransient<Markopilot.Core.Interfaces.IEmailEnrichmentWorker, Markopilot.Workers.Workers.EmailEnrichmentWorker>();
 builder.Services.AddTransient<Markopilot.Core.Interfaces.IBounceProcessorWorker, Markopilot.Workers.Workers.BounceProcessorWorker>();
 
+// ── Social Publishers ────────────────────────────
+builder.Services.AddHttpClient<TwitterPublisher>();
+builder.Services.AddHttpClient<LinkedInPublisher>();
+builder.Services.AddHttpClient<InstagramPublisher>();
+builder.Services.AddHttpClient<TikTokPublisher>();
+builder.Services.AddSingleton<IEnumerable<ISocialPublisher>>(sp => new ISocialPublisher[]
+{
+    sp.GetRequiredService<TwitterPublisher>(),
+    sp.GetRequiredService<LinkedInPublisher>(),
+    sp.GetRequiredService<InstagramPublisher>(),
+    sp.GetRequiredService<TikTokPublisher>(),
+});
+
+// ── Social Publishing Worker ─────────────────────
+builder.Services.AddTransient<SocialPublishingWorker>();
+
+// ── Media Generation ─────────────────────────────
+builder.Services.AddHttpClient<Markopilot.Core.Interfaces.IMediaGenerationService, Markopilot.Infrastructure.AI.MediaGenerationService>();
+builder.Services.AddHttpClient<Markopilot.Core.Interfaces.ISupabaseStorageService, Markopilot.Infrastructure.Supabase.SupabaseStorageService>();
+
 var host = builder.Build();
 
 using (var scope = host.Services.CreateScope())
@@ -99,6 +121,12 @@ using (var scope = host.Services.CreateScope())
         "BounceProcessorWorker",
         worker => worker.ExecuteAsync(),
         "0 */4 * * *");
+
+    // Social Publishing: picks up queued posts and publishes every 5 minutes
+    jobManager.AddOrUpdate<SocialPublishingWorker>(
+        "SocialPublishingWorker",
+        worker => worker.ProcessScheduledPostsAsync(),
+        "*/5 * * * *");
 }
 
 host.Run();

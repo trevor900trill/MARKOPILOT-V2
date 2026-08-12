@@ -53,4 +53,10 @@ public interface ILeadRepository
     /// Update a lead's email address and all enrichment metadata.
     /// </summary>
     Task UpdateLeadEmailAsync(Guid leadId, string? email, string emailStatus, double confidence, string? source, bool isCatchAll, string? verificationStatus = null);
+
+    /// <summary>
+    /// Set the email_enrichment_attempted_at timestamp on a lead.
+    /// Used for 30-day cooldown on 'unfindable' leads before retrying.
+    /// </summary>
+    Task UpdateLeadEmailEnrichmentAttemptedAsync(Guid leadId);
 }

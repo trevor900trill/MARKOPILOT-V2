@@ -441,10 +441,12 @@ Return ONLY this JSON, no preamble:
     {
         mxDomain = mxDomain.ToLowerInvariant();
         if (mxDomain.Contains("google.com") || mxDomain.Contains("aspmx.l.google.com")) return "google";
-        if (mxDomain.Contains("outlook.com") || mxDomain.Contains("outlook.com")) return "outlook";
+        if (mxDomain.Contains("outlook.com") || mxDomain.Contains("protection.outlook.com")) return "outlook";
         if (mxDomain.Contains("mimecast.com")) return "mimecast";
         if (mxDomain.Contains("pphosted.com")) return "proofpoint";
         if (mxDomain.Contains("secureserver.net")) return "godaddy";
+        if (mxDomain.Contains("zoho.com")) return "zoho";
+        if (mxDomain.Contains("barracuda")) return "barracuda";
         return "custom";
     }
 
