@@ -41,7 +41,10 @@ import {
   CheckCircle2,
   XCircle,
   RefreshCw,
-  BarChart3
+  BarChart3,
+  Calendar,
+  CalendarDays,
+  SlidersHorizontal
 } from "lucide-react";
 import { PLANS } from "@/lib/plans";
 import { useState, useEffect } from "react";
@@ -63,6 +66,158 @@ export default function LandingPage() {
 
   // Interactive state for GEO AI Engine Demo
   const [geoTab, setGeoTab] = useState<"with-marko" | "without-marko">("with-marko");
+
+  // Interactive state for Calendar Engine Demo
+  const [calendarFilter, setCalendarFilter] = useState<"all" | "social" | "leads" | "outreach">("all");
+  const [calendarView, setCalendarView] = useState<"week" | "timeline">("week");
+  const [selectedCalendarEvent, setSelectedCalendarEvent] = useState<string>("cal-3");
+
+  const calendarEvents = [
+    {
+      id: "cal-1",
+      dayName: "Mon",
+      dateStr: "Aug 18",
+      type: "social" as const,
+      platform: "twitter" as const,
+      time: "09:30 AM UTC",
+      title: "Why we rebuilt our backend pipeline from scratch in .NET 9",
+      snippet: "Architecture breakdown of our high-throughput worker queues handling 50k+ background events...",
+      status: "Published",
+      statusColor: "emerald",
+      badge: "Viral Thread",
+      mediaType: "Thread Graph",
+      aiHook: "High-retention technical devlog hook calibrated for indie hackers and engineering leaders.",
+      metrics: "4.2k views • 89 bookmarks"
+    },
+    {
+      id: "cal-2",
+      dayName: "Mon",
+      dateStr: "Aug 18",
+      type: "leads" as const,
+      platform: "lead" as const,
+      time: "02:00 PM UTC",
+      title: "AI Lead Discovery Sweep #14",
+      snippet: "Autonomous search across verified B2B directories & social signals. 18 qualified founders scored 90+.",
+      status: "Completed",
+      statusColor: "blue",
+      badge: "Autonomous Run",
+      mediaType: "Lead Intelligence",
+      aiHook: "Filtered for B2B founders with recent funding or public feature releases in the last 14 days.",
+      metrics: "18 Leads Verified"
+    },
+    {
+      id: "cal-3",
+      dayName: "Tue",
+      dateStr: "Aug 19",
+      type: "social" as const,
+      platform: "linkedin" as const,
+      time: "11:00 AM UTC",
+      title: "The secret to 99.4% AI Search authority in 2026",
+      snippet: "Why modern AI search engines cite active social conversation graphs over stale keyword landing pages...",
+      status: "Published",
+      statusColor: "emerald",
+      badge: "GEO Authority",
+      mediaType: "Infographic",
+      aiHook: "Data-backed breakdown of ChatGPT Search & Perplexity ranking signals.",
+      metrics: "1.8k impressions • 34 reposts"
+    },
+    {
+      id: "cal-4",
+      dayName: "Tue",
+      dateStr: "Aug 19",
+      type: "outreach" as const,
+      platform: "outreach" as const,
+      time: "03:15 PM UTC",
+      title: "Cold Sequence Wave: 'GEO & Omnichannel Scaling'",
+      snippet: "Personalized cold emails dispatched with smart throttle & 100-point reputation safeguard.",
+      status: "Dispatched",
+      statusColor: "emerald",
+      badge: "Smart Throttle",
+      mediaType: "Email Cadence",
+      aiHook: "Customized intro referencing prospect's latest product announcement automatically.",
+      metrics: "15 Sent • 64% Open Rate"
+    },
+    {
+      id: "cal-5",
+      dayName: "Wed (Today)",
+      dateStr: "Aug 20",
+      type: "social" as const,
+      platform: "instagram" as const,
+      time: "01:00 PM UTC",
+      title: "Architecting Autonomous Background Workers",
+      snippet: "Photorealistic Flux 1.1 Pro visual showing futuristic server room telemetry & growth analytics...",
+      status: "Scheduled",
+      statusColor: "purple",
+      badge: "Flux 1.1 Pro 4K",
+      mediaType: "Flux Pro 4K Visual",
+      aiHook: "Visual aesthetic optimized for Instagram carousel engagement and high-contrast dark theme.",
+      metrics: "Dispatches in 2h 15m"
+    },
+    {
+      id: "cal-6",
+      dayName: "Wed (Today)",
+      dateStr: "Aug 20",
+      type: "leads" as const,
+      platform: "lead" as const,
+      time: "04:30 PM UTC",
+      title: "Scheduled Lead Qualification Run #15",
+      snippet: "Autonomous worker scheduled to crawl seed queries and score 20 new high-intent SaaS leads.",
+      status: "Scheduled",
+      statusColor: "purple",
+      badge: "Lead Worker",
+      mediaType: "Enrichment Sweep",
+      aiHook: "Targeting seed keywords: 'growth engineering', 'founder in residence', 'indie SaaS'.",
+      metrics: "Dispatches in 5h 45m"
+    },
+    {
+      id: "cal-7",
+      dayName: "Thu",
+      dateStr: "Aug 21",
+      type: "social" as const,
+      platform: "tiktok" as const,
+      time: "10:15 AM UTC",
+      title: "3 mistakes killing your AI search ranking",
+      snippet: "Creatomate dynamic vertical video rendering with synchronized kinetic captions and upbeat audio...",
+      status: "Queued",
+      statusColor: "amber",
+      badge: "Creatomate MP4",
+      mediaType: "Creatomate 1080p MP4",
+      aiHook: "Hook within first 1.2s: 'If your brand is invisible on Perplexity, here is the exact fix.'",
+      metrics: "Review Queue Ready"
+    },
+    {
+      id: "cal-8",
+      dayName: "Thu",
+      dateStr: "Aug 21",
+      type: "outreach" as const,
+      platform: "outreach" as const,
+      time: "02:00 PM UTC",
+      title: "Follow-Up Sequence Step 2 (Contextual Touchpoint)",
+      snippet: "Automated objection handling sequence sent to leads who opened Wave #1 without replying.",
+      status: "Projected",
+      statusColor: "blue",
+      badge: "Auto Follow-up",
+      mediaType: "Smart Sequence",
+      aiHook: "Gentle non-intrusive value bump with 1-click live demo link.",
+      metrics: "Automated Cadence"
+    },
+    {
+      id: "cal-9",
+      dayName: "Fri",
+      dateStr: "Aug 22",
+      type: "social" as const,
+      platform: "twitter" as const,
+      time: "04:00 PM UTC",
+      title: "Weekend Build Challenge: Shipping with Zero Marketing Headaches",
+      snippet: "Inspirational founder story on automating all marketing pipelines while keeping heads down in code.",
+      status: "Approved",
+      statusColor: "emerald",
+      badge: "Friday Peak Window",
+      mediaType: "Thread & Poll",
+      aiHook: "Interactive poll formatted to boost weekend algorithmic reach.",
+      metrics: "Queued for Dispatch"
+    }
+  ];
 
   useEffect(() => {
     setMounted(true);
@@ -156,6 +311,10 @@ export default function LandingPage() {
     {
       q: "Can I connect my own custom email accounts for cold outreach?",
       a: "Yes! You can connect custom Gmail or custom SMTP accounts. Markopilot includes smart deliverability governors, automated rate limits, and deduplication heuristics to safeguard your sender reputation while reaching qualified leads."
+    },
+    {
+      q: "How does the Autonomous Marketing Calendar schedule content and background workers?",
+      a: "The Autonomous Marketing Calendar acts as the unified mission control for all your engines. It projects upcoming autonomous social posting, AI lead discovery sweeps, and cold email cadences across peak engagement windows. You can filter by channel, inspect AI reasoning for each post, make quick edits in Review Mode, or let the engine run hands-free."
     }
   ];
 
@@ -215,6 +374,7 @@ export default function LandingPage() {
             <Link href="#solutions" className="hover:text-white hover:-translate-y-0.5 transition-all">Solutions</Link>
             <Link href="#ai-discovery" className="hover:text-white hover:-translate-y-0.5 transition-all">AI Search (GEO)</Link>
             <Link href="#channels" className="hover:text-white hover:-translate-y-0.5 transition-all">Channels</Link>
+            <Link href="#calendar" className="hover:text-white hover:-translate-y-0.5 transition-all flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse"></span>Calendar</Link>
             <Link href="#how-it-works" className="hover:text-white hover:-translate-y-0.5 transition-all">How It Works</Link>
             <Link href="#pricing" className="hover:text-white hover:-translate-y-0.5 transition-all">Pricing</Link>
             <Link href="#faq" className="hover:text-white hover:-translate-y-0.5 transition-all">FAQ</Link>
@@ -1194,6 +1354,350 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* SECTION: Autonomous Multi-Channel Calendar & Schedule Engine */}
+      <section id="calendar" className="py-24 max-w-7xl mx-auto px-6 relative z-10 border-t border-white/5 scroll-mt-20">
+        <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-mono uppercase tracking-wider">
+            <Calendar size={14} className="text-purple-400" /> Autonomous Schedule Engine
+          </div>
+          <h2 className="font-serif text-4xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">
+            One unified calendar. <br className="hidden md:inline" />
+            Infinite autonomous marketing cadence.
+          </h2>
+          <p className="text-gray-400 text-base md:text-lg">
+            Stop juggling 5 different tab schedulers and reminder alarms. Markopilot synchronizes social posts, background lead discovery sweeps, and cold email cadences in one live mission control.
+          </p>
+        </div>
+
+        {/* Live Autonomous Worker Telemetry HUD */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="bg-gradient-to-br from-purple-950/20 to-black/40 border border-purple-500/20 rounded-2xl p-4 flex items-center justify-between backdrop-blur-md shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-300">
+                <Share2 size={18} />
+              </div>
+              <div>
+                <div className="text-xs text-gray-400 font-mono flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                  <span>Social Worker</span>
+                </div>
+                <div className="text-sm font-semibold text-white">Next run in 02h 14m</div>
+              </div>
+            </div>
+            <span className="text-[11px] font-mono px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20">
+              4 Posts / Wk
+            </span>
+          </div>
+
+          <div className="bg-gradient-to-br from-blue-950/20 to-black/40 border border-blue-500/20 rounded-2xl p-4 flex items-center justify-between backdrop-blur-md shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-300">
+                <Users size={18} />
+              </div>
+              <div>
+                <div className="text-xs text-gray-400 font-mono flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span>Lead Discovery Worker</span>
+                </div>
+                <div className="text-sm font-semibold text-white">Next sweep in 04h 32m</div>
+              </div>
+            </div>
+            <span className="text-[11px] font-mono px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-300 border border-blue-500/20">
+              20 Leads / Day
+            </span>
+          </div>
+
+          <div className="bg-gradient-to-br from-emerald-950/20 to-black/40 border border-emerald-500/20 rounded-2xl p-4 flex items-center justify-between backdrop-blur-md shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-300">
+                <Send size={18} />
+              </div>
+              <div>
+                <div className="text-xs text-gray-400 font-mono flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                  <span>Outreach Engine</span>
+                </div>
+                <div className="text-sm font-semibold text-white">Smart Throttle Active</div>
+              </div>
+            </div>
+            <span className="text-[11px] font-mono px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+              15 / Hour Cap
+            </span>
+          </div>
+        </div>
+
+        {/* Interactive Calendar Explorer Card */}
+        <div className="bg-gradient-to-b from-[#111117] to-[#08080c] border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl space-y-6">
+          {/* Controls Bar */}
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 border-b border-white/5 pb-6">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-mono text-gray-400 uppercase tracking-wider mr-2 hidden sm:inline">Filter:</span>
+              <button
+                onClick={() => setCalendarFilter("all")}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition ${
+                  calendarFilter === "all"
+                    ? "bg-white text-black shadow-md"
+                    : "bg-white/5 text-gray-400 hover:text-white border border-white/5"
+                }`}
+              >
+                All Engines (9)
+              </button>
+              <button
+                onClick={() => setCalendarFilter("social")}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 ${
+                  calendarFilter === "social"
+                    ? "bg-purple-600 text-white shadow-md"
+                    : "bg-white/5 text-gray-400 hover:text-white border border-white/5"
+                }`}
+              >
+                <Share2 size={13} /> Social Posts (5)
+              </button>
+              <button
+                onClick={() => setCalendarFilter("leads")}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 ${
+                  calendarFilter === "leads"
+                    ? "bg-blue-600 text-white shadow-md"
+                    : "bg-white/5 text-gray-400 hover:text-white border border-white/5"
+                }`}
+              >
+                <Users size={13} /> AI Lead Sweeps (2)
+              </button>
+              <button
+                onClick={() => setCalendarFilter("outreach")}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 ${
+                  calendarFilter === "outreach"
+                    ? "bg-emerald-600 text-white shadow-md"
+                    : "bg-white/5 text-gray-400 hover:text-white border border-white/5"
+                }`}
+              >
+                <Send size={13} /> Outreach (2)
+              </button>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 text-xs">
+                <button
+                  onClick={() => setCalendarView("week")}
+                  className={`px-3 py-1 rounded-lg font-medium transition ${
+                    calendarView === "week" ? "bg-white/20 text-white" : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  Week Matrix
+                </button>
+                <button
+                  onClick={() => setCalendarView("timeline")}
+                  className={`px-3 py-1 rounded-lg font-medium transition ${
+                    calendarView === "timeline" ? "bg-white/20 text-white" : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  Timeline View
+                </button>
+              </div>
+              <div className="hidden sm:flex items-center gap-1 text-xs font-mono text-gray-400 bg-white/5 px-3 py-1.5 rounded-xl border border-white/5">
+                <Clock size={13} className="text-purple-400" /> UTC Synced
+              </div>
+            </div>
+          </div>
+
+          {/* Main Grid & Preview Layout */}
+          <div className="grid lg:grid-cols-12 gap-6 items-start">
+            {/* Calendar Events List / Grid */}
+            <div className="lg:col-span-7 space-y-3">
+              <div className="text-xs font-mono text-gray-400 flex items-center justify-between px-1">
+                <span>August 2026 • Autonomous Weekly Schedule</span>
+                <span className="text-purple-400">Click any card to inspect AI payload</span>
+              </div>
+
+              <div className="space-y-2.5 max-h-[520px] overflow-y-auto pr-1">
+                {calendarEvents
+                  .filter((ev) => calendarFilter === "all" || ev.type === calendarFilter)
+                  .map((ev) => {
+                    const isSelected = selectedCalendarEvent === ev.id;
+                    return (
+                      <div
+                        key={ev.id}
+                        onClick={() => setSelectedCalendarEvent(ev.id)}
+                        className={`p-4 rounded-2xl border transition-all duration-200 cursor-pointer text-left flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
+                          isSelected
+                            ? "bg-gradient-to-r from-white/[0.08] to-purple-950/20 border-purple-500/50 shadow-[0_0_20px_rgba(168,85,247,0.15)] ring-1 ring-purple-500/40"
+                            : "bg-white/[0.02] border-white/5 hover:bg-white/[0.05] hover:border-white/10"
+                        }`}
+                      >
+                        <div className="flex items-start gap-3.5">
+                          {/* Day Pill */}
+                          <div className="flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex-shrink-0">
+                            <span className="text-[10px] uppercase font-mono text-gray-400">{ev.dayName}</span>
+                            <span className="text-sm font-bold text-white">{ev.dateStr.split(" ")[1]}</span>
+                          </div>
+
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {ev.platform === "twitter" && (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-full bg-white/10 text-white">
+                                  <MessageSquare size={11} /> Twitter/X
+                                </span>
+                              )}
+                              {ev.platform === "linkedin" && (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300">
+                                  <Briefcase size={11} /> LinkedIn
+                                </span>
+                              )}
+                              {ev.platform === "instagram" && (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300">
+                                  <Camera size={11} /> Instagram
+                                </span>
+                              )}
+                              {ev.platform === "tiktok" && (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300">
+                                  <Video size={11} /> TikTok
+                                </span>
+                              )}
+                              {ev.platform === "lead" && (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300">
+                                  <Users size={11} /> AI Lead Sweep
+                                </span>
+                              )}
+                              {ev.platform === "outreach" && (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">
+                                  <Mail size={11} /> Cold Email
+                                </span>
+                              )}
+
+                              <span className="text-[11px] font-mono text-gray-500 flex items-center gap-1">
+                                <Clock size={11} /> {ev.time}
+                              </span>
+                            </div>
+
+                            <h4 className="text-sm font-medium text-gray-200 line-clamp-1 group-hover:text-white">
+                              {ev.title}
+                            </h4>
+                          </div>
+                        </div>
+
+                        {/* Status Badge */}
+                        <div className="flex sm:flex-col items-end justify-between w-full sm:w-auto gap-2 flex-shrink-0">
+                          <span
+                            className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-medium ${
+                              ev.statusColor === "emerald"
+                                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                                : ev.statusColor === "purple"
+                                ? "bg-purple-500/20 text-purple-300 border border-purple-500/30 animate-pulse"
+                                : ev.statusColor === "amber"
+                                ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                                : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                            }`}
+                          >
+                            {ev.status}
+                          </span>
+                          <span className="text-[10px] text-gray-400 font-mono hidden sm:inline">{ev.metrics}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+
+            {/* Event Inspector & AI Context Preview Drawer */}
+            <div className="lg:col-span-5 bg-black/60 border border-white/10 rounded-2xl p-5 md:p-6 space-y-5 shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-purple-500/10 blur-3xl pointer-events-none"></div>
+
+              {(() => {
+                const active = calendarEvents.find((e) => e.id === selectedCalendarEvent) || calendarEvents[4];
+                return (
+                  <div className="space-y-4 animate-in fade-in duration-200">
+                    <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                      <div className="flex items-center gap-2">
+                        <Sparkles size={15} className="text-purple-400" />
+                        <span className="text-xs font-mono uppercase tracking-wider text-gray-300">Schedule Telemetry</span>
+                      </div>
+                      <span className="text-xs font-mono text-purple-300 bg-purple-500/10 px-2.5 py-0.5 rounded-full border border-purple-500/20">
+                        {active.badge}
+                      </span>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="text-[11px] font-mono text-gray-400 flex items-center gap-2">
+                        <span>{active.dateStr}</span> • <span>{active.time}</span>
+                      </div>
+                      <h3 className="text-base font-semibold text-white leading-snug">
+                        {active.title}
+                      </h3>
+                      <p className="text-xs text-gray-300 leading-relaxed bg-white/5 p-3 rounded-xl border border-white/5 font-sans">
+                        "{active.snippet}"
+                      </p>
+                    </div>
+
+                    <div className="space-y-3 pt-2">
+                      <div className="text-[11px] font-mono uppercase text-gray-400 tracking-wider">
+                        AI Reasoning & Cadence Strategy
+                      </div>
+                      <div className="p-3 rounded-xl bg-purple-950/20 border border-purple-500/20 text-xs text-gray-300 space-y-1.5">
+                        <div className="text-purple-300 font-medium flex items-center gap-1.5">
+                          <CheckCircle2 size={13} className="text-purple-400" /> Algorithmic Peak Engagement Slot
+                        </div>
+                        <p className="text-[11px] text-gray-400">
+                          {active.aiHook}
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+                        <div className="p-2.5 rounded-lg bg-white/5 border border-white/5">
+                          <span className="text-gray-500 block text-[10px]">Media Asset</span>
+                          <span className="text-white font-medium">{active.mediaType}</span>
+                        </div>
+                        <div className="p-2.5 rounded-lg bg-white/5 border border-white/5">
+                          <span className="text-gray-500 block text-[10px]">Execution Status</span>
+                          <span className="text-emerald-400 font-medium">{active.status}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 flex gap-2">
+                      <NavLink href="#" isAuth={true} isPrimary className="flex-1 py-2.5 rounded-xl bg-white text-black text-xs font-semibold hover:scale-[1.02] transition shadow flex items-center justify-center gap-2">
+                        Open Live Calendar <ExternalLink size={13} />
+                      </NavLink>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+
+        {/* 3 Value Pillars for the Calendar Engine */}
+        <div className="grid md:grid-cols-3 gap-6 mt-8">
+          <div className="bg-gradient-to-b from-white/[0.04] to-transparent border border-white/5 rounded-2xl p-6 space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400">
+              <Sparkles size={20} />
+            </div>
+            <h3 className="text-lg font-semibold text-white">Algorithmic Peak Dispatcher</h3>
+            <p className="text-sm text-gray-400 leading-relaxed font-light">
+              Markopilot models your global audience timezones and triggers posts at peak algorithmic reach windows across X, LinkedIn, Instagram, and TikTok.
+            </p>
+          </div>
+
+          <div className="bg-gradient-to-b from-white/[0.04] to-transparent border border-white/5 rounded-2xl p-6 space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400">
+              <RefreshCw size={20} />
+            </div>
+            <h3 className="text-lg font-semibold text-white">Cross-Pipeline Synchronization</h3>
+            <p className="text-sm text-gray-400 leading-relaxed font-light">
+              Lead discovery sweeps, email cadence steps, and public social proofs are synchronized so prospects see your brand active before you reach out.
+            </p>
+          </div>
+
+          <div className="bg-gradient-to-b from-white/[0.04] to-transparent border border-white/5 rounded-2xl p-6 space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+              <SlidersHorizontal size={20} />
+            </div>
+            <h3 className="text-lg font-semibold text-white">Review Mode or 100% Autopilot</h3>
+            <p className="text-sm text-gray-400 leading-relaxed font-light">
+              Inspect upcoming scheduled items in your queue, tweak captions with 1 click, or let autonomous workers dispatch directly without manual friction.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* SECTION: The Old Way vs The Markopilot Way */}
       <section className="py-24 max-w-7xl mx-auto px-6 relative z-10 border-t border-white/5">
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
@@ -1469,6 +1973,7 @@ export default function LandingPage() {
             <Link href="#solutions" className="hover:text-white transition-colors">Solutions</Link>
             <Link href="#ai-discovery" className="hover:text-white transition-colors">AI Search (GEO)</Link>
             <Link href="#channels" className="hover:text-white transition-colors">Channels</Link>
+            <Link href="#calendar" className="hover:text-white transition-colors">Calendar</Link>
             <Link href="#pricing" className="hover:text-white transition-colors">Pricing</Link>
             <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
             <Link href="/terms" className="hover:text-white transition-colors">Terms & Conditions</Link>
