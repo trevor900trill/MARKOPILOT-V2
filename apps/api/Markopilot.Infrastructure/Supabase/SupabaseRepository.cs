@@ -718,7 +718,7 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         return (bool)(await cmd.ExecuteScalarAsync())!;
     }
 
-    // ── ACTIVITY LOG ──────────────────────────────────
+    // ── ACTIVITY LOG & ERROR ALERTS ──────────────────
 
     public async Task InsertActivityAsync(Guid brandId, string type, string description,
         Dictionary<string, object>? metadata = null)
@@ -736,6 +736,70 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         cmd.Parameters.AddWithValue("meta", JsonSerializer.Serialize(metadata ?? new Dictionary<string, object>()));
 
         await cmd.ExecuteNonQueryAsync();
+
+        // If this is an error or warning, trigger an automated fun alert notification
+        if (IsAlertWorthyType(type))
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await DispatchErrorAlertAsync(brandId, type, description);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to dispatch automated error alert for brand {BrandId}", brandId);
+                }
+            });
+        }
+    }
+
+    private static bool IsAlertWorthyType(string type)
+    {
+        var lower = type.ToLowerInvariant();
+        return lower.Contains("error") || 
+               lower.Contains("failed") || 
+               lower.Contains("warning") || 
+               lower == "token_error" || 
+               lower == "media_failed" || 
+               lower == "quota_warning";
+    }
+
+    private async Task DispatchErrorAlertAsync(Guid brandId, string type, string description)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        // 1. Get Brand, Owner, and Gmail Token
+        await using var cmd = new NpgsqlCommand(@"
+            SELECT b.name AS brand_name, u.id AS user_id, u.email AS user_email, u.name AS user_name,
+                   b.gmail_access_token, b.gmail_refresh_token, b.gmail_email
+            FROM brands b
+            JOIN users u ON u.id = b.owner_id
+            WHERE b.id = @brandId", conn);
+        cmd.Parameters.AddWithValue("brandId", brandId);
+
+        await using var reader = await cmd.ExecuteReaderAsync();
+        if (!await reader.ReadAsync()) return;
+
+        var brandName = reader.GetString(0);
+        var userId = reader.GetGuid(1);
+        var userEmail = reader.IsDBNull(2) ? null : reader.GetString(2);
+        var userName = reader.IsDBNull(3) ? "Pilot" : reader.GetString(3);
+
+        // 2. Insert in-app Notification
+        await CreateNotificationAsync(new Notification
+        {
+            UserId = userId,
+            Type = "error",
+            Title = $"Hiccup on {brandName}",
+            Message = description,
+            ActionUrl = "/dashboard/activity"
+        });
+
+        if (string.IsNullOrEmpty(userEmail)) return;
+
+        _logger.LogInformation("Generated fun error alert for {UserEmail} (Brand: {BrandName}): {Description}", userEmail, brandName, description);
     }
 
     // ── NOTIFICATIONS ─────────────────────────────────

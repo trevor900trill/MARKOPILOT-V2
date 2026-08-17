@@ -140,8 +140,8 @@ export default function DashboardOverviewPage() {
            {/* Sub-Widget: Social Overview */}
            <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl overflow-hidden flex flex-col">
               <div className="p-5 border-b border-[var(--border)] flex justify-between items-center bg-[#111114]">
-                 <h3 className="font-serif text-white flex items-center gap-2"><Calendar size={18} className="text-[var(--text-muted)]" /> Broadcast Queue</h3>
-                 <Link href="/dashboard/social" className="text-xs font-semibold text-[var(--accent-primary)] hover:underline">View All</Link>
+                 <h3 className="font-serif text-white flex items-center gap-2"><Calendar size={18} className="text-[var(--text-muted)]" /> Upcoming Schedule & Broadcasts</h3>
+                 <Link href="/dashboard/calendar" className="text-xs font-semibold text-[var(--accent-primary)] hover:underline flex items-center gap-1">Open Calendar <ChevronRight size={14} /></Link>
               </div>
               <div className="divide-y divide-[var(--border)] flex-1 p-2">
                  {isLoading ? <Skeleton /> : upcomingPosts.length === 0 ? (
