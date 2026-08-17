@@ -16,11 +16,13 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
 {
     private readonly string _connectionString;
     private readonly ILogger<SupabaseRepository> _logger;
+    private readonly IAlertEmailService? _alertEmailService;
 
-    public SupabaseRepository(string connectionString, ILogger<SupabaseRepository> logger)
+    public SupabaseRepository(string connectionString, ILogger<SupabaseRepository> logger, IAlertEmailService? alertEmailService = null)
     {
         _connectionString = connectionString;
         _logger = logger;
+        _alertEmailService = alertEmailService;
     }
 
     private NpgsqlConnection CreateConnection() => new(_connectionString);
@@ -798,6 +800,12 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         });
 
         if (string.IsNullOrEmpty(userEmail)) return;
+
+        // 3. Dispatch Fun Email Alert via Resend
+        if (_alertEmailService != null)
+        {
+            await _alertEmailService.SendErrorAlertAsync(userEmail, userName, brandName, description, "/dashboard/activity");
+        }
 
         _logger.LogInformation("Generated fun error alert for {UserEmail} (Brand: {BrandName}): {Description}", userEmail, brandName, description);
     }

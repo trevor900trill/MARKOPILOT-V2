@@ -46,8 +46,13 @@ builder.Services.AddHangfire(config => config
 
 
 // ── Services ─────────────────────────────────────
+builder.Services.AddHttpClient<IAlertEmailService, Markopilot.Infrastructure.Email.ResendAlertEmailService>();
+
 builder.Services.AddSingleton(sp =>
-    new SupabaseRepository(connectionString, sp.GetRequiredService<ILogger<SupabaseRepository>>()));
+    new SupabaseRepository(
+        connectionString,
+        sp.GetRequiredService<ILogger<SupabaseRepository>>(),
+        sp.GetService<IAlertEmailService>()));
 builder.Services.AddSingleton<IUserRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
 builder.Services.AddSingleton<IBrandRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
 builder.Services.AddSingleton<ISocialRepository>(sp => sp.GetRequiredService<SupabaseRepository>());

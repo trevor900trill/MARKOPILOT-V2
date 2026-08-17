@@ -168,3 +168,11 @@ public interface IBounceProcessorWorker
 {
     Task ExecuteAsync();
 }
+
+/// <summary>
+/// Sends transactional system alert emails (via Resend) to account owners when errors or bumps occur.
+/// </summary>
+public interface IAlertEmailService
+{
+    Task<bool> SendErrorAlertAsync(string recipientEmail, string recipientName, string brandName, string errorDescription, string? actionUrl = null);
+}
