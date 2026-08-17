@@ -40,11 +40,11 @@ public class AiRoutingService : IAiRoutingService
             AiTask.LeadQueryGeneration => "meta-llama/llama-3.3-70b-instruct",
             AiTask.EntityExtraction => "meta-llama/llama-3.1-8b-instruct",
             AiTask.LeadScoring => "meta-llama/llama-3.1-8b-instruct",
-            AiTask.SocialPostGeneration => "google/gemini-2.0-flash-001",
-            AiTask.EmailOutreachCopy => "google/gemini-2.5-flash",
+            AiTask.SocialPostGeneration => "google/gemini-3.5-flash",
+            AiTask.EmailOutreachCopy => "google/gemini-3.5-flash",
             AiTask.ContentPillarSuggestion => "meta-llama/llama-3.3-70b-instruct",
-            AiTask.ImagePromptGeneration => "google/gemini-2.0-flash-001",
-            _ => "google/gemini-2.5-flash"
+            AiTask.ImagePromptGeneration => "google/gemini-3.5-flash",
+            _ => "google/gemini-3.5-flash"
         };
     }
 
