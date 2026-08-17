@@ -17,9 +17,9 @@ export interface PlanDefinition {
 }
 
 export const PLANS: PlanDefinition[] = [
-  { id: "starter", name: "Starter", price: "$19", posts: "30 Posts", leads: "100 Leads", brands: "1 Brand" },
-  { id: "growth",  name: "Growth",  price: "$49", posts: "120 Posts", leads: "500 Leads", brands: "3 Brands", featured: true },
-  { id: "scale",   name: "Scale",   price: "$149", posts: "Unlimited Posts", leads: "2,000 Leads", brands: "10 Brands" },
+  { id: "starter", name: "Starter", price: "$29", posts: "45 Posts", leads: "150 Leads", brands: "1 Brand" },
+  { id: "growth",  name: "Growth",  price: "$79", posts: "180 Posts", leads: "750 Leads", brands: "3 Brands", featured: true },
+  { id: "scale",   name: "Scale",   price: "$199", posts: "600 Posts", leads: "2,500 Leads", brands: "10 Brands" },
 ];
 
 export const DEFAULT_PLAN = "starter";

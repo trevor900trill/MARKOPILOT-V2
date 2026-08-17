@@ -183,22 +183,23 @@ export default function LandingPage() {
       `}} />
 
       {/* Interactive Cursor Glow */}
-      <div
-        className="fixed z-0 pointer-events-none rounded-full blur-[150px] opacity-40 mix-blend-screen transition-opacity duration-300"
-        style={{
-          width: '600px',
-          height: '600px',
-          background: 'radial-gradient(circle, var(--accent-primary) 0%, transparent 70%)',
-          transform: `translate(${mousePos.x - 300}px, ${mousePos.y - 300}px)`,
-        }}
-      />
+      {mounted && mousePos.x !== 0 && (
+        <div
+          className="fixed z-0 pointer-events-none rounded-full blur-[120px] opacity-25 transition-opacity duration-300"
+          style={{
+            width: '500px',
+            height: '500px',
+            background: 'radial-gradient(circle, var(--accent-primary) 0%, transparent 70%)',
+            transform: `translate(${mousePos.x - 250}px, ${mousePos.y - 250}px)`,
+          }}
+        />
+      )}
 
       {/* Dynamic Background Elements */}
-      <div className="fixed inset-0 z-0 pointer-events-none flex justify-center items-start overflow-hidden">
-        <div className="absolute top-80 -right-40 w-[800px] h-[800px] bg-blue-600/30 mix-blend-screen rounded-full blur-[200px] opacity-20 animate-pulse" style={{ animationDuration: '10s' }} />
-        <div className="absolute top-[1200px] -left-40 w-[700px] h-[700px] bg-purple-600/20 mix-blend-screen rounded-full blur-[220px] opacity-25" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,#07070a_80%)] z-0" />
-        <div className="absolute inset-0 z-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.15] repeat pointer-events-none" />
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-0 inset-x-0 h-[600px] bg-[radial-gradient(ellipse_at_top,rgba(124,110,255,0.12),transparent_70%)]" />
+        <div className="absolute top-[1000px] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-[radial-gradient(ellipse_at_center,rgba(59,130,246,0.07),transparent_70%)]" />
+        <div className="absolute bottom-0 inset-x-0 h-[600px] bg-[radial-gradient(ellipse_at_bottom,rgba(124,110,255,0.08),transparent_70%)]" />
       </div>
 
       {/* Navigation */}
@@ -1338,6 +1339,7 @@ export default function LandingPage() {
               return (
                 <div
                   key={plan.id}
+                  suppressHydrationWarning
                   className={isFeatured
                     ? "group bg-gradient-to-b from-[var(--bg-elevated)] to-[#07070a] border border-[var(--accent-primary)]/70 rounded-[32px] p-8 md:p-10 flex flex-col relative shadow-[0_0_50px_rgba(168,85,247,0.25)] ring-2 ring-[var(--accent-primary)]/30 lg:scale-105 z-10 h-full backdrop-blur-2xl transition-all duration-500"
                     : "bg-white/[0.02] backdrop-blur-xl border border-white/10 hover:border-white/20 transition-colors rounded-[32px] p-8 md:p-10 flex flex-col h-full hover:-translate-y-1 duration-500"
@@ -1355,7 +1357,7 @@ export default function LandingPage() {
                   )}
                   <h3 className={`text-xl font-medium text-white mb-2 ${isFeatured ? 'pb-1 relative z-10' : ''}`}>{plan.name}</h3>
                   <p className={`text-sm mb-6 ${isFeatured ? 'text-gray-300 relative z-10' : 'text-gray-400'}`}>{descriptions[plan.id] || ''}</p>
-                  <div className={`font-serif text-white mb-8 ${isFeatured ? 'text-6xl relative z-10 drop-shadow-md' : 'text-5xl'}`}>
+                  <div suppressHydrationWarning className={`font-serif text-white mb-8 ${isFeatured ? 'text-6xl relative z-10 drop-shadow-md' : 'text-5xl'}`}>
                     {plan.price}<span className={`text-xl font-sans font-light ${isFeatured ? 'text-gray-300' : 'text-gray-500'}`}>/mo</span>
                   </div>
                   <ul className={`space-y-4 mb-10 flex-1 ${isFeatured ? 'relative z-10' : ''}`}>
@@ -1436,9 +1438,8 @@ export default function LandingPage() {
       </section>
 
       {/* CTA Footer Section */}
-      <section className="py-32 text-center px-6 relative z-10 overflow-hidden mt-10 border-t border-white/5">
-        <div className="absolute inset-x-0 -bottom-[400px] h-[800px] w-[800px] mx-auto bg-[var(--accent-primary)]/15 blur-[160px] rounded-full pointer-events-none mix-blend-screen animate-pulse duration-1000"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-[#07070a] to-transparent z-0 pointer-events-none"></div>
+      <section className="py-32 text-center px-6 relative z-10 overflow-hidden mt-10 border-t border-white/5 bg-gradient-to-b from-transparent via-purple-950/10 to-transparent">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(124,110,255,0.1),transparent_70%)] pointer-events-none"></div>
         <div className="relative z-10 space-y-8 max-w-4xl mx-auto flex flex-col items-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-gray-300">
             <Sparkle size={13} className="text-purple-400" /> Start shipping products without marketing burnout

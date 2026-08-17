@@ -12,8 +12,8 @@ public static class PlanCatalog
     public static readonly PlanDefinition Starter = new()
     {
         Name = "Starter",
-        LeadsPerMonth = 100,
-        PostsPerMonth = 30,
+        LeadsPerMonth = 150,
+        PostsPerMonth = 45,
         BrandsAllowed = 1,
         HangfireQueue = "starter"
     };
@@ -21,8 +21,8 @@ public static class PlanCatalog
     public static readonly PlanDefinition Growth = new()
     {
         Name = "Growth",
-        LeadsPerMonth = 500,
-        PostsPerMonth = 120,
+        LeadsPerMonth = 750,
+        PostsPerMonth = 180,
         BrandsAllowed = 3,
         HangfireQueue = "growth"
     };
@@ -30,8 +30,8 @@ public static class PlanCatalog
     public static readonly PlanDefinition Scale = new()
     {
         Name = "Scale",
-        LeadsPerMonth = 2000,
-        PostsPerMonth = int.MaxValue,
+        LeadsPerMonth = 2500,
+        PostsPerMonth = 600,
         BrandsAllowed = 10,
         HangfireQueue = "scale"
     };
