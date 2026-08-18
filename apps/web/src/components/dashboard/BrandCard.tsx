@@ -1,7 +1,8 @@
 "use client";
 
 import { BrandSummary } from "@/lib/brand-context";
-import { Send, Globe, Mail, Link as LinkIcon, BarChart } from "lucide-react";
+import { Send, Mail, BarChart } from "lucide-react";
+import { XIcon, LinkedInIcon, TikTokIcon, InstagramIcon } from "@/components/icons/SocialIcons";
 
 type BrandCardProps = {
   brand: BrandSummary;
@@ -11,9 +12,10 @@ type BrandCardProps = {
 
 export function BrandCard({ brand, isActive, onSelect }: BrandCardProps) {
   const platforms = [
-    { name: "Twitter", connected: brand.twitterConnected, icon: Globe },
-    { name: "LinkedIn", connected: brand.linkedinConnected, icon: LinkIcon },
-    { name: "TikTok", connected: brand.tiktokConnected, icon: Send },
+    { name: "X (Twitter)", connected: brand.twitterConnected, icon: XIcon },
+    { name: "LinkedIn", connected: brand.linkedinConnected, icon: LinkedInIcon },
+    { name: "Instagram", connected: brand.instagramConnected, icon: InstagramIcon },
+    { name: "TikTok", connected: brand.tiktokConnected, icon: TikTokIcon },
     { name: "Gmail", connected: brand.gmailConnected, icon: Mail },
   ];
 

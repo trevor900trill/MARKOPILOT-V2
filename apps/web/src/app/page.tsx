@@ -47,6 +47,7 @@ import {
   SlidersHorizontal
 } from "lucide-react";
 import { PLANS } from "@/lib/plans";
+import { XIcon, LinkedInIcon, InstagramIcon, TikTokIcon } from "@/components/icons/SocialIcons";
 import { useState, useEffect } from "react";
 
 export default function LandingPage() {
@@ -612,10 +613,10 @@ export default function LandingPage() {
         <div className="flex max-w-full relative opacity-60 hover:opacity-100 transition-opacity duration-500 overflow-hidden" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 15%, black 85%, transparent)', maskImage: 'linear-gradient(to right, transparent, black 15%, black 85%, transparent)' }}>
           <div className="flex w-max animate-scroll pointer-events-none">
             <div className="flex gap-20 items-center px-10 text-xl font-medium tracking-wide whitespace-nowrap">
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><MessageSquare size={26} /> Twitter (X)</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Briefcase size={26} /> LinkedIn</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Camera size={26} /> Instagram</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Video size={26} /> TikTok</div>
+              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><XIcon size={24} /> Twitter (X)</div>
+              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><LinkedInIcon size={24} /> LinkedIn</div>
+              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><InstagramIcon size={24} /> Instagram</div>
+              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><TikTokIcon size={24} /> TikTok</div>
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Mail size={26} /> Gmail & SMTP</div>
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Wand2 size={26} /> Replicate (Flux 1.1 Pro)</div>
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Film size={26} /> Creatomate Video API</div>
@@ -624,10 +625,10 @@ export default function LandingPage() {
             </div>
             {/* Duplicated for infinite looping */}
             <div className="flex gap-20 items-center px-10 text-xl font-medium tracking-wide whitespace-nowrap">
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><MessageSquare size={26} /> Twitter (X)</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Briefcase size={26} /> LinkedIn</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Camera size={26} /> Instagram</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Video size={26} /> TikTok</div>
+              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><XIcon size={24} /> Twitter (X)</div>
+              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><LinkedInIcon size={24} /> LinkedIn</div>
+              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><InstagramIcon size={24} /> Instagram</div>
+              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><TikTokIcon size={24} /> TikTok</div>
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Mail size={26} /> Gmail & SMTP</div>
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Wand2 size={26} /> Replicate (Flux 1.1 Pro)</div>
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Film size={26} /> Creatomate Video API</div>
@@ -805,19 +806,19 @@ export default function LandingPage() {
                 </div>
                 <div className="space-y-2">
                   <div className="p-2.5 rounded-lg bg-white/5 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2"><MessageSquare size={14} className="text-blue-400" /> Twitter (X)</div>
+                    <div className="flex items-center gap-2"><XIcon size={14} className="text-white" /> Twitter (X)</div>
                     <span className="text-[11px] text-emerald-400 font-mono">Autopilot (3/day)</span>
                   </div>
                   <div className="p-2.5 rounded-lg bg-white/5 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2"><Briefcase size={14} className="text-blue-500" /> LinkedIn B2B</div>
+                    <div className="flex items-center gap-2"><LinkedInIcon size={14} className="text-[#0A66C2]" /> LinkedIn B2B</div>
                     <span className="text-[11px] text-emerald-400 font-mono">Autopilot (1/day)</span>
                   </div>
                   <div className="p-2.5 rounded-lg bg-white/5 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2"><Camera size={14} className="text-pink-400" /> Instagram</div>
+                    <div className="flex items-center gap-2"><InstagramIcon size={14} className="text-pink-400" /> Instagram</div>
                     <span className="text-[11px] text-purple-300 font-mono">Flux 1.1 Pro AI</span>
                   </div>
                   <div className="p-2.5 rounded-lg bg-white/5 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2"><Video size={14} className="text-cyan-400" /> TikTok</div>
+                    <div className="flex items-center gap-2"><TikTokIcon size={14} className="text-cyan-400" /> TikTok</div>
                     <span className="text-[11px] text-cyan-300 font-mono">Creatomate Render</span>
                   </div>
                   <div className="p-2.5 rounded-lg bg-white/5 flex items-center justify-between text-xs">
@@ -1055,7 +1056,7 @@ export default function LandingPage() {
                 : "bg-white/5 text-gray-400 hover:text-white border border-white/5"
             }`}
           >
-            <MessageSquare size={16} /> Twitter / X
+            <XIcon size={16} /> Twitter / X
           </button>
           <button
             onClick={() => setActivePlatform("linkedin")}
@@ -1065,7 +1066,7 @@ export default function LandingPage() {
                 : "bg-white/5 text-gray-400 hover:text-white border border-white/5"
             }`}
           >
-            <Briefcase size={16} /> LinkedIn
+            <LinkedInIcon size={16} /> LinkedIn
           </button>
           <button
             onClick={() => setActivePlatform("instagram")}
@@ -1075,7 +1076,7 @@ export default function LandingPage() {
                 : "bg-white/5 text-gray-400 hover:text-white border border-white/5"
             }`}
           >
-            <Camera size={16} /> Instagram (Flux Pro)
+            <InstagramIcon size={16} /> Instagram (Flux Pro)
           </button>
           <button
             onClick={() => setActivePlatform("tiktok")}
@@ -1085,7 +1086,7 @@ export default function LandingPage() {
                 : "bg-white/5 text-gray-400 hover:text-white border border-white/5"
             }`}
           >
-            <Video size={16} /> TikTok (Creatomate MP4)
+            <TikTokIcon size={16} /> TikTok (Creatomate MP4)
           </button>
           <button
             onClick={() => setActivePlatform("outreach")}

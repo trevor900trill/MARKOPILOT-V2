@@ -23,8 +23,10 @@ import {
   Eye,
   X,
   ExternalLink,
-  RefreshCw
+  RefreshCw,
+  Lock
 } from "lucide-react";
+import { XIcon, LinkedInIcon, InstagramIcon, TikTokIcon } from "@/components/icons/SocialIcons";
 
 type TelemetryItem = {
   enabled: boolean;
@@ -235,13 +237,13 @@ export default function CalendarPage() {
     switch (platform?.toLowerCase()) {
       case "x":
       case "twitter":
-        return <span className="bg-white/10 text-white border border-white/20 px-1.5 py-0.5 rounded text-[10px] font-mono">X</span>;
+        return <span className="bg-white/10 text-white border border-white/20 px-1.5 py-0.5 rounded text-[10px] font-mono inline-flex items-center gap-1"><XIcon size={10} /> X</span>;
       case "linkedin":
-        return <span className="bg-[#0A66C2]/20 text-[#0A66C2] border border-[#0A66C2]/30 px-1.5 py-0.5 rounded text-[10px] font-mono">LinkedIn</span>;
+        return <span className="bg-[#0A66C2]/20 text-[#0A66C2] border border-[#0A66C2]/30 px-1.5 py-0.5 rounded text-[10px] font-mono inline-flex items-center gap-1"><LinkedInIcon size={10} /> LinkedIn</span>;
       case "instagram":
-        return <span className="bg-pink-500/20 text-pink-300 border border-pink-500/30 px-1.5 py-0.5 rounded text-[10px] font-mono">IG</span>;
+        return <span className="bg-pink-500/20 text-pink-300 border border-pink-500/30 px-1.5 py-0.5 rounded text-[10px] font-mono inline-flex items-center gap-1"><InstagramIcon size={10} /> IG</span>;
       case "tiktok":
-        return <span className="bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-1.5 py-0.5 rounded text-[10px] font-mono">TikTok</span>;
+        return <span className="bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-1.5 py-0.5 rounded text-[10px] font-mono inline-flex items-center gap-1"><TikTokIcon size={10} /> TikTok</span>;
       default:
         return null;
     }
