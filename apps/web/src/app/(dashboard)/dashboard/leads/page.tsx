@@ -186,7 +186,7 @@ export default function LeadsPage() {
         <div className="bg-[var(--bg-elevated)] border border-[var(--border)] p-5 rounded-2xl">
           <h3 className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-medium mb-1">Discovery Limits</h3>
           <div className="flex items-end gap-2">
-            <p className="text-2xl font-serif text-white">{user?.quotaLeadsUsed ?? 0}<span className="text-[var(--text-muted)] text-base">/{user?.quotaLeadsPerMonth ?? 100}</span></p>
+            <p className="text-2xl font-serif text-white">{user?.quotaLeadsUsed ?? 0}<span className="text-[var(--text-muted)] text-base">/{user?.quotaLeadsPerMonth ?? 150}</span></p>
             <span className="text-xs text-[var(--text-muted)] mb-1">this month</span>
           </div>
         </div>

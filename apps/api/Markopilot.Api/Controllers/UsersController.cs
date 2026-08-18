@@ -25,6 +25,7 @@ public class UsersController : ControllerBase
         if (user == null) return NotFound(new { error = new { code = "NOT_FOUND", message = "User not found" } });
 
         var brandsUsed = await _userRepo.CountBrandsByOwnerAsync(userId);
+        var plan = Markopilot.Core.Models.PlanCatalog.GetByName(user.PlanName);
 
         return Ok(new
         {
@@ -35,11 +36,11 @@ public class UsersController : ControllerBase
             planName = user.PlanName,
             subscriptionStatus = user.SubscriptionStatus,
             onboardingCompleted = user.OnboardingCompleted,
-            quotaLeadsPerMonth = user.QuotaLeadsPerMonth,
-            quotaPostsPerMonth = user.QuotaPostsPerMonth,
+            quotaLeadsPerMonth = plan.LeadsPerMonth,
+            quotaPostsPerMonth = plan.PostsPerMonth,
             quotaLeadsUsed = user.QuotaLeadsUsed,
             quotaPostsUsed = user.QuotaPostsUsed,
-            quotaBrandsAllowed = user.QuotaBrandsAllowed,
+            quotaBrandsAllowed = plan.BrandsAllowed,
             quotaBrandsUsed = brandsUsed,
             createdAt = user.CreatedAt,
         });

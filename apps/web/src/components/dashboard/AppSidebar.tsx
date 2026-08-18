@@ -15,9 +15,9 @@ export function AppSidebar() {
 
   const planName = user?.planName || "Starter";
   const postsUsed = user?.quotaPostsUsed || 0;
-  const postsAllowed = user?.quotaPostsPerMonth || 30;
+  const postsAllowed = user?.quotaPostsPerMonth || 45;
   const leadsUsed = user?.quotaLeadsUsed || 0;
-  const leadsAllowed = user?.quotaLeadsPerMonth || 100;
+  const leadsAllowed = user?.quotaLeadsPerMonth || 150;
   const brandsUsed = user?.quotaBrandsUsed || 0;
   const brandsAllowed = user?.quotaBrandsAllowed || 1;
 

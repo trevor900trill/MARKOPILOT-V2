@@ -16,9 +16,9 @@ export default function AccountPage() {
    const currentPlan = user?.planName || "Starter";
    const limits = {
       leadsUsed: user?.quotaLeadsUsed || 0,
-      leadsAllowed: user?.quotaLeadsPerMonth || 100,
+      leadsAllowed: user?.quotaLeadsPerMonth || 150,
       postsUsed: user?.quotaPostsUsed || 0,
-      postsAllowed: user?.quotaPostsPerMonth || 30,
+      postsAllowed: user?.quotaPostsPerMonth || 45,
       cycleCurrent: "Current Billing Cycle",
       cycleEnd: "End of month"
    };

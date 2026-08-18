@@ -101,15 +101,16 @@ public class WebhooksController : ControllerBase
                     string subscriptionId = data.GetProperty("id").GetString() ?? "";
                     string status = attributes.GetProperty("status").GetString() ?? "cancelled";
                     
+                    var starterPlan = Markopilot.Core.Models.PlanCatalog.GetByName("Starter");
                     await repo.UpdateUserSubscriptionAsync(
                         userId, 
                         subscriptionId, 
                         status, 
-                        "Starter", 
+                        starterPlan.Name, 
                         null, 
-                        100, 
-                        30, 
-                        1);
+                        starterPlan.LeadsPerMonth, 
+                        starterPlan.PostsPerMonth, 
+                        starterPlan.BrandsAllowed);
                 }
                 
                 _logger.LogInformation("Successfully processed webhook for user {UserId}", userId);
