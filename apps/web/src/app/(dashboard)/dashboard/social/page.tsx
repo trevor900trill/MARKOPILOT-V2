@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, AlertCircle, Plus, Calendar, Clock, Trash2, Heart, MessageSquare, RefreshCw, Video } from "lucide-react";
+import { CheckCircle2, AlertCircle, Plus, Calendar, Clock, Trash2, Heart, MessageSquare, RefreshCw, Video, RotateCcw, ThumbsUp, ThumbsDown, XCircle, ChevronDown } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useBrand } from "@/lib/brand-context";
 import { apiGet, apiPost, apiDelete } from "@/lib/api-client";
@@ -16,11 +16,12 @@ type Post = {
   scheduledFor: string;
   status: string;
   publishedAt?: string;
+  errorMessage?: string;
 };
 
 export default function SocialPage() {
   const { activeBrand, refreshBrands } = useBrand();
-  const [activeTab, setActiveTab] = useState<"accounts" | "queue" | "published">("accounts");
+  const [activeTab, setActiveTab] = useState<"accounts" | "queue" | "published" | "failed">("accounts");
   const [loadingPlatform, setLoadingPlatform] = useState<string | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,6 +29,7 @@ export default function SocialPage() {
   const [newPostPlatform, setNewPostPlatform] = useState("linkedin");
   const [newPostCopy, setNewPostCopy] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const connectedPlatforms: Record<string, boolean> = {
     x: activeBrand?.twitterConnected ?? false,
@@ -92,6 +94,45 @@ export default function SocialPage() {
     }
   };
 
+  const handleRetryPost = async (id: string) => {
+    if (!activeBrand) return;
+    setActionLoading(id);
+    try {
+      await apiPost(`/social/${activeBrand.id}/posts/${id}/retry`);
+      await fetchPosts();
+    } catch (err) {
+      console.error("Failed to retry post:", err);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleApprovePost = async (id: string) => {
+    if (!activeBrand) return;
+    setActionLoading(id);
+    try {
+      await apiPost(`/social/${activeBrand.id}/posts/${id}/approve`);
+      await fetchPosts();
+    } catch (err) {
+      console.error("Failed to approve post:", err);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleRejectPost = async (id: string) => {
+    if (!activeBrand) return;
+    setActionLoading(id);
+    try {
+      await apiPost(`/social/${activeBrand.id}/posts/${id}/reject`);
+      await fetchPosts();
+    } catch (err) {
+      console.error("Failed to reject post:", err);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const handleCreatePost = async () => {
     if (!activeBrand || !newPostCopy.trim()) return;
     setIsCreating(true);
@@ -119,8 +160,9 @@ export default function SocialPage() {
     { id: "tiktok", name: "TikTok", icon: TikTokIcon, color: "bg-black border border-white/10", textColor: "text-white" },
   ];
 
-  const queuedPosts = posts.filter(p => p.status === "queued");
+  const queuedPosts = posts.filter(p => p.status === "queued" || p.status === "pending_review");
   const publishedPosts = posts.filter(p => p.status === "published");
+  const failedPosts = posts.filter(p => p.status === "failed");
 
   return (
     <div className="space-y-8 animate-in fade-in max-w-6xl">
@@ -143,6 +185,12 @@ export default function SocialPage() {
         </button>
         <button onClick={() => setActiveTab("published")} className={`pb-3 px-4 text-sm font-medium transition border-b-2 flex items-center gap-2 ${activeTab === 'published' ? 'border-[var(--accent-primary)] text-white' : 'border-transparent text-[var(--text-secondary)] hover:text-white'}`}>
           <CheckCircle2 size={14} /> Published History
+        </button>
+        <button onClick={() => setActiveTab("failed")} className={`pb-3 px-4 text-sm font-medium transition border-b-2 flex items-center gap-2 ${activeTab === 'failed' ? 'border-red-400 text-red-400' : 'border-transparent text-[var(--text-secondary)] hover:text-white'}`}>
+          <XCircle size={14} /> Failed
+          {failedPosts.length > 0 && (
+            <span className="bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{failedPosts.length}</span>
+          )}
         </button>
       </div>
 
@@ -218,8 +266,9 @@ export default function SocialPage() {
               <thead className="bg-[#111114] border-b border-[var(--border)] text-[var(--text-secondary)]">
                 <tr>
                   <th className="px-6 py-4 font-medium uppercase text-[10px] tracking-wider w-[15%]">Platform</th>
-                  <th className="px-6 py-4 font-medium uppercase text-[10px] tracking-wider w-[50%]">Content Preview</th>
-                  <th className="px-6 py-4 font-medium uppercase text-[10px] tracking-wider w-[25%]">Scheduled Time</th>
+                  <th className="px-6 py-4 font-medium uppercase text-[10px] tracking-wider w-[40%]">Content Preview</th>
+                  <th className="px-6 py-4 font-medium uppercase text-[10px] tracking-wider w-[15%]">Status</th>
+                  <th className="px-6 py-4 font-medium uppercase text-[10px] tracking-wider w-[20%]">Scheduled Time</th>
                   <th className="px-6 py-4 font-medium uppercase text-[10px] tracking-wider text-right w-[10%]">Actions</th>
                 </tr>
               </thead>
@@ -250,15 +299,48 @@ export default function SocialPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
+                      {post.status === "pending_review" ? (
+                        <span className="px-2 py-1 rounded text-[10px] uppercase font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 tracking-wider">
+                          Awaiting Review
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 rounded text-[10px] uppercase font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 tracking-wider">
+                          Queued
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
                       <div className="flex items-center gap-2 text-[var(--text-secondary)]">
                         <Calendar size={14} className="text-[var(--accent-primary)]" />
                         {new Date(post.scheduledFor).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button onClick={() => handleDeletePost(post.id)} className="p-2 text-[var(--text-muted)] hover:text-[var(--error)] transition rounded hover:bg-[var(--error)]/10">
-                        <Trash2 size={16} />
-                      </button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        {post.status === "pending_review" && (
+                          <>
+                            <button
+                              onClick={() => handleApprovePost(post.id)}
+                              disabled={actionLoading === post.id}
+                              title="Approve & Queue"
+                              className="p-2 text-emerald-400 hover:bg-emerald-500/10 transition rounded disabled:opacity-50"
+                            >
+                              {actionLoading === post.id ? <RefreshCw size={14} className="animate-spin" /> : <ThumbsUp size={14} />}
+                            </button>
+                            <button
+                              onClick={() => handleRejectPost(post.id)}
+                              disabled={actionLoading === post.id}
+                              title="Reject"
+                              className="p-2 text-[var(--text-muted)] hover:text-red-400 hover:bg-red-500/10 transition rounded disabled:opacity-50"
+                            >
+                              <ThumbsDown size={14} />
+                            </button>
+                          </>
+                        )}
+                        <button onClick={() => handleDeletePost(post.id)} className="p-2 text-[var(--text-muted)] hover:text-[var(--error)] transition rounded hover:bg-[var(--error)]/10">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -314,6 +396,66 @@ export default function SocialPage() {
                     </td>
                     <td className="px-6 py-4 text-[var(--text-muted)]">
                       {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : new Date(post.scheduledFor).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+
+      {/* FAILED VIEW */}
+      {activeTab === "failed" && (
+        <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl overflow-hidden animate-in fade-in duration-200">
+          {isLoading ? (
+            <div className="p-12 flex justify-center items-center text-[var(--text-muted)]">
+              <RefreshCw className="animate-spin" />
+            </div>
+          ) : failedPosts.length === 0 ? (
+            <div className="p-12 text-center text-[var(--text-secondary)]">No failed posts. Everything is running smoothly! 🎉</div>
+          ) : (
+            <table className="w-full text-left text-sm">
+              <thead className="bg-[#111114] border-b border-[var(--border)] text-[var(--text-secondary)]">
+                <tr>
+                  <th className="px-6 py-4 font-medium uppercase text-[10px] tracking-wider w-[12%]">Platform</th>
+                  <th className="px-6 py-4 font-medium uppercase text-[10px] tracking-wider w-[35%]">Content Preview</th>
+                  <th className="px-6 py-4 font-medium uppercase text-[10px] tracking-wider w-[35%]">Error</th>
+                  <th className="px-6 py-4 font-medium uppercase text-[10px] tracking-wider text-right w-[18%]">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--border)]">
+                {failedPosts.map(post => (
+                  <tr key={post.id} className="hover:bg-white/5 transition group">
+                    <td className="px-6 py-4">
+                      <span className="capitalize text-white bg-[var(--bg-primary)] px-3 py-1 rounded border border-[var(--border)] inline-flex items-center gap-2">
+                        <PlatformIcon platform={post.platform} size={14} />
+                        {post.platform}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-[var(--text-secondary)] line-clamp-2">{post.generatedCopy}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle size={14} className="text-red-400 flex-shrink-0 mt-0.5" />
+                        <p className="text-red-400/80 text-xs leading-relaxed">{post.errorMessage || "Unknown error"}</p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleRetryPost(post.id)}
+                          disabled={actionLoading === post.id}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--accent-primary)]/10 hover:bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30 rounded-xl text-xs font-medium transition disabled:opacity-50"
+                        >
+                          {actionLoading === post.id ? <RefreshCw size={12} className="animate-spin" /> : <RotateCcw size={12} />}
+                          Retry
+                        </button>
+                        <button onClick={() => handleDeletePost(post.id)} className="p-2 text-[var(--text-muted)] hover:text-[var(--error)] transition rounded hover:bg-[var(--error)]/10">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

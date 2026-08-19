@@ -121,6 +121,7 @@ export default function CalendarPage() {
   };
 
   const formatCountdown = (targetDateStr: string | null | undefined) => {
+    if (isLoading && !data) return "loading";
     if (!targetDateStr) return "Disabled";
     const target = new Date(targetDateStr).getTime();
     const diff = target - now.getTime();
@@ -299,7 +300,11 @@ export default function CalendarPage() {
 
           <p className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wider">Next Lead Discovery</p>
           <div className="text-2xl font-serif font-bold text-white mt-1">
-            {formatCountdown(data?.telemetry?.leads?.nextRunAt)}
+            {formatCountdown(data?.telemetry?.leads?.nextRunAt) === "loading" ? (
+              <div className="h-7 w-40 bg-white/5 rounded-lg animate-pulse" />
+            ) : (
+              formatCountdown(data?.telemetry?.leads?.nextRunAt)
+            )}
           </div>
           <p className="text-xs text-[var(--text-secondary)] mt-2 flex items-center gap-1.5">
             <Clock size={12} className="text-amber-400" />
@@ -332,7 +337,11 @@ export default function CalendarPage() {
 
           <p className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wider">Next Social Post Generation</p>
           <div className="text-2xl font-serif font-bold text-white mt-1">
-            {formatCountdown(data?.telemetry?.social?.nextRunAt)}
+            {formatCountdown(data?.telemetry?.social?.nextRunAt) === "loading" ? (
+              <div className="h-7 w-40 bg-white/5 rounded-lg animate-pulse" />
+            ) : (
+              formatCountdown(data?.telemetry?.social?.nextRunAt)
+            )}
           </div>
           <p className="text-xs text-[var(--text-secondary)] mt-2 flex items-center gap-1.5">
             <Clock size={12} className="text-[var(--accent-primary)]" />
@@ -365,7 +374,11 @@ export default function CalendarPage() {
 
           <p className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wider">Next Outreach Dispatch</p>
           <div className="text-2xl font-serif font-bold text-white mt-1">
-            {formatCountdown(data?.telemetry?.outreach?.nextRunAt)}
+            {formatCountdown(data?.telemetry?.outreach?.nextRunAt) === "loading" ? (
+              <div className="h-7 w-40 bg-white/5 rounded-lg animate-pulse" />
+            ) : (
+              formatCountdown(data?.telemetry?.outreach?.nextRunAt)
+            )}
           </div>
           <p className="text-xs text-[var(--text-secondary)] mt-2 flex items-center gap-1.5">
             <Clock size={12} className="text-purple-400" />

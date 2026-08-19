@@ -1,6 +1,6 @@
 "use client";
 
-import { Users, Search, Play, Filter, Download, MailPlus, Trash2, ShieldBan, ExternalLink, RefreshCw, Sparkles } from "lucide-react";
+import { Users, Search, Play, Filter, Download, MailPlus, Trash2, ShieldBan, ExternalLink, RefreshCw, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useEffect, useCallback } from "react";
 import { useBrand } from "@/lib/brand-context";
@@ -32,6 +32,15 @@ export default function LeadsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [performance, setPerformance] = useState<QueryPerformance[]>([]);
   const [isPerformanceLoading, setIsPerformanceLoading] = useState(false);
+  const [expandedLeads, setExpandedLeads] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (id: string) => {
+    setExpandedLeads(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
 
   const fetchLeads = useCallback(async () => {
     if (!activeBrand) return;
@@ -250,8 +259,18 @@ export default function LeadsPage() {
                       </div>
                     </div>
                     {lead.aiSummary && (
-                      <div className="mt-3 text-xs text-[var(--text-muted)] whitespace-normal line-clamp-2 max-w-[350px]">
-                        &quot;{lead.aiSummary}&quot;
+                      <div className="mt-3 max-w-[350px]">
+                        <p className={`text-xs text-[var(--text-muted)] whitespace-normal ${expandedLeads.has(lead.id) ? '' : 'line-clamp-2'}`}>
+                          &quot;{lead.aiSummary}&quot;
+                        </p>
+                        {lead.aiSummary.length > 100 && (
+                          <button
+                            onClick={() => toggleExpand(lead.id)}
+                            className="flex items-center gap-1 text-[10px] text-[var(--accent-primary)] hover:text-white mt-1 transition font-medium"
+                          >
+                            {expandedLeads.has(lead.id) ? <><ChevronUp size={10} /> Show less</> : <><ChevronDown size={10} /> Read full analysis</>}
+                          </button>
+                        )}
                       </div>
                     )}
                   </td>
