@@ -75,15 +75,12 @@ public class SocialPublishingWorker
                         var user = await _userRepo.GetUserByIdAsync(brand.OwnerId);
                         if (user != null && !string.IsNullOrWhiteSpace(user.Email))
                         {
-                            var dashboardUrl = _brandRepo is Markopilot.Infrastructure.Supabase.SupabaseRepository
-                                ? null // let the alert service build the default
-                                : null;
                             await _alertEmailService.SendErrorAlertAsync(
                                 recipientEmail: user.Email,
                                 recipientName: user.DisplayName ?? user.Email,
                                 brandName: brand.Name,
                                 errorDescription: $"Post to {post.Platform} failed: {shortError}",
-                                actionUrl: dashboardUrl);
+                                actionUrl: null);
                         }
                     }
                 }
