@@ -179,24 +179,52 @@ export function OnboardingTour() {
     return () => window.removeEventListener("markopilot:replay-tour", handler);
   }, []);
 
-  // Locate target element for current step
+  // Clear elevation from any previously-highlighted element
+  const clearElevation = useCallback(() => {
+    document.querySelectorAll("[data-tour-elevated]").forEach((el) => {
+      (el as HTMLElement).style.position = "";
+      (el as HTMLElement).style.zIndex = "";
+      (el as HTMLElement).style.borderRadius = "";
+      (el as HTMLElement).style.boxShadow = "";
+      el.removeAttribute("data-tour-elevated");
+    });
+  }, []);
+
+  // Locate target element for current step and elevate it
   const locateTarget = useCallback(() => {
-    if (phase !== "stepping") return;
+    if (phase !== "stepping") {
+      clearElevation();
+      return;
+    }
     const step = TOUR_STEPS[stepIndex];
-    const el = document.querySelector(`[data-tour="${step.target}"]`);
+
+    // Clear previous elevation first
+    clearElevation();
+
+    const el = document.querySelector(`[data-tour="${step.target}"]`) as HTMLElement | null;
     if (el) {
-      const rect = el.getBoundingClientRect();
-      setTargetRect(rect);
+      // Elevate above the overlay (z-9980) so it appears bright & clear
+      el.style.position = "relative";
+      el.style.zIndex = "9985";
+      el.style.borderRadius = "16px";
+      el.style.boxShadow = "0 0 0 4px rgba(139, 92, 246, 0.2), 0 0 30px 4px rgba(139, 92, 246, 0.08)";
+      el.setAttribute("data-tour-elevated", "true");
+
       // Scroll into view if needed
       el.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      // Small delay for tooltip positioning after scroll
+
+      // Read rect after a tick so scroll settles
       setTooltipReady(false);
-      setTimeout(() => setTooltipReady(true), 150);
+      setTimeout(() => {
+        const rect = el.getBoundingClientRect();
+        setTargetRect(rect);
+        setTooltipReady(true);
+      }, 200);
     } else {
       setTargetRect(null);
       setTooltipReady(true);
     }
-  }, [phase, stepIndex]);
+  }, [phase, stepIndex, clearElevation]);
 
   useEffect(() => {
     locateTarget();
@@ -206,8 +234,9 @@ export function OnboardingTour() {
     return () => {
       window.removeEventListener("resize", locateTarget);
       window.removeEventListener("scroll", locateTarget, true);
+      clearElevation(); // Clean up on unmount
     };
-  }, [locateTarget]);
+  }, [locateTarget, clearElevation]);
 
   const handleStart = () => {
     setStepIndex(0);
@@ -229,6 +258,7 @@ export function OnboardingTour() {
   };
 
   const handleComplete = () => {
+    clearElevation();
     setPhase("complete");
     setShowConfetti(true);
     localStorage.setItem(STORAGE_KEY, "true");
@@ -236,6 +266,7 @@ export function OnboardingTour() {
   };
 
   const handleDismiss = () => {
+    clearElevation();
     setPhase("idle");
     localStorage.setItem(STORAGE_KEY, "true");
   };
@@ -410,28 +441,8 @@ export function OnboardingTour() {
 
   return (
     <>
-      {/* Overlay */}
-      <div className="fixed inset-0 z-[9980] pointer-events-none">
-        {/* Semi-transparent backdrop */}
-        <div className="absolute inset-0 bg-black/60 pointer-events-auto" onClick={handleDismiss} />
-
-        {/* Spotlight cutout */}
-        {targetRect && (
-          <div
-            className="absolute rounded-2xl pointer-events-none transition-all duration-300 ease-out"
-            style={{
-              top: targetRect.top - 8,
-              left: targetRect.left - 8,
-              width: targetRect.width + 16,
-              height: targetRect.height + 16,
-              boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 30px 4px rgba(139, 92, 246, 0.15)",
-              background: "transparent",
-              zIndex: 9981,
-              border: "2px solid rgba(139, 92, 246, 0.3)",
-            }}
-          />
-        )}
-      </div>
+      {/* Overlay — target element is elevated above this via z-index:9985 */}
+      <div className="fixed inset-0 z-[9980] bg-black/60" onClick={handleDismiss} />
 
       {/* Tooltip Card */}
       {tooltipReady && (
