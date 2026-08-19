@@ -59,6 +59,7 @@ builder.Services.AddSingleton<ISocialRepository>(sp => sp.GetRequiredService<Sup
 builder.Services.AddSingleton<ILeadRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
 builder.Services.AddSingleton<IOutreachRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
 builder.Services.AddSingleton<INotificationRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
+builder.Services.AddSingleton<IEmailPatternRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
 
 builder.Services.AddSingleton<ITokenEncryptionService>(sp =>
 {
@@ -89,7 +90,30 @@ builder.Services.AddHttpClient<Markopilot.Core.Interfaces.ILeadDiscoveryService,
     {
         ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
     });
+builder.Services.AddHttpClient<Markopilot.Infrastructure.Email.HunterIoClient>();
 
+// ── Media Generation (needed by SocialPostingWorker for Instagram/TikTok) ─
+builder.Services.AddHttpClient<Markopilot.Core.Interfaces.IMediaGenerationService, Markopilot.Infrastructure.AI.MediaGenerationService>();
+builder.Services.AddHttpClient<Markopilot.Core.Interfaces.ISupabaseStorageService, Markopilot.Infrastructure.Supabase.SupabaseStorageService>();
+
+builder.Services.AddHttpClient<Markopilot.Infrastructure.Social.TwitterPublisher>();
+builder.Services.AddHttpClient<Markopilot.Infrastructure.Social.LinkedInPublisher>();
+builder.Services.AddHttpClient<Markopilot.Infrastructure.Social.InstagramPublisher>();
+builder.Services.AddHttpClient<Markopilot.Infrastructure.Social.TikTokPublisher>();
+builder.Services.AddSingleton<IEnumerable<ISocialPublisher>>(sp => new ISocialPublisher[]
+{
+    sp.GetRequiredService<Markopilot.Infrastructure.Social.TwitterPublisher>(),
+    sp.GetRequiredService<Markopilot.Infrastructure.Social.LinkedInPublisher>(),
+    sp.GetRequiredService<Markopilot.Infrastructure.Social.InstagramPublisher>(),
+    sp.GetRequiredService<Markopilot.Infrastructure.Social.TikTokPublisher>(),
+});
+
+builder.Services.AddTransient<Markopilot.Workers.Workers.SocialPublishingWorker>();
+builder.Services.AddTransient<Markopilot.Core.Interfaces.ILeadExtractionWorker, Markopilot.Workers.Workers.LeadExtractionWorker>();
+builder.Services.AddTransient<Markopilot.Core.Interfaces.ISocialPostingWorker, Markopilot.Workers.Workers.SocialPostingWorker>();
+builder.Services.AddTransient<Markopilot.Core.Interfaces.IOutreachWorker, Markopilot.Workers.Workers.OutreachWorker>();
+builder.Services.AddTransient<Markopilot.Core.Interfaces.IEmailEnrichmentWorker, Markopilot.Workers.Workers.EmailEnrichmentWorker>();
+builder.Services.AddTransient<Markopilot.Core.Interfaces.IBounceProcessorWorker, Markopilot.Workers.Workers.BounceProcessorWorker>();
 
 // ── API ──────────────────────────────────────────
 builder.Services.AddControllers();

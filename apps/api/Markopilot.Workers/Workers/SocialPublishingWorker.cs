@@ -14,21 +14,27 @@ public class SocialPublishingWorker
 {
     private readonly ISocialRepository _socialRepo;
     private readonly IBrandRepository _brandRepo;
+    private readonly IUserRepository _userRepo;
     private readonly IEnumerable<ISocialPublisher> _publishers;
     private readonly ITokenEncryptionService _encryptionService;
+    private readonly IAlertEmailService _alertEmailService;
     private readonly ILogger<SocialPublishingWorker> _logger;
 
     public SocialPublishingWorker(
         ISocialRepository socialRepo,
         IBrandRepository brandRepo,
+        IUserRepository userRepo,
         IEnumerable<ISocialPublisher> publishers,
         ITokenEncryptionService encryptionService,
+        IAlertEmailService alertEmailService,
         ILogger<SocialPublishingWorker> logger)
     {
         _socialRepo = socialRepo;
         _brandRepo = brandRepo;
+        _userRepo = userRepo;
         _publishers = publishers;
         _encryptionService = encryptionService;
+        _alertEmailService = alertEmailService;
         _logger = logger;
     }
 
@@ -55,12 +61,45 @@ public class SocialPublishingWorker
             }
             catch (Exception ex)
             {
+                var shortError = TruncateError(ex.Message, 300);
                 _logger.LogError(ex, "Failed to publish post {PostId} to {Platform}.", post.Id, post.Platform);
-                await _socialRepo.UpdatePostStatusAsync(post.Id, "failed", errorMessage: ex.Message);
+                await _socialRepo.UpdatePostStatusAsync(post.Id, "failed", errorMessage: shortError);
                 await _brandRepo.InsertActivityAsync(post.BrandId, "error",
-                    $"Failed to publish post to {post.Platform}: {ex.Message}");
+                    $"Failed to publish post to {post.Platform}: {shortError}");
+
+                try
+                {
+                    var brand = await _brandRepo.GetBrandByIdSystemAsync(post.BrandId);
+                    if (brand != null)
+                    {
+                        var user = await _userRepo.GetUserByIdAsync(brand.OwnerId);
+                        if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+                        {
+                            var dashboardUrl = _brandRepo is Markopilot.Infrastructure.Supabase.SupabaseRepository
+                                ? null // let the alert service build the default
+                                : null;
+                            await _alertEmailService.SendErrorAlertAsync(
+                                recipientEmail: user.Email,
+                                recipientName: user.DisplayName ?? user.Email,
+                                brandName: brand.Name,
+                                errorDescription: $"Post to {post.Platform} failed: {shortError}",
+                                actionUrl: dashboardUrl);
+                        }
+                    }
+                }
+                catch (Exception alertEx)
+                {
+                    _logger.LogWarning(alertEx, "Failed to dispatch alert email for post {PostId} failure.", post.Id);
+                }
             }
         }
+    }
+
+    private static string TruncateError(string message, int maxChars)
+    {
+        if (string.IsNullOrWhiteSpace(message)) return "unknown error";
+        if (message.Length <= maxChars) return message;
+        return message[..(maxChars - 3)] + "...";
     }
 
     private async Task PublishSinglePostAsync(SocialPost post)

@@ -20,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Markopilot.Core\Markopilot.Core.csproj" />
     <ProjectReference Include="..\Markopilot.Infrastructure\Markopilot.Infrastructure.csproj" />
+    <ProjectReference Include="..\Markopilot.Workers\Markopilot.Workers.csproj" />
   </ItemGroup>
 
 </Project>

@@ -107,7 +107,15 @@ export default function ActivityPage() {
                 <div className="p-16 text-center text-[var(--text-secondary)]">
                    {filterType === "all" ? "No activity recorded yet. Actions by the automation engine will appear here." : "No errors found."}
                 </div>
-              ) : logs.map((log) => (
+              ) : logs.map((log) => {
+                 const charLimit = 160;
+                 const isLong = log.description.length > charLimit;
+                 const isExpanded = expandedLogId === log.id;
+                 const displayText = isLong && !isExpanded
+                   ? log.description.slice(0, charLimit - 3) + "..."
+                   : log.description;
+
+                 return (
                  <div key={log.id} className="group hover:bg-white/5 transition duration-200">
                      <div className="p-5 flex items-start gap-4">
                         <div className="mt-1 flex-shrink-0">{getIcon(log.type)}</div>
@@ -120,11 +128,22 @@ export default function ActivityPage() {
                                  {formatTimeAgo(log.createdAt)}
                               </span>
                            </div>
-                           <p className="text-sm text-white font-medium">{log.description}</p>
+                           <div>
+                             <p className={`text-sm text-white font-medium ${isExpanded ? "whitespace-pre-wrap break-words" : "whitespace-normal break-words"}`}>{displayText}</p>
+                             {isLong && (
+                               <button
+                                 onClick={() => setExpandedLogId(isExpanded ? null : log.id)}
+                                 className="mt-1.5 text-xs font-semibold text-[var(--accent-primary)] hover:text-[var(--accent-secondary)] transition focus:outline-none"
+                               >
+                                 {isExpanded ? "Show less" : "Show more"}
+                               </button>
+                             )}
+                           </div>
                         </div>
                      </div>
                  </div>
-              ))}
+                 );
+              })}
            </div>
            
            <div className="p-4 border-t border-[var(--border)] bg-[#111114] flex justify-between items-center">

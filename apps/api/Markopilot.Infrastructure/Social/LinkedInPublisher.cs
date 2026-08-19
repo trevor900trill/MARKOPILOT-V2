@@ -43,21 +43,21 @@ public class LinkedInPublisher : ISocialPublisher
             fullText += "\n\n" + string.Join(" ", post.Hashtags.Select(h => h.StartsWith("#") ? h : $"#{h}"));
         }
 
-        var payload = new
+        var payload = new Dictionary<string, object>
         {
-            author = userUrn,
-            lifecycleState = "PUBLISHED",
-            specificContent = new
+            ["author"] = userUrn,
+            ["lifecycleState"] = "PUBLISHED",
+            ["specificContent"] = new Dictionary<string, object>
             {
-                comLinkedinUgcShareContent = new
+                ["com.linkedin.ugc.ShareContent"] = new Dictionary<string, object>
                 {
-                    shareCommentary = new { text = fullText },
-                    shareMediaCategory = "NONE"
+                    ["shareCommentary"] = new Dictionary<string, object> { ["text"] = fullText },
+                    ["shareMediaCategory"] = "NONE"
                 }
             },
-            visibility = new
+            ["visibility"] = new Dictionary<string, object>
             {
-                comLinkedinUgcMemberNetworkVisibility = "PUBLIC"
+                ["com.linkedin.ugc.MemberNetworkVisibility"] = "PUBLIC"
             }
         };
 
