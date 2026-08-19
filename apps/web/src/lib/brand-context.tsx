@@ -20,6 +20,8 @@ export type BrandSummary = {
   automationPostsEnabled: boolean;
   automationLeadsEnabled: boolean;
   automationOutreachEnabled: boolean;
+  automationPostReviewEnabled?: boolean;
+  requireEmailApproval?: boolean;
   createdAt: string;
 };
 

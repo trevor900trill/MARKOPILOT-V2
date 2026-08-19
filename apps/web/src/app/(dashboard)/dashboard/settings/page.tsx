@@ -20,6 +20,11 @@ type BrandDetails = {
   targetPainPoints: string[];
   targetGeographies: string[];
   contentPillars: string[];
+  automationPostsEnabled?: boolean;
+  automationLeadsEnabled?: boolean;
+  automationOutreachEnabled?: boolean;
+  automationPostReviewEnabled?: boolean;
+  requireEmailApproval?: boolean;
 };
 
 export default function BrandSettingsPage() {
@@ -41,6 +46,11 @@ export default function BrandSettingsPage() {
     targetPainPoints: [] as string[],
     targetGeographies: [] as string[],
     contentPillars: [] as string[],
+    automationPostsEnabled: true,
+    automationLeadsEnabled: true,
+    automationOutreachEnabled: true,
+    automationPostReviewEnabled: false,
+    requireEmailApproval: false,
   });
 
   useEffect(() => {
@@ -62,6 +72,11 @@ export default function BrandSettingsPage() {
           targetPainPoints: brand.targetPainPoints || [],
           targetGeographies: brand.targetGeographies || [],
           contentPillars: brand.contentPillars || [],
+          automationPostsEnabled: brand.automationPostsEnabled ?? true,
+          automationLeadsEnabled: brand.automationLeadsEnabled ?? true,
+          automationOutreachEnabled: brand.automationOutreachEnabled ?? true,
+          automationPostReviewEnabled: brand.automationPostReviewEnabled ?? false,
+          requireEmailApproval: brand.requireEmailApproval ?? false,
         });
       } catch (err) {
         console.error("Failed to fetch brand details:", err);
@@ -147,6 +162,50 @@ export default function BrandSettingsPage() {
           <Save size={16} /> {loading ? "Saving..." : saved ? "Saved ✓" : "Save Changes"}
         </button>
       </div>
+
+      {/* Workflow & Approval Settings Banner */}
+      <section className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6">
+        <h2 className="text-xl font-medium text-white mb-2">Automation & Review Workflow</h2>
+        <p className="text-xs text-[var(--text-secondary)] mb-6">Configure whether autonomous workers publish directly or wait for manual review in queues.</p>
+        
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl p-4 flex items-start justify-between gap-4">
+            <div>
+              <div className="text-sm font-medium text-white mb-1">Social Posting Approval Queue</div>
+              <p className="text-xs text-[var(--text-secondary)]">
+                {formData.automationPostReviewEnabled 
+                  ? "Manual Review: AI drafts posts to Pending Queue. You approve before publishing."
+                  : "Autonomous: AI automatically posts to connected accounts on schedule."}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => updateForm("automationPostReviewEnabled", !formData.automationPostReviewEnabled)}
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${formData.automationPostReviewEnabled ? 'bg-[var(--accent-primary)]' : 'bg-neutral-800'}`}
+            >
+              <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${formData.automationPostReviewEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+            </button>
+          </div>
+
+          <div className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl p-4 flex items-start justify-between gap-4">
+            <div>
+              <div className="text-sm font-medium text-white mb-1">Email Outreach Approval</div>
+              <p className="text-xs text-[var(--text-secondary)]">
+                {formData.requireEmailApproval
+                  ? "Manual Review: Outbound emails require review before sending."
+                  : "Autonomous: Dispatches emails automatically to qualified leads."}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => updateForm("requireEmailApproval", !formData.requireEmailApproval)}
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${formData.requireEmailApproval ? 'bg-[var(--accent-primary)]' : 'bg-neutral-800'}`}
+            >
+              <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${formData.requireEmailApproval ? 'translate-x-5' : 'translate-x-0'}`} />
+            </button>
+          </div>
+        </div>
+      </section>
 
       <div className="grid md:grid-cols-2 gap-8">
         <section className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6 space-y-4">
