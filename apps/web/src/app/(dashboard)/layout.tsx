@@ -2,6 +2,7 @@
 
 import { AppSidebar } from "@/components/dashboard/AppSidebar";
 import { AppTopbar } from "@/components/dashboard/AppTopbar";
+import { OnboardingTour } from "@/components/dashboard/OnboardingTour";
 import { BrandProvider } from "@/lib/brand-context";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -147,6 +148,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </main>
         </div>
       </div>
+      <OnboardingTour />
     </BrandProvider>
   );
 }

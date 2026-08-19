@@ -84,7 +84,7 @@ export default function DashboardOverviewPage() {
                <h1 className="text-3xl font-serif text-white">Hub Overview</h1>
                <p className="text-[var(--text-secondary)] mt-2">Welcome back, {session?.user?.name || "Pilot"}. Here is your automation telemetry.</p>
            </div>
-           <div className="flex items-center gap-4 bg-[var(--bg-elevated)] border border-[var(--border)] p-2 pr-4 rounded-2xl shadow-xl">
+           <div data-tour="engine-status" className="flex items-center gap-4 bg-[var(--bg-elevated)] border border-[var(--border)] p-2 pr-4 rounded-2xl shadow-xl">
                <div className={`w-12 h-12 flex justify-center items-center rounded-xl text-white ${engineState === 'RUNNING' ? 'bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.3)]' : 'bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)]'}`}>
                    <Zap size={24} />
                </div>
@@ -102,7 +102,7 @@ export default function DashboardOverviewPage() {
        </div>
 
        {/* HIGH LEVEL STATS */}
-       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+       <div data-tour="stats-cards" className="grid grid-cols-1 md:grid-cols-3 gap-6">
            <Link href="/dashboard/social" className="group bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6 hover:border-[var(--accent-primary)] transition">
                <div className="flex justify-between items-start">
                    <div className="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center mb-4"><TrendingUp size={20}/></div>
@@ -138,7 +138,7 @@ export default function DashboardOverviewPage() {
        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
            
            {/* Sub-Widget: Social Overview */}
-           <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl overflow-hidden flex flex-col">
+           <div data-tour="upcoming-schedule" className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl overflow-hidden flex flex-col">
               <div className="p-5 border-b border-[var(--border)] flex justify-between items-center bg-[#111114]">
                  <h3 className="font-serif text-white flex items-center gap-2"><Calendar size={18} className="text-[var(--text-muted)]" /> Upcoming Schedule & Broadcasts</h3>
                  <Link href="/dashboard/calendar" className="text-xs font-semibold text-[var(--accent-primary)] hover:underline flex items-center gap-1">Open Calendar <ChevronRight size={14} /></Link>
@@ -162,7 +162,7 @@ export default function DashboardOverviewPage() {
            </div>
 
            {/* Sub-Widget: Lean CRM */}
-           <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl overflow-hidden flex flex-col">
+           <div data-tour="recent-captures" className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl overflow-hidden flex flex-col">
               <div className="p-5 border-b border-[var(--border)] flex justify-between items-center bg-[#111114]">
                  <h3 className="font-serif text-white flex items-center gap-2"><Activity size={18} className="text-[var(--text-muted)]" /> Recent Captures</h3>
                  <Link href="/dashboard/leads" className="text-xs font-semibold text-[var(--accent-primary)] hover:underline">Full Pipeline</Link>
@@ -177,9 +177,9 @@ export default function DashboardOverviewPage() {
                           <p className="text-xs text-[var(--text-muted)]">{lead.company}</p>
                        </div>
                        <div className="flex items-center gap-4">
-                          <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded border ${lead.score >= 90 ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>
-                             {lead.score} SCR
-                          </span>
+                           <span title="AI Lead Score — higher means a stronger match for your brand" className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded border ${lead.score >= 90 ? 'bg-green-500/10 text-green-400 border-green-500/20' : lead.score >= 70 ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-orange-500/10 text-orange-400 border-orange-500/20'}`}>
+                              {lead.score}<span className="opacity-50">/100</span>
+                           </span>
                        </div>
                     </div>
                  ))}

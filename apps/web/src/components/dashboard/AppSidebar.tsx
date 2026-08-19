@@ -1,10 +1,11 @@
 "use client";
 
-import { LayoutDashboard, Send, Users, Activity, Settings, ChevronDown, ChevronsLeft, ChevronsRight, Mail, Briefcase, Calendar } from "lucide-react";
+import { LayoutDashboard, Send, Users, Activity, Settings, ChevronDown, ChevronsLeft, ChevronsRight, Mail, Briefcase, Calendar, HelpCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useState } from "react";
 import { useBrand } from "@/lib/brand-context";
+import { replayTour } from "@/components/dashboard/OnboardingTour";
 
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
@@ -44,7 +45,7 @@ export function AppSidebar() {
       </div>
 
       {/* Brand Switcher */}
-      <div className="p-4 relative">
+      <div className="p-4 relative" data-tour="brand-switcher">
         {isLoading ? (
           <div className="w-full bg-[var(--bg-elevated)] border border-[var(--border)] rounded-xl px-3 py-2 flex items-center gap-2 animate-pulse">
             <div className="w-6 h-6 rounded-md bg-white/10 flex-shrink-0" />
@@ -94,7 +95,7 @@ export function AppSidebar() {
       </div>
 
       {/* Nav Links */}
-      <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
+      <nav data-tour="nav-links" className="flex-1 px-3 space-y-1 overflow-y-auto">
         {links.map((link) => {
           const active = isActive(link.href, link.exact);
           return (
@@ -130,7 +131,7 @@ export function AppSidebar() {
 
         {/* Quota Mini Widget */}
         {!collapsed && (
-          <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-xl p-3 space-y-2">
+          <div data-tour="quota-widget" className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-xl p-3 space-y-2">
             <div className="flex items-center justify-between text-xs">
               <span className="capitalize font-medium text-white">{planName} Plan</span>
               <Link href="/pricing" className="text-[var(--accent-primary)] hover:underline text-[10px]">Upgrade</Link>
@@ -176,6 +177,16 @@ export function AppSidebar() {
               </>
             )}
           </div>
+        )}
+
+        {!collapsed && (
+          <button
+            onClick={replayTour}
+            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-elevated)] rounded-xl transition"
+          >
+            <HelpCircle size={14} />
+            <span>Replay Tour</span>
+          </button>
         )}
 
         <button
