@@ -70,25 +70,43 @@ export function useBrand() {
 export function BrandProvider({ children }: { children: React.ReactNode }) {
   const { status } = useSession();
   const [brands, setBrands] = useState<BrandSummary[]>([]);
-  const [activeBrandId, setActiveBrandId] = useState<string | null>(null);
+  const [activeBrandId, setActiveBrandIdState] = useState<string | null>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("markopilot_active_brand_id");
+    }
+    return null;
+  });
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const setActiveBrandId = useCallback((id: string) => {
+    setActiveBrandIdState(id);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("markopilot_active_brand_id", id);
+    }
+  }, []);
 
   const fetchBrands = useCallback(async () => {
     try {
       const data = await apiGet<BrandSummary[]>("/brands");
-      setBrands(data || []);
-      // Auto-select first brand if none selected or current selection no longer exists
-      if (data && data.length > 0) {
-        if (!activeBrandId || !data.find((b: BrandSummary) => b.id === activeBrandId)) {
-          setActiveBrandId(data[0].id);
-        }
+      const brandList = data || [];
+      setBrands(brandList);
+
+      if (brandList.length > 0) {
+        const storedId = typeof window !== "undefined" ? localStorage.getItem("markopilot_active_brand_id") : null;
+        const targetId = (activeBrandId && brandList.some((b) => b.id === activeBrandId))
+          ? activeBrandId
+          : (storedId && brandList.some((b) => b.id === storedId))
+          ? storedId
+          : brandList[0].id;
+
+        setActiveBrandId(targetId);
       }
     } catch (err) {
       console.error("Failed to fetch brands:", err);
       setBrands([]);
     }
-  }, [activeBrandId]);
+  }, [activeBrandId, setActiveBrandId]);
 
   const fetchUser = useCallback(async () => {
     try {
@@ -100,6 +118,10 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (status === "unauthenticated") {
+      setIsLoading(false);
+      return;
+    }
     if (status !== "authenticated") return;
 
     const init = async () => {
@@ -110,7 +132,7 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
     init();
   }, [status, fetchBrands, fetchUser]);
 
-  const activeBrand = brands.find((b) => b.id === activeBrandId) ?? null;
+  const activeBrand = brands.find((b) => b.id === activeBrandId) ?? (brands.length > 0 ? brands[0] : null);
 
   return (
     <BrandContext.Provider

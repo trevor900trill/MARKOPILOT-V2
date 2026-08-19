@@ -11,7 +11,7 @@ export function AppSidebar() {
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const { brands, activeBrand, setActiveBrandId, user } = useBrand();
+  const { brands, activeBrand, setActiveBrandId, user, isLoading } = useBrand();
 
   const planName = user?.planName || "Starter";
   const postsUsed = user?.quotaPostsUsed || 0;
@@ -45,27 +45,34 @@ export function AppSidebar() {
 
       {/* Brand Switcher */}
       <div className="p-4 relative">
-        <button
-          onClick={() => setSwitcherOpen(!switcherOpen)}
-          className="w-full flex items-center justify-between bg-[var(--bg-elevated)] border border-[var(--border)] rounded-xl px-3 py-2 text-sm hover:border-[var(--accent-primary)] transition"
-        >
-          <div className="flex items-center gap-2 overflow-hidden">
-            <div className="w-6 h-6 rounded-md bg-[var(--accent-primary)] text-white flex flex-shrink-0 items-center justify-center font-bold text-xs">
-              {activeBrand?.name?.charAt(0)?.toUpperCase() || "?"}
-            </div>
-            {!collapsed && <span className="font-medium truncate">{activeBrand?.name || "Select Brand"}</span>}
+        {isLoading ? (
+          <div className="w-full bg-[var(--bg-elevated)] border border-[var(--border)] rounded-xl px-3 py-2 flex items-center gap-2 animate-pulse">
+            <div className="w-6 h-6 rounded-md bg-white/10 flex-shrink-0" />
+            {!collapsed && <div className="h-4 w-24 bg-white/10 rounded" />}
           </div>
-          {!collapsed && <ChevronDown size={14} className={`text-[var(--text-muted)] transition-transform ${switcherOpen ? "rotate-180" : ""}`} />}
-        </button>
+        ) : (
+          <button
+            onClick={() => setSwitcherOpen(!switcherOpen)}
+            className="w-full flex items-center justify-between bg-[var(--bg-elevated)] border border-[var(--border)] rounded-xl px-3 py-2 text-sm hover:border-[var(--accent-primary)] transition"
+          >
+            <div className="flex items-center gap-2 overflow-hidden">
+              <div className="w-6 h-6 rounded-md bg-[var(--accent-primary)] text-white flex flex-shrink-0 items-center justify-center font-bold text-xs">
+                {activeBrand?.name?.charAt(0)?.toUpperCase() || "?"}
+              </div>
+              {!collapsed && <span className="font-medium truncate">{activeBrand?.name || "Select Brand"}</span>}
+            </div>
+            {!collapsed && <ChevronDown size={14} className={`text-[var(--text-muted)] transition-transform ${switcherOpen ? "rotate-180" : ""}`} />}
+          </button>
+        )}
 
         {/* Dropdown */}
-        {switcherOpen && !collapsed && (
+        {switcherOpen && !collapsed && !isLoading && (
           <div className="absolute left-4 right-4 top-[calc(100%+4px)] z-50 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-xl shadow-2xl overflow-hidden">
             {brands.map((brand) => (
               <button
                 key={brand.id}
                 onClick={() => { setActiveBrandId(brand.id); setSwitcherOpen(false); }}
-                className={`w-full text-left px-3 py-2.5 text-sm hover:bg-[var(--bg-surface)] transition flex items-center gap-2 ${brand.id === activeBrand?.id ? "text-[var(--accent-primary)]" : "text-[var(--text-secondary)]"}`}
+                className={`w-full text-left px-3 py-2.5 text-sm hover:bg-[var(--bg-surface)] transition flex items-center gap-2 ${brand.id === activeBrand?.id ? "text-[var(--accent-primary)] font-medium" : "text-[var(--text-secondary)]"}`}
               >
                 <div className={`w-5 h-5 rounded text-[10px] flex items-center justify-center font-bold ${brand.id === activeBrand?.id ? "bg-[var(--accent-primary)] text-white" : "bg-[var(--bg-primary)] text-[var(--text-muted)] border border-[var(--border)]"}`}>
                   {brand.name.charAt(0).toUpperCase()}
@@ -91,66 +98,93 @@ export function AppSidebar() {
         {links.map((link) => {
           const active = isActive(link.href, link.exact);
           return (
-            <Link key={link.href} href={link.href} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition group ${active ? "bg-[var(--bg-elevated)] text-white" : "text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-elevated)]"}`}>
-              <link.icon size={18} className={`flex-shrink-0 ${active ? "text-[var(--accent-primary)]" : "text-[var(--text-muted)] group-hover:text-[var(--accent-primary)]"}`} />
-              {!collapsed && <span className="text-sm font-medium">{link.name}</span>}
+            <Link
+              key={link.name}
+              href={link.href}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${active ? "bg-[var(--accent-primary)] text-white shadow-lg shadow-[var(--accent-glow)]/20" : "text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-elevated)]"}`}
+            >
+              <link.icon size={18} className="flex-shrink-0" />
+              {!collapsed && <span>{link.name}</span>}
             </Link>
           );
         })}
-        {!collapsed && <hr className="my-4 border-[var(--border)] mx-3" />}
-        <Link href="/dashboard/settings" className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition group ${isActive("/dashboard/settings") ? "bg-[var(--bg-elevated)] text-white" : "text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-elevated)]"}`}>
-          <Settings size={18} className={`flex-shrink-0 ${isActive("/dashboard/settings") ? "text-[var(--accent-primary)]" : "text-[var(--text-muted)] group-hover:text-[var(--accent-primary)]"}`} />
-          {!collapsed && <span className="text-sm font-medium">Brand Settings</span>}
-        </Link>
-        <Link href="/dashboard/account" className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition group ${isActive("/dashboard/account") ? "bg-[var(--bg-elevated)] text-white" : "text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-elevated)]"}`}>
-          <Settings size={18} className={`flex-shrink-0 ${isActive("/dashboard/account") ? "text-[var(--accent-primary)]" : "text-[var(--text-muted)] group-hover:text-[var(--accent-primary)]"}`} />
-          {!collapsed && <span className="text-sm font-medium">Account Settings</span>}
-        </Link>
       </nav>
 
-      {/* Footer Quotas */}
-      {!collapsed && (
-        <div className="p-4 border-t border-[var(--border)] space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-white capitalize">{planName} Plan</span>
-            <Link href="/account" className="text-xs text-[var(--accent-primary)] hover:underline">Upgrade</Link>
-          </div>
-          <div className="space-y-3">
-            <div>
-              <div className="flex justify-between text-[10px] text-[var(--text-muted)] mb-1">
-                <span>Posts</span>
-                <span>{postsUsed} / {postsAllowed}</span>
-              </div>
-              <div className="h-1.5 w-full bg-[var(--bg-elevated)] rounded-full overflow-hidden">
-                <div className="h-full bg-[var(--accent-primary)] rounded-full transition-all duration-700" style={{ width: `${postsAllowed > 0 ? (postsUsed / postsAllowed) * 100 : 0}%` }} />
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between text-[10px] text-[var(--text-muted)] mb-1">
-                <span>Leads</span>
-                <span>{leadsUsed} / {leadsAllowed}</span>
-              </div>
-              <div className="h-1.5 w-full bg-[var(--bg-elevated)] rounded-full overflow-hidden">
-                <div className="h-full bg-[var(--accent-primary)] rounded-full transition-all duration-700" style={{ width: `${leadsAllowed > 0 ? (leadsUsed / leadsAllowed) * 100 : 0}%` }} />
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between text-[10px] text-[var(--text-muted)] mb-1">
-                <span>Brands</span>
-                <span>{brandsUsed} / {brandsAllowed}</span>
-              </div>
-              <div className="h-1.5 w-full bg-[var(--bg-elevated)] rounded-full overflow-hidden">
-                <div className="h-full bg-[var(--accent-primary)] rounded-full transition-all duration-700" style={{ width: `${brandsAllowed > 0 ? (brandsUsed / brandsAllowed) * 100 : 0}%` }} />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Footer Area with Settings and Quota */}
+      <div className="p-4 border-t border-[var(--border)] space-y-3">
+        <Link
+          href="/dashboard/settings"
+          className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all ${isActive("/dashboard/settings") ? "bg-[var(--accent-primary)] text-white" : "text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-elevated)]"}`}
+        >
+          <Settings size={18} className="flex-shrink-0" />
+          {!collapsed && <span>Brand Settings</span>}
+        </Link>
 
-      {/* Collapse Toggle */}
-      <button onClick={() => setCollapsed(!collapsed)} className="h-10 border-t border-[var(--border)] flex items-center justify-center text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-elevated)] transition">
-        {collapsed ? <ChevronsRight size={16} /> : <ChevronsLeft size={16} />}
-      </button>
+        <Link
+          href="/account"
+          className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all ${isActive("/account") ? "bg-[var(--accent-primary)] text-white" : "text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-elevated)]"}`}
+        >
+          <Settings size={18} className="flex-shrink-0" />
+          {!collapsed && <span>Account Settings</span>}
+        </Link>
+
+        {/* Quota Mini Widget */}
+        {!collapsed && (
+          <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-xl p-3 space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="capitalize font-medium text-white">{planName} Plan</span>
+              <Link href="/pricing" className="text-[var(--accent-primary)] hover:underline text-[10px]">Upgrade</Link>
+            </div>
+
+            {isLoading ? (
+              <div className="space-y-2 animate-pulse pt-1">
+                <div className="h-2 bg-white/10 rounded-full w-full" />
+                <div className="h-2 bg-white/10 rounded-full w-full" />
+                <div className="h-2 bg-white/10 rounded-full w-full" />
+              </div>
+            ) : (
+              <>
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
+                    <span>Posts</span>
+                    <span>{postsUsed} / {postsAllowed}</span>
+                  </div>
+                  <div className="w-full bg-[var(--bg-surface)] rounded-full h-1 overflow-hidden">
+                    <div className="bg-[var(--accent-primary)] h-1 rounded-full" style={{ width: `${Math.min(100, (postsUsed / postsAllowed) * 100)}%` }}></div>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
+                    <span>Leads</span>
+                    <span>{leadsUsed} / {leadsAllowed}</span>
+                  </div>
+                  <div className="w-full bg-[var(--bg-surface)] rounded-full h-1 overflow-hidden">
+                    <div className="bg-[var(--accent-primary)] h-1 rounded-full" style={{ width: `${Math.min(100, (leadsUsed / leadsAllowed) * 100)}%` }}></div>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
+                    <span>Brands</span>
+                    <span>{brandsUsed} / {brandsAllowed}</span>
+                  </div>
+                  <div className="w-full bg-[var(--bg-surface)] rounded-full h-1 overflow-hidden">
+                    <div className="bg-[var(--accent-primary)] h-1 rounded-full" style={{ width: `${Math.min(100, (brandsUsed / brandsAllowed) * 100)}%` }}></div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="w-full flex items-center justify-center p-1.5 text-[var(--text-muted)] hover:text-white rounded-lg hover:bg-[var(--bg-elevated)] transition"
+        >
+          {collapsed ? <ChevronsRight size={16} /> : <ChevronsLeft size={16} />}
+        </button>
+      </div>
     </aside>
   );
 }

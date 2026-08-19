@@ -48,16 +48,27 @@ public class ContentGenerationService : IContentGenerationService
     {
         var template = await ReadPromptAsync("social-post.txt");
         var systemContent = template
+            .Replace("{brandName}", brand.Name)
             .Replace("{{brandName}}", brand.Name)
+            .Replace("{industry}", brand.Industry)
             .Replace("{{industry}}", brand.Industry)
+            .Replace("{brandDescription}", brand.Description)
+            .Replace("{{brandDescription}}", brand.Description)
+            .Replace("{formality}", brand.BrandVoiceFormality)
+            .Replace("{humour}", brand.BrandVoiceHumour)
+            .Replace("{assertiveness}", brand.BrandVoiceAssertiveness)
+            .Replace("{empathy}", brand.BrandVoiceEmpathy)
+            .Replace("{contentPillar}", contentPillar)
+            .Replace("{audienceDescription}", brand.TargetAudienceDescription ?? "")
+            .Replace("{targetAudienceDescription}", brand.TargetAudienceDescription ?? "")
             .Replace("{{targetAudience}}", brand.TargetAudienceDescription ?? "")
-            .Replace("{{brandVoice}}", $"{brand.BrandVoiceFormality}, {brand.BrandVoiceHumour}, {brand.BrandVoiceAssertiveness}, {brand.BrandVoiceEmpathy}");
+            .Replace("{platform}", platform.ToString().ToLowerInvariant());
 
         var request = new AiCompletionRequest
         {
             Task = AiTask.SocialPostGeneration,
             SystemPrompt = systemContent,
-            UserPrompt = $"Generate a {platform} post about: {contentPillar}",
+            UserPrompt = $"Generate an engaging {platform} post for {brand.Name} focusing on the content theme: {contentPillar}.",
             MaxTokens = 1000
         };
 
@@ -98,15 +109,26 @@ public class ContentGenerationService : IContentGenerationService
     {
         var template = await ReadPromptAsync("outreach-email.txt");
         var systemContent = template
+            .Replace("{brandName}", brand.Name)
             .Replace("{{brandName}}", brand.Name)
+            .Replace("{industry}", brand.Industry)
             .Replace("{{industry}}", brand.Industry)
-            .Replace("{{targetAudience}}", brand.TargetAudienceDescription ?? "");
+            .Replace("{brandDescription}", brand.Description)
+            .Replace("{{brandDescription}}", brand.Description)
+            .Replace("{formality}", brand.BrandVoiceFormality)
+            .Replace("{humour}", brand.BrandVoiceHumour)
+            .Replace("{assertiveness}", brand.BrandVoiceAssertiveness)
+            .Replace("{empathy}", brand.BrandVoiceEmpathy)
+            .Replace("{leadName}", lead.Name ?? "there")
+            .Replace("{leadJobTitle}", lead.JobTitle ?? "Leader")
+            .Replace("{leadCompany}", lead.Company ?? "your company")
+            .Replace("{leadSummary}", lead.AiSummary ?? "");
 
         var request = new AiCompletionRequest
         {
             Task = AiTask.EmailOutreachCopy,
             SystemPrompt = systemContent,
-            UserPrompt = $"Lead name: {lead.Name}\nJob title: {lead.JobTitle}\nCompany: {lead.Company}\nBackground: {lead.AiSummary}",
+            UserPrompt = $"Write a personalized cold outreach email from {brand.Name} to {lead.Name ?? "there"} ({lead.JobTitle ?? "Leader"} at {lead.Company ?? "their company"}).",
             MaxTokens = 1500
         };
 
@@ -128,14 +150,22 @@ public class ContentGenerationService : IContentGenerationService
     {
         var template = await ReadPromptAsync("follow-up-email.txt");
         var systemContent = template
+            .Replace("{brandName}", brand.Name)
             .Replace("{{brandName}}", brand.Name)
-            .Replace("{{industry}}", brand.Industry);
+            .Replace("{industry}", brand.Industry)
+            .Replace("{{industry}}", brand.Industry)
+            .Replace("{brandDescription}", brand.Description)
+            .Replace("{{brandDescription}}", brand.Description)
+            .Replace("{leadName}", lead.Name ?? "there")
+            .Replace("{leadJobTitle}", lead.JobTitle ?? "Leader")
+            .Replace("{leadCompany}", lead.Company ?? "your company")
+            .Replace("{originalSubject}", originalSubject);
 
         var request = new AiCompletionRequest
         {
             Task = AiTask.EmailOutreachCopy,
             SystemPrompt = systemContent,
-            UserPrompt = $"Lead name: {lead.Name}\nCompany: {lead.Company}\nOriginal subject: {originalSubject}",
+            UserPrompt = $"Write a concise follow-up email to {lead.Name ?? "there"} from {brand.Name} following up on '{originalSubject}'.",
             MaxTokens = 1000
         };
 
@@ -157,15 +187,21 @@ public class ContentGenerationService : IContentGenerationService
     {
         var template = await ReadPromptAsync("content-pillars.txt");
         var systemContent = template
+            .Replace("{brandName}", brand.Name)
             .Replace("{{brandName}}", brand.Name)
+            .Replace("{industry}", brand.Industry)
             .Replace("{{industry}}", brand.Industry)
-            .Replace("{{targetAudience}}", brand.TargetAudienceDescription ?? "");
+            .Replace("{brandDescription}", brand.Description)
+            .Replace("{{brandDescription}}", brand.Description)
+            .Replace("{targetAudienceDescription}", brand.TargetAudienceDescription ?? "")
+            .Replace("{{targetAudience}}", brand.TargetAudienceDescription ?? "")
+            .Replace("{painPoints}", string.Join(", ", brand.TargetPainPoints ?? []));
 
         var request = new AiCompletionRequest
         {
             Task = AiTask.ContentPillarSuggestion,
             SystemPrompt = systemContent,
-            UserPrompt = "Please suggest 5 content pillars for this brand.",
+            UserPrompt = $"Please suggest 5 distinct content pillars for {brand.Name}.",
             MaxTokens = 800
         };
 
@@ -193,15 +229,23 @@ public class ContentGenerationService : IContentGenerationService
 
         var template = await ReadPromptAsync("lead-queries.txt");
         var systemContent = template
+            .Replace("{brandName}", brand.Name)
             .Replace("{{brandName}}", brand.Name)
+            .Replace("{industry}", brand.Industry)
             .Replace("{{industry}}", brand.Industry)
-            .Replace("{{targetAudience}}", brand.TargetAudienceDescription ?? "");
+            .Replace("{brandDescription}", brand.Description)
+            .Replace("{{brandDescription}}", brand.Description)
+            .Replace("{targetAudienceDescription}", brand.TargetAudienceDescription ?? "")
+            .Replace("{{targetAudience}}", brand.TargetAudienceDescription ?? "")
+            .Replace("{jobTitles}", string.Join(", ", brand.TargetJobTitles ?? []))
+            .Replace("{painPoints}", string.Join(", ", brand.TargetPainPoints ?? []))
+            .Replace("{geographies}", string.Join(", ", brand.TargetGeographies ?? []));
 
         var request = new AiCompletionRequest
         {
             Task = AiTask.LeadQueryGeneration,
             SystemPrompt = systemContent,
-            UserPrompt = $"Please generate 5 search queries to find leads.{historyContext}",
+            UserPrompt = $"Please generate 5 search queries to find prospective leads for {brand.Name}.{historyContext}",
             MaxTokens = 600
         };
 

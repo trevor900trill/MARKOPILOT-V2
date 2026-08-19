@@ -5,11 +5,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useBrand } from "@/lib/brand-context";
-import { apiPut } from "@/lib/api-client";
 
 export function AppTopbar() {
   const { data: session } = useSession();
-  const { activeBrand, refreshBrands } = useBrand();
+  const { activeBrand, isLoading } = useBrand();
 
   const brandName = activeBrand?.name || "No Brand Selected";
   const brandStatus = activeBrand?.status || "active";
@@ -18,19 +17,30 @@ export function AppTopbar() {
   return (
     <header className="h-16 bg-[var(--bg-primary)] border-b border-[var(--border)] flex items-center justify-between px-4 md:px-8">
       <div className="flex items-center gap-4">
-        {/* Mobile menu (placeholder) */}
+        {/* Mobile menu */}
         <button className="md:hidden text-[var(--text-secondary)]"><Menu /></button>
         
         {/* Brand Context */}
         <div className="hidden md:flex items-center gap-3">
-          <h2 className="text-lg font-medium text-white">{brandName}</h2>
-          <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${
-            brandStatus === "active"
-              ? "bg-[var(--success)]/10 border border-[var(--success)]/20 text-[var(--success)]"
-              : brandStatus === "paused"
-              ? "bg-[var(--warning)]/10 border border-[var(--warning)]/20 text-[var(--warning)]"
-              : "bg-[var(--text-muted)]/10 border border-[var(--border)] text-[var(--text-muted)]"
-          }`}>{brandStatus}</span>
+          {isLoading ? (
+            <div className="flex items-center gap-2 animate-pulse">
+              <div className="h-5 w-32 bg-white/10 rounded-md" />
+              <div className="h-4 w-12 bg-white/5 rounded-full" />
+            </div>
+          ) : activeBrand ? (
+            <>
+              <h2 className="text-lg font-medium text-white">{activeBrand.name}</h2>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${
+                brandStatus === "active"
+                  ? "bg-[var(--success)]/10 border border-[var(--success)]/20 text-[var(--success)]"
+                  : brandStatus === "paused"
+                  ? "bg-[var(--warning)]/10 border border-[var(--warning)]/20 text-[var(--warning)]"
+                  : "bg-[var(--text-muted)]/10 border border-[var(--border)] text-[var(--text-muted)]"
+              }`}>{brandStatus}</span>
+            </>
+          ) : (
+            <h2 className="text-sm font-medium text-[var(--text-muted)]">No Brand Selected</h2>
+          )}
         </div>
       </div>
 

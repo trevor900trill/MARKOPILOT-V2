@@ -42,7 +42,7 @@ type Post = {
 };
 
 export default function SocialPage() {
-  const { activeBrand, refreshBrands } = useBrand();
+  const { activeBrand, refreshBrands, isLoading: isBrandLoading } = useBrand();
   const [activeTab, setActiveTab] = useState<"accounts" | "queue" | "published" | "failed">("accounts");
   const [loadingPlatform, setLoadingPlatform] = useState<string | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -265,35 +265,48 @@ export default function SocialPage() {
       </div>
 
       {/* Workflow Mode Switcher Card */}
-      <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xl">
-        <div className="flex items-center gap-3.5">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${isReviewQueueEnabled ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`}>
-            <Sliders size={20} />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-white">Publishing Workflow:</span>
-              <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${isReviewQueueEnabled ? 'bg-amber-500/10 text-amber-300 border-amber-500/30' : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'}`}>
-                {isReviewQueueEnabled ? "Manual Review Queue" : "Autonomous Posting"}
-              </span>
+      {isBrandLoading || !activeBrand ? (
+        <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xl animate-pulse">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-white/5" />
+            <div className="space-y-2">
+              <div className="h-4 w-48 bg-white/10 rounded" />
+              <div className="h-3 w-72 bg-white/5 rounded" />
             </div>
-            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-              {isReviewQueueEnabled
-                ? "AI schedules posts into the Pending Queue for your approval before publishing to live feeds."
-                : "AI automatically posts generated content directly to connected channels on schedule."}
-            </p>
           </div>
+          <div className="h-9 w-40 bg-white/10 rounded-xl" />
         </div>
+      ) : (
+        <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xl">
+          <div className="flex items-center gap-3.5">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${isReviewQueueEnabled ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`}>
+              <Sliders size={20} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-white">Publishing Workflow:</span>
+                <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${isReviewQueueEnabled ? 'bg-amber-500/10 text-amber-300 border-amber-500/30' : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'}`}>
+                  {isReviewQueueEnabled ? "Manual Review Queue" : "Autonomous Posting"}
+                </span>
+              </div>
+              <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+                {isReviewQueueEnabled
+                  ? "AI schedules posts into the Pending Queue for your approval before publishing to live feeds."
+                  : "AI automatically posts generated content directly to connected channels on schedule."}
+              </p>
+            </div>
+          </div>
 
-        <button
-          onClick={handleToggleWorkflow}
-          disabled={togglingReview}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold border transition flex items-center gap-2 flex-shrink-0 ${isReviewQueueEnabled ? 'bg-[var(--bg-surface)] hover:bg-white/10 text-white border-[var(--border)]' : 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/30'}`}
-        >
-          {togglingReview && <RefreshCw size={12} className="animate-spin" />}
-          {isReviewQueueEnabled ? "Switch to Auto-Post" : "Switch to Review Queue"}
-        </button>
-      </div>
+          <button
+            onClick={handleToggleWorkflow}
+            disabled={togglingReview}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold border transition flex items-center gap-2 flex-shrink-0 ${isReviewQueueEnabled ? 'bg-[var(--bg-surface)] hover:bg-white/10 text-white border-[var(--border)]' : 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/30'}`}
+          >
+            {togglingReview && <RefreshCw size={12} className="animate-spin" />}
+            {isReviewQueueEnabled ? "Switch to Auto-Post" : "Switch to Review Queue"}
+          </button>
+        </div>
+      )}
 
       {/* Tabs Navigation */}
       <div className="flex items-center gap-2 border-b border-[var(--border)] pb-0 overflow-x-auto">
@@ -340,60 +353,78 @@ export default function SocialPage() {
 
       {/* 1. ACCOUNTS VIEW */}
       {activeTab === "accounts" && (
-        <div className="grid md:grid-cols-2 gap-6 animate-in fade-in zoom-in-95 duration-200">
-          {platforms.map(platform => {
-            const isConnected = connectedPlatforms[platform.id];
-            const isComingSoon = (platform as any).comingSoon;
-
-            return (
-              <div key={platform.id} className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6 flex flex-col justify-between shadow-xl">
-                <div className="flex justify-between items-start mb-6">
-                  <div className={`w-14 h-14 ${platform.color} rounded-xl flex items-center justify-center shadow-lg`}>
-                    <platform.icon size={28} className={platform.textColor} />
-                  </div>
-                  {isComingSoon ? (
-                    <span className="flex items-center gap-1.5 text-xs font-medium text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-full border border-amber-400/20">
-                      Coming Soon
-                    </span>
-                  ) : isConnected ? (
-                    <span className="flex items-center gap-1.5 text-xs font-medium text-[var(--success)] bg-[var(--success)]/10 px-2.5 py-1 rounded-full border border-[var(--success)]/20">
-                      <CheckCircle2 size={14} /> Connected
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1.5 text-xs font-medium text-[var(--text-muted)] bg-[var(--bg-surface)] px-2.5 py-1 rounded-full border border-[var(--border)]">
-                      <AlertCircle size={14} /> Disconnected
-                    </span>
-                  )}
+        isBrandLoading || !activeBrand ? (
+          <div className="grid md:grid-cols-2 gap-6 animate-pulse">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6 flex flex-col justify-between h-56 shadow-xl">
+                <div className="flex justify-between items-start">
+                  <div className="w-14 h-14 bg-white/5 rounded-xl" />
+                  <div className="h-5 w-20 bg-white/5 rounded-full" />
                 </div>
-
-                <div>
-                  <h3 className="text-xl font-medium text-white mb-2">{platform.name}</h3>
-                  <p className="text-sm text-[var(--text-secondary)] mb-6">
-                    {isComingSoon
-                      ? `We're currently building the ${platform.name} integration. Stay tuned!`
-                      : isConnected
-                        ? "Your account is linked and ready for autonomous posting."
-                        : `Connect your ${platform.name} account to enable AI scheduling.`}
-                  </p>
-
-                  {isConnected ? (
-                    <button onClick={() => handleDisconnect(platform.id)} className="w-full py-2.5 rounded-xl border border-[var(--error)]/30 text-[var(--error)] font-medium hover:bg-[var(--error)]/10 flex justify-center items-center transition">
-                      Disconnect Profile
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => !isComingSoon && handleConnect(platform.id)}
-                      disabled={loadingPlatform === platform.id || isComingSoon}
-                      className={`w-full py-2.5 rounded-xl border font-medium flex justify-center items-center transition disabled:opacity-40 ${isComingSoon ? 'bg-[var(--bg-elevated)] border-[var(--border)] text-[var(--text-muted)]' : 'bg-[var(--bg-surface)] border-[var(--border)] text-white hover:border-[var(--accent-primary)] hover:text-[var(--accent-primary)]'}`}
-                    >
-                      {loadingPlatform === platform.id ? "Connecting..." : isComingSoon ? "Coming Soon" : `Connect ${platform.name}`}
-                    </button>
-                  )}
+                <div className="space-y-2">
+                  <div className="h-5 w-32 bg-white/10 rounded" />
+                  <div className="h-3 w-full bg-white/5 rounded" />
                 </div>
+                <div className="h-10 bg-white/5 rounded-xl w-full" />
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 gap-6 animate-in fade-in zoom-in-95 duration-200">
+            {platforms.map(platform => {
+              const isConnected = connectedPlatforms[platform.id];
+              const isComingSoon = (platform as any).comingSoon;
+
+              return (
+                <div key={platform.id} className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6 flex flex-col justify-between shadow-xl">
+                  <div className="flex justify-between items-start mb-6">
+                    <div className={`w-14 h-14 ${platform.color} rounded-xl flex items-center justify-center shadow-lg`}>
+                      <platform.icon size={28} className={platform.textColor} />
+                    </div>
+                    {isComingSoon ? (
+                      <span className="flex items-center gap-1.5 text-xs font-medium text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-full border border-amber-400/20">
+                        Coming Soon
+                      </span>
+                    ) : isConnected ? (
+                      <span className="flex items-center gap-1.5 text-xs font-medium text-[var(--success)] bg-[var(--success)]/10 px-2.5 py-1 rounded-full border border-[var(--success)]/20">
+                        <CheckCircle2 size={14} /> Connected
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1.5 text-xs font-medium text-[var(--text-muted)] bg-[var(--bg-surface)] px-2.5 py-1 rounded-full border border-[var(--border)]">
+                        <AlertCircle size={14} /> Disconnected
+                      </span>
+                    )}
+                  </div>
+
+                  <div>
+                    <h3 className="text-xl font-medium text-white mb-2">{platform.name}</h3>
+                    <p className="text-sm text-[var(--text-secondary)] mb-6">
+                      {isComingSoon
+                        ? `We're currently building the ${platform.name} integration. Stay tuned!`
+                        : isConnected
+                          ? "Your account is linked and ready for autonomous posting."
+                          : `Connect your ${platform.name} account to enable AI scheduling.`}
+                    </p>
+
+                    {isConnected ? (
+                      <button onClick={() => handleDisconnect(platform.id)} className="w-full py-2.5 rounded-xl border border-[var(--error)]/30 text-[var(--error)] font-medium hover:bg-[var(--error)]/10 flex justify-center items-center transition">
+                        Disconnect Profile
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => !isComingSoon && handleConnect(platform.id)}
+                        disabled={loadingPlatform === platform.id || isComingSoon}
+                        className={`w-full py-2.5 rounded-xl border font-medium flex justify-center items-center transition disabled:opacity-40 ${isComingSoon ? 'bg-[var(--bg-elevated)] border-[var(--border)] text-[var(--text-muted)]' : 'bg-[var(--bg-surface)] border-[var(--border)] text-white hover:border-[var(--accent-primary)] hover:text-[var(--accent-primary)]'}`}
+                      >
+                        {loadingPlatform === platform.id ? "Connecting..." : isComingSoon ? "Coming Soon" : `Connect ${platform.name}`}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )
       )}
 
       {/* 2. QUEUE VIEW */}
