@@ -238,13 +238,13 @@ export default function CalendarPage() {
     switch (platform?.toLowerCase()) {
       case "x":
       case "twitter":
-        return <span className="bg-white/10 text-white border border-white/20 px-1.5 py-0.5 rounded text-[10px] font-mono inline-flex items-center gap-1"><XIcon size={10} /> X</span>;
+        return <span className="bg-white/15 text-white border border-white/30 px-2 py-0.5 rounded-full text-xs font-mono inline-flex items-center gap-1.5"><XIcon size={12} /> X</span>;
       case "linkedin":
-        return <span className="bg-[#0A66C2]/20 text-[#0A66C2] border border-[#0A66C2]/30 px-1.5 py-0.5 rounded text-[10px] font-mono inline-flex items-center gap-1"><LinkedInIcon size={10} /> LinkedIn</span>;
+        return <span className="bg-[#0A66C2]/30 text-sky-300 border border-sky-400/40 px-2 py-0.5 rounded-full text-xs font-mono inline-flex items-center gap-1.5"><LinkedInIcon size={12} /> LinkedIn</span>;
       case "instagram":
-        return <span className="bg-pink-500/20 text-pink-300 border border-pink-500/30 px-1.5 py-0.5 rounded text-[10px] font-mono inline-flex items-center gap-1"><InstagramIcon size={10} /> IG</span>;
+        return <span className="bg-pink-500/25 text-pink-200 border border-pink-400/40 px-2 py-0.5 rounded-full text-xs font-mono inline-flex items-center gap-1.5"><InstagramIcon size={12} /> IG</span>;
       case "tiktok":
-        return <span className="bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-1.5 py-0.5 rounded text-[10px] font-mono inline-flex items-center gap-1"><TikTokIcon size={10} /> TikTok</span>;
+        return <span className="bg-cyan-500/25 text-cyan-200 border border-cyan-400/40 px-2 py-0.5 rounded-full text-xs font-mono inline-flex items-center gap-1.5"><TikTokIcon size={12} /> TikTok</span>;
       default:
         return null;
     }
@@ -600,49 +600,60 @@ export default function CalendarPage() {
 
       {/* POST PREVIEW MODAL */}
       {selectedPost && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-3xl max-w-lg w-full p-6 shadow-2xl relative animate-in zoom-in-95 duration-200">
-            <button
-              onClick={() => setSelectedPost(null)}
-              className="absolute top-5 right-5 text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition"
-            >
-              <X size={20} />
-            </button>
-
-            <div className="flex items-center gap-2 mb-4">
-              {getPlatformBadge(selectedPost.platform)}
-              <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border ${selectedPost.status === 'published' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-blue-500/10 text-blue-400 border-blue-500/30'}`}>
-                {selectedPost.status}
-              </span>
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-[#18181c] border border-white/15 rounded-3xl max-w-lg w-full p-6 shadow-2xl relative animate-in zoom-in-95 duration-200 ring-1 ring-white/10">
+            <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/10">
+              <div className="flex items-center gap-2">
+                {getPlatformBadge(selectedPost.platform)}
+                <span className={`text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full border ${
+                  selectedPost.status === 'published' 
+                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' 
+                    : selectedPost.status === 'failed'
+                    ? 'bg-red-500/20 text-red-300 border-red-500/40'
+                    : 'bg-blue-500/20 text-blue-300 border-blue-500/40'
+                }`}>
+                  {selectedPost.status}
+                </span>
+              </div>
+              <button
+                onClick={() => setSelectedPost(null)}
+                className="text-gray-400 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition"
+              >
+                <X size={18} />
+              </button>
             </div>
 
-            <h3 className="text-lg font-serif text-white mb-2">Scheduled Social Post</h3>
-            <p className="text-xs text-[var(--text-muted)] font-mono mb-4 flex items-center gap-1.5">
-              <Clock size={12} />
-              {new Date(selectedPost.scheduledFor).toLocaleString()}
-            </p>
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-xl font-serif font-semibold text-white mb-1">Scheduled Social Post</h3>
+                <p className="text-xs text-gray-400 font-mono flex items-center gap-1.5">
+                  <Clock size={13} className="text-[var(--accent-primary)]" />
+                  {new Date(selectedPost.scheduledFor).toLocaleString()}
+                </p>
+              </div>
 
-            <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-4 mb-4 text-sm text-gray-200 whitespace-pre-wrap font-sans leading-relaxed">
-              {selectedPost.copy}
+              <div className="bg-black/50 border border-white/10 rounded-2xl p-4 text-sm text-gray-100 whitespace-pre-wrap font-sans leading-relaxed max-h-60 overflow-y-auto">
+                {selectedPost.copy}
+              </div>
+
+              {selectedPost.hashtags && selectedPost.hashtags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedPost.hashtags.map((tag, i) => (
+                    <span key={i} className="text-xs font-mono text-[var(--accent-primary)] bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)]/30 px-2 py-0.5 rounded-lg">
+                      #{tag.replace(/^#/, "")}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {selectedPost.mediaUrl && (
+                <div className="rounded-xl overflow-hidden border border-white/10 max-h-52 bg-black">
+                  <img src={selectedPost.mediaUrl} alt="Post media" className="w-full h-full object-contain" />
+                </div>
+              )}
             </div>
 
-            {selectedPost.hashtags && selectedPost.hashtags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mb-4">
-                {selectedPost.hashtags.map((tag, i) => (
-                  <span key={i} className="text-xs font-mono text-[var(--accent-primary)] bg-[var(--accent-primary)]/10 px-2 py-0.5 rounded-md">
-                    #{tag.replace(/^#/, "")}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {selectedPost.mediaUrl && (
-              <div className="mb-4 rounded-xl overflow-hidden border border-[var(--border)]">
-                <img src={selectedPost.mediaUrl} alt="Post media" className="w-full h-48 object-cover" />
-              </div>
-            )}
-
-            <div className="flex justify-end gap-3 mt-6">
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-white/10">
               <button
                 onClick={() => setSelectedPost(null)}
                 className="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-medium transition"
