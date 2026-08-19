@@ -29,6 +29,7 @@ public class Brand
     public int AutomationOutreachDelayHours { get; set; } = 4;
     public int AutomationOutreachDailyLimit { get; set; } = 20;
     public bool RequireEmailApproval { get; set; } = false;
+    public bool AutomationPostReviewEnabled { get; set; } = false;
     public string? BusinessAddress { get; set; }
 
     // Social tokens (stored encrypted)

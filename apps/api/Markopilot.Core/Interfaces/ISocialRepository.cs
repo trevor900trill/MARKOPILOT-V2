@@ -36,7 +36,15 @@ public interface ISocialRepository
     /// <remarks>Used by: Workers (SocialPublishingWorker)</remarks>
     Task UpdatePostStatusAsync(Guid postId, string status, string? platformPostId = null, string? errorMessage = null);
 
-    // ── Delete ───────────────────────────────────
+    /// <summary>Retry a failed post by resetting it to queued.</summary>
+    /// <remarks>Used by: API</remarks>
+    Task RetryPostAsync(Guid postId, Guid ownerId);
+
+    /// <summary>Approve a pending_review post, moving it to queued for publishing.</summary>
+    /// <remarks>Used by: API</remarks>
+    Task ApprovePostAsync(Guid postId, Guid ownerId);
+
+    // -- Delete ───────────────────────────────────
     /// <summary>Cancel a queued post (only if still 'queued').</summary>
     /// <remarks>Used by: API</remarks>
     Task CancelPostAsync(Guid postId, Guid ownerId);

@@ -210,6 +210,7 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
                 automation_outreach_daily_limit = @outreachLimit,
                 automation_outreach_delay_hours = @outreachDelay,
                 require_email_approval = @requireApproval,
+                require_post_review = @requirePostReview,
                 updated_at = NOW()
             WHERE id = @id AND owner_id = @ownerId
             RETURNING *", conn);
@@ -236,6 +237,7 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         cmd.Parameters.AddWithValue("outreachLimit", brand.AutomationOutreachDailyLimit);
         cmd.Parameters.AddWithValue("outreachDelay", brand.AutomationOutreachDelayHours);
         cmd.Parameters.AddWithValue("requireApproval", brand.RequireEmailApproval);
+        cmd.Parameters.AddWithValue("requirePostReview", brand.AutomationPostReviewEnabled);
         await using var reader = await cmd.ExecuteReaderAsync();
         await reader.ReadAsync();
         return MapBrand(reader);
@@ -940,6 +942,37 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         await using var cmd = new NpgsqlCommand(@"
             UPDATE posts SET status = 'cancelled'
             WHERE id = @id AND status = 'queued'
+            AND brand_id IN (SELECT id FROM brands WHERE owner_id = @ownerId)", conn);
+        cmd.Parameters.AddWithValue("id", postId);
+        cmd.Parameters.AddWithValue("ownerId", ownerId);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task RetryPostAsync(Guid postId, Guid ownerId)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            UPDATE posts SET status = 'queued',
+                scheduled_for = NOW() + INTERVAL '1 minute',
+                error_message = NULL
+            WHERE id = @id AND status = 'failed'
+            AND brand_id IN (SELECT id FROM brands WHERE owner_id = @ownerId)", conn);
+        cmd.Parameters.AddWithValue("id", postId);
+        cmd.Parameters.AddWithValue("ownerId", ownerId);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task ApprovePostAsync(Guid postId, Guid ownerId)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            UPDATE posts SET status = 'queued',
+                scheduled_for = NOW() + INTERVAL '1 minute'
+            WHERE id = @id AND status = 'pending_review'
             AND brand_id IN (SELECT id FROM brands WHERE owner_id = @ownerId)", conn);
         cmd.Parameters.AddWithValue("id", postId);
         cmd.Parameters.AddWithValue("ownerId", ownerId);
@@ -1709,6 +1742,7 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         AutomationLeadsEnabled = r.GetBoolean(r.GetOrdinal("automation_leads_enabled")),
         AutomationOutreachEnabled = r.GetBoolean(r.GetOrdinal("automation_outreach_enabled")),
         RequireEmailApproval = !r.IsDBNull(r.GetOrdinal("require_email_approval")) && r.GetBoolean(r.GetOrdinal("require_email_approval")),
+        AutomationPostReviewEnabled = !r.IsDBNull(r.GetOrdinal("require_post_review")) && r.GetBoolean(r.GetOrdinal("require_post_review")),
         CreatedAt = r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("created_at")),
         UpdatedAt = r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("updated_at")),
     };

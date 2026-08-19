@@ -96,6 +96,8 @@ public class SocialPostingWorker : ISocialPostingWorker
                 _logger.LogInformation("Generating post for {Platform} for brand {BrandId}", platform, brandId);
                 var generatedPost = await _contentService.GeneratePostAsync(brand, contentPillar, platform);
 
+                var initialStatus = brand.AutomationPostReviewEnabled ? "pending_review" : "queued";
+
                 var socialPost = new SocialPost
                 {
                     Id = Guid.NewGuid(),
@@ -104,7 +106,7 @@ public class SocialPostingWorker : ISocialPostingWorker
                     ContentPillar = contentPillar,
                     GeneratedCopy = generatedPost.Copy,
                     Hashtags = generatedPost.Hashtags,
-                    Status = "queued",
+                    Status = initialStatus,
                     ScheduledFor = DateTimeOffset.UtcNow.AddMinutes(_random.Next(0, 31)),
                     GeneratedAt = DateTimeOffset.UtcNow
                 };
@@ -162,7 +164,8 @@ public class SocialPostingWorker : ISocialPostingWorker
         if (successCount > 0)
         {
             await _quotaService.IncrementPostsUsedAsync(brand.OwnerId, successCount);
-            await _brandRepo.InsertActivityAsync(brandId, "post_generated", $"Successfully queued {successCount} posts for various platforms based on pillar: {contentPillar}.");
+            var action = brand.AutomationPostReviewEnabled ? "sent for review" : "queued";
+            await _brandRepo.InsertActivityAsync(brandId, "post_generated", $"Successfully {action} {successCount} posts for various platforms based on pillar: {contentPillar}.");
         }
     }
 }

@@ -102,7 +102,8 @@ public class SocialPublishingWorker
     private async Task PublishSinglePostAsync(SocialPost post)
     {
         var publisher = _publishers.FirstOrDefault(p =>
-            p.Platform.Equals(post.Platform, StringComparison.OrdinalIgnoreCase));
+            p.Platform.Equals(post.Platform, StringComparison.OrdinalIgnoreCase) ||
+            (p.Platform.Equals("x", StringComparison.OrdinalIgnoreCase) && post.Platform.Equals("twitter", StringComparison.OrdinalIgnoreCase)));
 
         if (publisher == null)
         {

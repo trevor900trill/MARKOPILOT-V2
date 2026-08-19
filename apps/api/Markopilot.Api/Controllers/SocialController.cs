@@ -71,6 +71,33 @@ public class SocialController : ControllerBase
         return NoContent();
     }
 
+    [HttpPost("{brandId:guid}/posts/{postId:guid}/retry")]
+    public async Task<IActionResult> RetryPost(Guid brandId, Guid postId)
+    {
+        var ownerId = HttpContext.GetUserId();
+        if (ownerId == Guid.Empty) return Unauthorized();
+        await _socialRepo.RetryPostAsync(postId, ownerId);
+        return Ok(new { success = true, message = "Post re-queued for publishing." });
+    }
+
+    [HttpPost("{brandId:guid}/posts/{postId:guid}/approve")]
+    public async Task<IActionResult> ApprovePost(Guid brandId, Guid postId)
+    {
+        var ownerId = HttpContext.GetUserId();
+        if (ownerId == Guid.Empty) return Unauthorized();
+        await _socialRepo.ApprovePostAsync(postId, ownerId);
+        return Ok(new { success = true, message = "Post approved and queued for publishing." });
+    }
+
+    [HttpPost("{brandId:guid}/posts/{postId:guid}/reject")]
+    public async Task<IActionResult> RejectPost(Guid brandId, Guid postId)
+    {
+        var ownerId = HttpContext.GetUserId();
+        if (ownerId == Guid.Empty) return Unauthorized();
+        await _socialRepo.CancelPostAsync(postId, ownerId);
+        return Ok(new { success = true, message = "Post rejected." });
+    }
+
     [HttpGet("{brandId:guid}/connect/{platform}")]
     public IActionResult InitiateConnection(Guid brandId, string platform)
     {
