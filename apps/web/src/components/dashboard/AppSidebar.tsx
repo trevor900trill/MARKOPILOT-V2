@@ -38,25 +38,26 @@ export function AppSidebar() {
   return (
     <aside className={`bg-[var(--bg-surface)] border-r border-[var(--border)] flex flex-col transition-all duration-300 ${collapsed ? "w-20" : "w-64"} hidden md:flex`}>
       {/* Logo Area */}
-      <div className="h-16 flex items-center px-6 border-b border-[var(--border)]">
+      <div className={`h-16 flex items-center border-b border-[var(--border)] ${collapsed ? "justify-center px-0" : "px-6"}`}>
         <Link href="/dashboard" className="font-serif text-xl tracking-wide text-white overflow-hidden whitespace-nowrap">
           {collapsed ? "M" : "Markopilot"}
         </Link>
       </div>
 
       {/* Brand Switcher */}
-      <div className="p-4 relative" data-tour="brand-switcher">
+      <div className={`p-4 relative ${collapsed ? "flex justify-center px-2" : ""}`} data-tour="brand-switcher">
         {isLoading ? (
-          <div className="w-full bg-[var(--bg-elevated)] border border-[var(--border)] rounded-xl px-3 py-2 flex items-center gap-2 animate-pulse">
+          <div className={`bg-[var(--bg-elevated)] border border-[var(--border)] rounded-xl flex items-center gap-2 animate-pulse ${collapsed ? "w-11 h-11 justify-center p-0" : "w-full px-3 py-2"}`}>
             <div className="w-6 h-6 rounded-md bg-white/10 flex-shrink-0" />
             {!collapsed && <div className="h-4 w-24 bg-white/10 rounded" />}
           </div>
         ) : (
           <button
             onClick={() => setSwitcherOpen(!switcherOpen)}
-            className="w-full flex items-center justify-between bg-[var(--bg-elevated)] border border-[var(--border)] rounded-xl px-3 py-2 text-sm hover:border-[var(--accent-primary)] transition"
+            title={collapsed ? (activeBrand?.name || "Select Brand") : undefined}
+            className={`flex items-center bg-[var(--bg-elevated)] border border-[var(--border)] rounded-xl text-sm hover:border-[var(--accent-primary)] transition ${collapsed ? "w-11 h-11 justify-center p-0" : "w-full justify-between px-3 py-2"}`}
           >
-            <div className="flex items-center gap-2 overflow-hidden">
+            <div className={`flex items-center gap-2 overflow-hidden ${collapsed ? "justify-center" : ""}`}>
               <div className="w-6 h-6 rounded-md bg-[var(--accent-primary)] text-white flex flex-shrink-0 items-center justify-center font-bold text-xs">
                 {activeBrand?.name?.charAt(0)?.toUpperCase() || "?"}
               </div>
@@ -67,8 +68,8 @@ export function AppSidebar() {
         )}
 
         {/* Dropdown */}
-        {switcherOpen && !collapsed && !isLoading && (
-          <div className="absolute left-4 right-4 top-[calc(100%+4px)] z-50 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-xl shadow-2xl overflow-hidden">
+        {switcherOpen && !isLoading && (
+          <div className={`absolute z-50 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-xl shadow-2xl overflow-hidden ${collapsed ? "left-16 top-2 w-56" : "left-4 right-4 top-[calc(100%+4px)]"}`}>
             {brands.map((brand) => (
               <button
                 key={brand.id}
@@ -95,14 +96,23 @@ export function AppSidebar() {
       </div>
 
       {/* Nav Links */}
-      <nav data-tour="nav-links" className="flex-1 px-3 space-y-1 overflow-y-auto">
+      <nav data-tour="nav-links" className={`flex-1 space-y-1.5 overflow-y-auto ${collapsed ? "px-2" : "px-3"}`}>
         {links.map((link) => {
           const active = isActive(link.href, link.exact);
           return (
             <Link
               key={link.name}
               href={link.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${active ? "bg-[var(--accent-primary)] text-white shadow-lg shadow-[var(--accent-glow)]/20" : "text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-elevated)]"}`}
+              title={collapsed ? link.name : undefined}
+              className={`flex items-center rounded-xl text-sm font-medium transition-all ${
+                collapsed 
+                  ? "w-11 h-11 mx-auto justify-center p-0" 
+                  : "gap-3 px-3 py-2.5"
+              } ${
+                active 
+                  ? "bg-[var(--accent-primary)] text-white shadow-lg shadow-[var(--accent-glow)]/20" 
+                  : "text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-elevated)]"
+              }`}
             >
               <link.icon size={18} className="flex-shrink-0" />
               {!collapsed && <span>{link.name}</span>}
@@ -112,10 +122,13 @@ export function AppSidebar() {
       </nav>
 
       {/* Footer Area with Settings and Quota */}
-      <div className="p-4 border-t border-[var(--border)] space-y-3">
+      <div className={`p-4 border-t border-[var(--border)] space-y-2 ${collapsed ? "px-2" : ""}`}>
         <Link
           href="/dashboard/settings"
-          className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all ${isActive("/dashboard/settings") ? "bg-[var(--accent-primary)] text-white" : "text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-elevated)]"}`}
+          title={collapsed ? "Brand Settings" : undefined}
+          className={`flex items-center rounded-xl text-sm font-medium transition-all ${
+            collapsed ? "w-11 h-11 mx-auto justify-center p-0" : "gap-3 px-3 py-2"
+          } ${isActive("/dashboard/settings") ? "bg-[var(--accent-primary)] text-white" : "text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-elevated)]"}`}
         >
           <Settings size={18} className="flex-shrink-0" />
           {!collapsed && <span>Brand Settings</span>}
@@ -123,7 +136,10 @@ export function AppSidebar() {
 
         <Link
           href="/account"
-          className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all ${isActive("/account") ? "bg-[var(--accent-primary)] text-white" : "text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-elevated)]"}`}
+          title={collapsed ? "Account Settings" : undefined}
+          className={`flex items-center rounded-xl text-sm font-medium transition-all ${
+            collapsed ? "w-11 h-11 mx-auto justify-center p-0" : "gap-3 px-3 py-2"
+          } ${isActive("/account") ? "bg-[var(--accent-primary)] text-white" : "text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-elevated)]"}`}
         >
           <Settings size={18} className="flex-shrink-0" />
           {!collapsed && <span>Account Settings</span>}
@@ -191,7 +207,8 @@ export function AppSidebar() {
 
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="w-full flex items-center justify-center p-1.5 text-[var(--text-muted)] hover:text-white rounded-lg hover:bg-[var(--bg-elevated)] transition"
+          title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+          className={`flex items-center justify-center text-[var(--text-muted)] hover:text-white rounded-lg hover:bg-[var(--bg-elevated)] transition ${collapsed ? "w-11 h-8 mx-auto" : "w-full p-1.5"}`}
         >
           {collapsed ? <ChevronsRight size={16} /> : <ChevronsLeft size={16} />}
         </button>

@@ -422,7 +422,7 @@ Return ONLY this JSON, no preamble:
 
             var verification = await InternalSmtpCheckAsync(permutations, mxRecords, domain, probes);
             
-            if (verification != null)
+            if (verification != null && (verification.Status == EmailVerificationStatus.Valid || (verification.Status == EmailVerificationStatus.Risky && verification.IsCatchAll)))
             {
                 verification.Provider = provider;
                 verification.Source = "smtp";
@@ -531,7 +531,7 @@ Return ONLY this JSON, no preamble:
                 }
 
                 await writer.WriteLineAsync("QUIT");
-                return new EmailVerificationResult { Email = candidateEmails.First(), Status = EmailVerificationStatus.Invalid, Confidence = 0.0 };
+                return null;
             }
             catch { continue; }
         }

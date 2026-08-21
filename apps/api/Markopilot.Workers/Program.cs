@@ -115,11 +115,11 @@ using (var scope = host.Services.CreateScope())
         worker => worker.ExecuteAsync(),
         "*/30 * * * *");
 
-    // Email enrichment: runs every hour, picks up leads missing emails
+    // Email enrichment: runs every 10 minutes, picks up leads missing emails
     jobManager.AddOrUpdate<Markopilot.Core.Interfaces.IEmailEnrichmentWorker>(
         "GlobalEmailEnrichmentWorker",
         worker => worker.ExecuteAsync(),
-        "0 * * * *"); // Top of every hour
+        "*/10 * * * *"); // Every 10 minutes
 
     // Bounce Processor: runs every 4 hours
     jobManager.AddOrUpdate<Markopilot.Core.Interfaces.IBounceProcessorWorker>(

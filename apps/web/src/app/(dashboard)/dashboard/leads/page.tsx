@@ -1,6 +1,6 @@
 "use client";
 
-import { Users, Search, Play, Filter, Download, MailPlus, Trash2, ShieldBan, ExternalLink, RefreshCw, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
+import { Users, Search, Play, Filter, Download, MailPlus, Trash2, ShieldBan, ExternalLink, RefreshCw, Sparkles, ChevronDown, ChevronUp, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useEffect, useCallback } from "react";
 import { useBrand } from "@/lib/brand-context";
@@ -13,6 +13,11 @@ type Lead = {
   jobTitle: string;
   company: string;
   email: string | null;
+  emailStatus?: string;
+  emailConfidence?: number;
+  emailSource?: string | null;
+  isCatchAll?: boolean;
+  verificationStatus?: string | null;
   linkedinUrl: string | null;
   leadScore: number;
   aiSummary: string;
@@ -138,6 +143,53 @@ export default function LeadsPage() {
       case 'disqualified': return <span className="px-2 py-1 rounded text-[10px] uppercase font-bold bg-neutral-500/10 text-neutral-400 border border-neutral-500/20 tracking-wider">Disqualified</span>;
       default: return <span className="px-2 py-1 rounded text-[10px] uppercase font-bold bg-neutral-800 text-neutral-300 border border-neutral-700 tracking-wider">{status}</span>;
     }
+  };
+
+  const getEmailBadge = (lead: Lead) => {
+    if (lead.email) {
+      const status = lead.emailStatus?.toLowerCase() || "verified";
+      if (status === "verified") {
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            Verified {lead.emailConfidence && lead.emailConfidence > 0 ? `${Math.round(lead.emailConfidence * 100)}%` : ""}
+          </span>
+        );
+      }
+      if (status === "risky" || lead.isCatchAll) {
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+            Catch-All / Risky
+          </span>
+        );
+      }
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-purple-500/10 text-purple-300 border border-purple-500/20">
+          <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+          {lead.emailSource ? lead.emailSource.replace("_", " ") : "Enriched"}
+        </span>
+      );
+    }
+
+    // When lead does NOT have an email:
+    const status = lead.emailStatus?.toLowerCase();
+    if (status === "unfindable" || status === "exhausted") {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-neutral-800 text-neutral-400 border border-neutral-700/80">
+          <span className="w-1.5 h-1.5 rounded-full bg-neutral-500"></span>
+          Unfindable
+        </span>
+      );
+    }
+
+    // Default: Enrichment pending / queued
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+        Pending Enrichment
+      </span>
+    );
   };
 
   const filteredLeads = leads.filter(l =>
@@ -280,17 +332,17 @@ export default function LeadsPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 align-top pt-6 space-y-1.5">
-                    {lead.email ? (
-                      <div className="flex items-center gap-2 text-[var(--text-secondary)] text-xs">
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                        {lead.email}
+                    <div className="flex flex-col gap-1">
+                      {lead.email ? (
+                        <div className="flex items-center gap-1.5 text-white font-medium text-xs">
+                          <Mail size={13} className="text-[var(--accent-primary)] flex-shrink-0" />
+                          <span className="truncate max-w-[200px]" title={lead.email}>{lead.email}</span>
+                        </div>
+                      ) : null}
+                      <div className="flex items-center gap-2">
+                        {getEmailBadge(lead)}
                       </div>
-                    ) : (
-                      <div className="flex items-center gap-2 text-[var(--text-muted)] text-xs">
-                        <span className="w-1.5 h-1.5 rounded-full bg-red-500/50"></span>
-                        No Email
-                      </div>
-                    )}
+                    </div>
                     {lead.sourceUrl ? (
                       <a href={lead.sourceUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-blue-400 hover:text-blue-300 text-xs transition">
                         <ExternalLink size={12} /> LinkedIn Profile

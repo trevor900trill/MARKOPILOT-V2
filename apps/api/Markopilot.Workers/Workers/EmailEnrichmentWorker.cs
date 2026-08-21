@@ -56,8 +56,14 @@ public class EmailEnrichmentWorker : IEmailEnrichmentWorker
     {
         _logger.LogInformation("Starting Hunter-Level Email Enrichment run.");
 
-        var leads = await _leadRepo.GetLeadsNeedingEmailEnrichmentAsync(15); // Smaller batches for stealth
-        if (leads.Count == 0) return;
+        var leads = await _leadRepo.GetLeadsNeedingEmailEnrichmentAsync(30);
+        if (leads.Count == 0)
+        {
+            _logger.LogInformation("No leads pending email enrichment.");
+            return;
+        }
+
+        _logger.LogInformation("Found {Count} leads needing email enrichment. Processing...", leads.Count);
 
         // Process leads concurrently (max 3) for throughput while maintaining per-domain stealth
         var tasks = leads.Select(lead => ProcessLeadAsync(lead));
@@ -70,7 +76,7 @@ public class EmailEnrichmentWorker : IEmailEnrichmentWorker
         try
         {
             // ── STEALTH: Random jitter between leads ──────────
-            await Task.Delay(Random.Shared.Next(2000, 5000));
+            await Task.Delay(Random.Shared.Next(1500, 3500));
 
             var (first, last) = ParseName(lead.Name!);
             if (string.IsNullOrEmpty(first)) return;
@@ -78,6 +84,7 @@ public class EmailEnrichmentWorker : IEmailEnrichmentWorker
             var domain = await DiscoverDomainForLead(lead);
             if (string.IsNullOrEmpty(domain))
             {
+                _logger.LogWarning("Could not discover domain for lead {Name} ({Company}). Marking unfindable.", lead.Name, lead.Company);
                 await _leadRepo.UpdateLeadEmailAsync(lead.Id, null, "unfindable", 0, null, false);
                 return;
             }
@@ -143,7 +150,7 @@ public class EmailEnrichmentWorker : IEmailEnrichmentWorker
                 discoveryResult = await _discoveryService.DiscoverEmailAsync(lead.Name!, lead.Company!, domain);
             }
             
-            if (discoveryResult != null)
+            if (discoveryResult != null && (discoveryResult.Status == EmailVerificationStatus.Valid || (discoveryResult.Status == EmailVerificationStatus.Risky && discoveryResult.IsCatchAll)))
             {
                 // Calculate final confidence
                 double confidence = CalculateConfidence(discoveryResult, patternCache, first, last, domain);
@@ -166,7 +173,7 @@ public class EmailEnrichmentWorker : IEmailEnrichmentWorker
             }
 
             // ══ STAGE 2.5: Web Email Search (Free Hunter) ════
-            _logger.LogInformation("Web scraping for {Name} @ {Domain}...", lead.Name, domain);
+            _logger.LogInformation("Web scraping search for {Name} @ {Domain}...", lead.Name, domain);
             var webEmail = await _discoveryService.SearchForEmailAsync(lead.Name!, lead.Company!, domain);
             if (!string.IsNullOrWhiteSpace(webEmail))
             {
@@ -185,6 +192,9 @@ public class EmailEnrichmentWorker : IEmailEnrichmentWorker
             }
 
             // ══ STAGE 3: Hunter.io Fallback ═══════════════════
+            _logger.LogInformation("Stage 3: Attempting Hunter.io fallback for {Name} @ {Domain} (Hunter configured: {IsConfigured})",
+                lead.Name, domain, _hunterClient.IsConfigured);
+
             if (_hunterClient.IsConfigured)
             {
                 // 3a. Try cheaper DomainSearch first — learns pattern + may find the email directly
@@ -202,16 +212,18 @@ public class EmailEnrichmentWorker : IEmailEnrichmentWorker
 
                     // Check if any returned email matches our target person
                     var targetEmails = domainResult.Emails
-                        .Where(e => e.Contains(first, StringComparison.OrdinalIgnoreCase) ||
-                                    e.Contains(last, StringComparison.OrdinalIgnoreCase))
+                        .Where(e => (!string.IsNullOrEmpty(first) && e.Contains(first, StringComparison.OrdinalIgnoreCase)) ||
+                                    (!string.IsNullOrEmpty(last) && e.Contains(last, StringComparison.OrdinalIgnoreCase)))
                         .ToList();
 
                     if (targetEmails.Count > 0)
                     {
                         var hunterEmail = targetEmails.First();
+                        _logger.LogInformation("Hunter.io DomainSearch successfully found {Email} for {Name}", hunterEmail, lead.Name);
                         await _leadRepo.UpdateLeadEmailAsync(lead.Id, hunterEmail, "enriched", 0.75, "hunter_domain", false);
                         await _leadRepo.UpdateLeadEmailEnrichmentAttemptedAsync(lead.Id);
                         await UpdatePatternIntelligence(domain, new EmailVerificationResult { Email = hunterEmail, Source = "hunter_domain", Provider = "unknown" }, first, last);
+                        await _brandRepo.InsertActivityAsync(lead.BrandId, "lead_enrichment", $"Hunter.io domain search found {hunterEmail}.");
                         return;
                     }
                 }
@@ -220,14 +232,17 @@ public class EmailEnrichmentWorker : IEmailEnrichmentWorker
                 var finderEmail = await _hunterClient.EmailFinderAsync(domain, first, last);
                 if (!string.IsNullOrWhiteSpace(finderEmail))
                 {
+                    _logger.LogInformation("Hunter.io EmailFinder successfully found {Email} for {Name}", finderEmail, lead.Name);
                     await _leadRepo.UpdateLeadEmailAsync(lead.Id, finderEmail, "enriched", 0.7, "hunter", false);
                     await _leadRepo.UpdateLeadEmailEnrichmentAttemptedAsync(lead.Id);
                     await UpdatePatternIntelligence(domain, new EmailVerificationResult { Email = finderEmail, Source = "hunter", Provider = "unknown" }, first, last);
+                    await _brandRepo.InsertActivityAsync(lead.BrandId, "lead_enrichment", $"Hunter.io email finder found {finderEmail}.");
                     return;
                 }
             }
 
             // Failed all stages
+            _logger.LogInformation("All enrichment stages exhausted for {Name} @ {Domain}. Marking unfindable.", lead.Name, domain);
             await _leadRepo.UpdateLeadEmailAsync(lead.Id, null, "unfindable", 0, "exhausted", false);
             await _leadRepo.UpdateLeadEmailEnrichmentAttemptedAsync(lead.Id);
         }
