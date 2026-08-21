@@ -389,96 +389,54 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <header className="relative z-10 min-h-[92vh] flex flex-col items-center justify-center pt-32 pb-20 overflow-visible">
-        <div className="max-w-5xl mx-auto px-6 text-center space-y-8 relative z-20">
+      <header className="relative z-10 min-h-[88vh] flex flex-col items-center justify-center pt-28 pb-16 overflow-visible">
+        <div className="max-w-4xl mx-auto px-6 text-center space-y-7 relative z-20">
 
-          {/* Animated Announcement Pill */}
+          {/* Clean Category Badge */}
           <div
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-gray-300 tracking-wide mb-2 opacity-0 animate-[fadeUpIn_1s_cubic-bezier(0.16,1,0.3,1)_100ms_forwards] backdrop-blur-md shadow-inner"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.04] border border-white/10 text-xs font-medium text-gray-300 tracking-wide mb-1 backdrop-blur-md shadow-sm"
           >
-            <Sparkles size={14} className="text-[var(--accent-primary)] animate-pulse" />
-            <span className="text-gray-400">Markopilot 2.0:</span>
-            <span className="text-white font-semibold">Autonomous Socials, Leads & AI Search (GEO)</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]"></span>
+            <span className="text-gray-400 font-normal">Markopilot Engine</span>
+            <span className="text-white/40">•</span>
+            <span className="text-white font-medium">Autonomous Socials, Leads & AI Search (GEO)</span>
           </div>
 
-          {/* Epic Animated Headline */}
+          {/* Headline */}
           <h1
-            className="font-serif text-[clamp(44px,7.5vw,104px)] leading-[1.06] tracking-tight opacity-0 animate-[fadeUpIn_1s_cubic-bezier(0.16,1,0.3,1)_200ms_forwards]"
+            className="font-serif text-[clamp(40px,6.5vw,84px)] leading-[1.08] tracking-tight text-white font-normal"
           >
-            <span className="text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-white/70 drop-shadow-xl inline-block">
-              Your Entire Growth Engine, <br />
-            </span>
-            <span className="relative inline-block mt-1">
-              {/* Ghost text to maintain stable width */}
-              <span className="opacity-0 tracking-tight select-none pointer-events-none pb-4 inline-block">{fullText}</span>
-
-              {/* Typed Text Overlay */}
-              <span className="absolute inset-0 text-left whitespace-nowrap text-transparent bg-clip-text bg-gradient-to-r from-[var(--accent-primary)] via-purple-300 to-white drop-shadow-[0_0_40px_rgba(168,85,247,0.45)] pb-4 inline-block">
-                {typedText}
-                <span className={`inline-block w-[3px] h-[0.7em] bg-[var(--accent-primary)] ml-1 md:ml-3 align-baseline transition-opacity ${typedText.length === fullText.length ? 'animate-pulse' : ''} ${typedText.length === 0 ? 'opacity-0' : 'opacity-100'}`}></span>
-              </span>
-
-              {/* Underline glow */}
-              <div className="absolute top-[82%] left-0 w-full h-[3px] bg-gradient-to-r from-transparent via-[var(--accent-primary)] to-transparent opacity-80 blur-[2px]"></div>
+            Your Entire Growth Engine, <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-white to-purple-200 font-normal">
+              Running Itself.
             </span>
           </h1>
 
+          {/* Clear, High-Value Subtitle */}
           <p
-            className="text-lg md:text-2xl text-gray-300 max-w-3xl mx-auto font-sans font-light leading-relaxed opacity-0 animate-[fadeUpIn_1s_cubic-bezier(0.16,1,0.3,1)_300ms_forwards]"
+            className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto font-sans font-light leading-relaxed"
           >
-            Stop wasting 20 hours a week juggling social apps. Markopilot autonomously drafts posts, renders Flux images & TikTok videos, mines qualified leads, and turns your brand into the <strong className="text-white font-normal">#1 recommendation across AI search engines</strong>.
+            Markopilot writes and publishes high-converting posts across <strong className="text-white font-medium">X, LinkedIn, Instagram, and TikTok</strong>, extracts verified B2B leads, and makes AI search engines recommend your brand 24/7.
           </p>
 
-          {/* Quick Persona Hook Buttons */}
-          <div className="flex flex-wrap items-center justify-center gap-2.5 pt-2 opacity-0 animate-[fadeUpIn_1s_cubic-bezier(0.16,1,0.3,1)_400ms_forwards]">
-            <span className="text-xs uppercase tracking-widest text-gray-400 font-medium mr-2">I am:</span>
-            <button
-              onClick={() => {
-                setActivePersona("dev");
-                document.getElementById("solutions")?.scrollIntoView({ behavior: "smooth" });
-              }}
-              className="px-3.5 py-1.5 rounded-full text-xs font-medium bg-white/5 hover:bg-white/15 border border-white/10 text-gray-300 hover:text-white transition flex items-center gap-1.5"
-            >
-              <Code size={13} className="text-purple-400" /> A Solo Indie Dev
-            </button>
-            <button
-              onClick={() => {
-                setActivePersona("founder");
-                document.getElementById("solutions")?.scrollIntoView({ behavior: "smooth" });
-              }}
-              className="px-3.5 py-1.5 rounded-full text-xs font-medium bg-white/5 hover:bg-white/15 border border-white/10 text-gray-300 hover:text-white transition flex items-center gap-1.5"
-            >
-              <Clock size={13} className="text-blue-400" /> An Overwhelmed Founder
-            </button>
-            <button
-              onClick={() => {
-                setActivePersona("brand");
-                document.getElementById("solutions")?.scrollIntoView({ behavior: "smooth" });
-              }}
-              className="px-3.5 py-1.5 rounded-full text-xs font-medium bg-white/5 hover:bg-white/15 border border-white/10 text-gray-300 hover:text-white transition flex items-center gap-1.5"
-            >
-              <Search size={13} className="text-emerald-400" /> A Brand Building AI Discoverability
-            </button>
-          </div>
-
-          {/* CTAs */}
+          {/* Primary CTAs */}
           <div
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6 opacity-0 animate-[fadeUpIn_1s_cubic-bezier(0.16,1,0.3,1)_500ms_forwards]"
+            className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-3"
           >
-            <NavLink href="#" isAuth={true} isPrimary className="group relative w-full sm:w-auto px-8 py-4 rounded-full bg-white text-black font-semibold text-base hover:scale-105 transition-all flex items-center justify-center gap-2 overflow-hidden shadow-[0_0_40px_rgba(255,255,255,0.25)]">
-              Start 14-Day Free Trial <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+            <NavLink href="#" isAuth={true} isPrimary className="group relative w-full sm:w-auto px-7 py-3.5 rounded-full bg-white text-black font-semibold text-sm hover:bg-gray-100 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 overflow-hidden shadow-[0_0_30px_rgba(255,255,255,0.2)]">
+              Start 14-Day Free Trial <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
             </NavLink>
-            <Link href="#how-it-works" className="w-full sm:w-auto px-8 py-4 rounded-full bg-white/5 border border-white/10 text-white font-medium text-base hover:bg-white/10 hover:border-white/20 transition-all flex items-center justify-center gap-2 backdrop-blur-md hover:-translate-y-0.5">
-              Explore The Cockpit
+            <Link href="#solutions" className="w-full sm:w-auto px-6 py-3.5 rounded-full bg-white/5 border border-white/10 text-gray-200 font-medium text-sm hover:bg-white/10 hover:text-white hover:border-white/20 transition-all flex items-center justify-center gap-2 backdrop-blur-md">
+              See How It Works
             </Link>
           </div>
 
-          <div className="pt-2 text-xs text-gray-400 flex items-center justify-center gap-4 font-mono">
-            <span className="flex items-center gap-1.5"><CheckCircle2 size={13} className="text-emerald-400" /> No credit card required</span>
-            <span>•</span>
-            <span className="flex items-center gap-1.5"><CheckCircle2 size={13} className="text-emerald-400" /> 2-minute setup</span>
-            <span>•</span>
-            <span className="flex items-center gap-1.5"><CheckCircle2 size={13} className="text-emerald-400" /> Review Queue or Full Autopilot</span>
+          {/* Trust Guarantees */}
+          <div className="pt-2 text-xs text-gray-400 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+            <span className="flex items-center gap-1.5 text-gray-300"><CheckCircle2 size={13} className="text-emerald-400 flex-shrink-0" /> No credit card required</span>
+            <span className="hidden sm:inline text-white/20">•</span>
+            <span className="flex items-center gap-1.5 text-gray-300"><CheckCircle2 size={13} className="text-emerald-400 flex-shrink-0" /> 2-minute setup</span>
+            <span className="hidden sm:inline text-white/20">•</span>
           </div>
         </div>
 
