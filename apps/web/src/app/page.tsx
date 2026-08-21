@@ -392,23 +392,26 @@ export default function LandingPage() {
       <header className="relative z-10 min-h-[88vh] flex flex-col items-center justify-center pt-28 pb-16 overflow-visible">
         <div className="max-w-4xl mx-auto px-6 text-center space-y-7 relative z-20">
 
-          {/* Clean Category Badge */}
-          <div
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.04] border border-white/10 text-xs font-medium text-gray-300 tracking-wide mb-1 backdrop-blur-md shadow-sm"
-          >
-            <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]"></span>
-            <span className="text-gray-400 font-normal">Markopilot Engine</span>
-            <span className="text-white/40">•</span>
-            <span className="text-white font-medium">Autonomous Socials, Leads & AI Search (GEO)</span>
-          </div>
-
-          {/* Headline */}
+          {/* Headline with Typewriter */}
           <h1
-            className="font-serif text-[clamp(40px,6.5vw,84px)] leading-[1.08] tracking-tight text-white font-normal"
+            className="font-serif text-[clamp(44px,7vw,92px)] leading-[1.08] tracking-tight text-white font-normal"
           >
             Your Entire Growth Engine, <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-white to-purple-200 font-normal">
-              Running Itself.
+            <span className="relative inline-block mt-1">
+              {/* Ghost text to maintain stable layout */}
+              <span className="opacity-0 tracking-tight select-none pointer-events-none pb-2 inline-block">
+                {fullText}
+              </span>
+
+              {/* Typed Text Overlay */}
+              <span className="absolute inset-0 text-left whitespace-nowrap text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-white to-purple-200 pb-2 inline-block">
+                {typedText}
+                <span
+                  className={`inline-block w-[3px] h-[0.75em] bg-[var(--accent-primary)] ml-1 md:ml-2 align-baseline transition-opacity ${
+                    typedText.length === fullText.length ? "animate-pulse" : ""
+                  } ${typedText.length === 0 ? "opacity-0" : "opacity-100"}`}
+                ></span>
+              </span>
             </span>
           </h1>
 
@@ -437,6 +440,7 @@ export default function LandingPage() {
             <span className="hidden sm:inline text-white/20">•</span>
             <span className="flex items-center gap-1.5 text-gray-300"><CheckCircle2 size={13} className="text-emerald-400 flex-shrink-0" /> 2-minute setup</span>
             <span className="hidden sm:inline text-white/20">•</span>
+            <span className="flex items-center gap-1.5 text-gray-300"><CheckCircle2 size={13} className="text-emerald-400 flex-shrink-0" /> 1-Click Review or Full Autopilot</span>
           </div>
         </div>
 
@@ -1920,26 +1924,53 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-white/5 bg-[#07070a]">
-        <div className="max-w-7xl mx-auto px-6 py-12 flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="flex items-center gap-3 group cursor-pointer">
-            <div className="w-7 h-7 rounded-lg border border-white/10 flex items-center justify-center text-white/70 group-hover:border-white/30 group-hover:text-white transition-all shadow-sm bg-white/5">
-              <Rocket size={14} />
+      <footer className="relative z-10 border-t border-white/5 bg-[#07070a] pt-16 pb-12">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-10 pb-12 border-b border-white/5">
+            {/* Brand column */}
+            <div className="md:col-span-5 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white shadow-sm">
+                  <Rocket size={16} />
+                </div>
+                <span className="text-xl font-serif tracking-tight font-medium text-white">Markopilot</span>
+              </div>
+              <p className="text-gray-400 text-sm max-w-sm font-light leading-relaxed">
+                Autonomous marketing &amp; B2B lead intelligence. Publish across 4 networks, enrich verified leads, and rank on AI search engines hands-free.
+              </p>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>Autonomous Engine Active</span>
+              </div>
             </div>
-            <span className="text-xl font-serif tracking-tight font-medium text-white/90 group-hover:text-white transition-colors">Markopilot</span>
+
+            {/* Links column: Product */}
+            <div className="md:col-span-4 md:col-start-7 space-y-3">
+              <div className="text-xs uppercase tracking-wider text-gray-300 font-semibold font-mono">Product &amp; Solutions</div>
+              <ul className="space-y-2.5 text-sm text-gray-400">
+                <li><Link href="#solutions" className="hover:text-white transition-colors">Founder &amp; Dev Solutions</Link></li>
+                <li><Link href="#ai-discovery" className="hover:text-white transition-colors">AI Search Optimization (GEO)</Link></li>
+                <li><Link href="#channels" className="hover:text-white transition-colors">Omni-Channel Engine</Link></li>
+                <li><Link href="#calendar" className="hover:text-white transition-colors">Autonomous Calendar</Link></li>
+                <li><Link href="#pricing" className="hover:text-white transition-colors">Plans &amp; Pricing</Link></li>
+              </ul>
+            </div>
+
+            {/* Links column: Legal & Contact */}
+            <div className="md:col-span-2 space-y-3">
+              <div className="text-xs uppercase tracking-wider text-gray-300 font-semibold font-mono">Company &amp; Legal</div>
+              <ul className="space-y-2.5 text-sm text-gray-400">
+                <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/terms" className="hover:text-white transition-colors">Terms &amp; Conditions</Link></li>
+                <li><a href="mailto:hello@markopilot.com" className="hover:text-white transition-colors">Contact Support</a></li>
+              </ul>
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-8 text-sm font-medium text-gray-400">
-            <Link href="#solutions" className="hover:text-white transition-colors">Solutions</Link>
-            <Link href="#ai-discovery" className="hover:text-white transition-colors">AI Search (GEO)</Link>
-            <Link href="#channels" className="hover:text-white transition-colors">Channels</Link>
-            <Link href="#calendar" className="hover:text-white transition-colors">Calendar</Link>
-            <Link href="#pricing" className="hover:text-white transition-colors">Pricing</Link>
-            <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
-            <Link href="/terms" className="hover:text-white transition-colors">Terms & Conditions</Link>
-            <a href="mailto:hello@markopilot.com" className="hover:text-white transition-colors">Contact</a>
-          </div>
-          <div className="text-gray-500 text-xs font-mono">
-            © 2026 Markopilot. All rights reserved.
+
+          {/* Bottom copyright row */}
+          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-400 font-sans">
+            <p>© {new Date().getFullYear()} Markopilot. All rights reserved.</p>
+            <p className="text-gray-400">Engineered for fast-moving founders &amp; indie builders.</p>
           </div>
         </div>
       </footer>
