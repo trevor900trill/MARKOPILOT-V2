@@ -175,4 +175,5 @@ public interface IBounceProcessorWorker
 public interface IAlertEmailService
 {
     Task<bool> SendErrorAlertAsync(string recipientEmail, string recipientName, string brandName, string errorDescription, string? actionUrl = null);
+    Task<bool> SendPaymentConfirmationEmailAsync(string recipientEmail, string recipientName, string planName, decimal amountKes, string receiptNumber, DateTimeOffset periodEnd);
 }

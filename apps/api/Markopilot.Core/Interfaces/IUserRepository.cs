@@ -38,7 +38,13 @@ public interface IUserRepository
     Task UpdateOnboardingStatusAsync(Guid userId, bool completed);
 
     /// <summary>Update user subscription details and quotas from payment webhook.</summary>
-    /// <remarks>Used by: API (WebhooksController)</remarks>
+    /// <remarks>Used by: API (WebhooksController, SubscriptionsController)</remarks>
     Task UpdateUserSubscriptionAsync(Guid userId, string subscriptionId, string status,
         string planName, DateTimeOffset? periodEnd, int leadsQuota, int postsQuota, int brandsQuota);
+
+    // ── M-PESA & Waitlist ─────────────────────────
+    Task RecordMpesaTransactionAsync(MpesaTransaction tx);
+    Task UpdateMpesaTransactionStatusAsync(string checkoutRequestId, string status, string? mpesaReceiptNumber = null, int? resultCode = null, string? resultDesc = null);
+    Task<MpesaTransaction?> GetMpesaTransactionAsync(string checkoutRequestId);
+    Task AddToCountryWaitlistAsync(CountryWaitlist entry);
 }

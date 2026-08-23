@@ -12,6 +12,7 @@ public class User
     public string SubscriptionStatus { get; set; } = "trialing";
     public string PlanName { get; set; } = "starter";
     public DateTimeOffset? CurrentPeriodEnd { get; set; }
+    public DateTimeOffset? TrialEndsAt { get; set; }
     public int QuotaLeadsPerMonth { get; set; } = 100;
     public int QuotaPostsPerMonth { get; set; } = 30;
     public int QuotaBrandsAllowed { get; set; } = 1;

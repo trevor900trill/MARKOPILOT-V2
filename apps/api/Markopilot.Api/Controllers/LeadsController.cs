@@ -64,6 +64,11 @@ public class LeadsController : ControllerBase
         {
             return StatusCode(400, new { error = new { code = "MISSING_EMAIL", message = "Cannot queue outreach for a lead without an email address." } });
         }
+
+        if (await _outreachRepo.IsEmailSuppressedAsync(brandId, lead.Email))
+        {
+            return StatusCode(400, new { error = new { code = "SUPPRESSED_EMAIL", message = "This contact has unsubscribed and is on this brand's suppression list." } });
+        }
         
         var email = new Markopilot.Core.Models.OutreachEmail
         {

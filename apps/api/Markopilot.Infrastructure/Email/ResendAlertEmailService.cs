@@ -147,4 +147,122 @@ public class ResendAlertEmailService : IAlertEmailService
 </body>
 </html>";
     }
+
+    public async Task<bool> SendPaymentConfirmationEmailAsync(
+        string recipientEmail,
+        string recipientName,
+        string planName,
+        decimal amountKes,
+        string receiptNumber,
+        DateTimeOffset periodEnd)
+    {
+        var apiKey = _config["Resend:ApiKey"];
+        var fromEmail = _config["Resend:FromEmail"] ?? "Markopilot Billing <billing@markopilot.com>";
+        var dashboardUrl = _config["Frontend:BaseUrl"] ?? "https://markopilot.com";
+
+        if (string.IsNullOrEmpty(apiKey))
+        {
+            _logger.LogWarning("Resend:ApiKey is not configured. Skipping payment confirmation email to {Email}", recipientEmail);
+            return false;
+        }
+
+        try
+        {
+            var subject = $"Payment Confirmed! Your Markopilot {planName} Plan is Active (Receipt: {receiptNumber})";
+            var formattedDate = periodEnd.ToString("MMMM dd, yyyy");
+            var html = $@"
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset=""utf-8"">
+  <title>Payment Receipt</title>
+</head>
+<body style=""margin: 0; padding: 40px 16px; background-color: #07070a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #f3f4f6;"">
+  <table align=""center"" border=""0"" cellpadding=""0"" cellspacing=""0"" width=""100%"" style=""max-width: 560px; background-color: #111116; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5);"">
+    <tr>
+      <td style=""padding: 32px 32px 24px 32px; background: linear-gradient(180deg, rgba(16, 185, 129, 0.15) 0%, transparent 100%); text-align: center;"">
+        <div style=""width: 48px; height: 48px; background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #10b981; font-size: 24px; line-height: 48px; text-align: center;"">✓</div>
+        <h1 style=""margin: 16px 0 4px 0; font-size: 22px; font-weight: 700; color: #ffffff;"">Payment Confirmed!</h1>
+        <p style=""margin: 0; font-size: 13px; color: #9ca3af;"">Your subscription has been successfully activated.</p>
+      </td>
+    </tr>
+    <tr>
+      <td style=""padding: 0 32px 32px 32px;"">
+        <p style=""font-size: 14px; line-height: 1.6; color: #d1d5db;"">
+          Hi {recipientName},<br><br>
+          Thank you for your payment! Your <strong>Markopilot {planName}</strong> subscription is now active for the next 30 days. Your autonomous marketing and lead extraction engine is running.
+        </p>
+
+        <div style=""background-color: #18181f; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 20px; margin: 20px 0;"">
+          <table width=""100%"" style=""font-size: 13px; color: #9ca3af;"">
+            <tr>
+              <td style=""padding: 6px 0;"">Plan:</td>
+              <td align=""right"" style=""color: #ffffff; font-weight: 600;"">{planName}</td>
+            </tr>
+            <tr>
+              <td style=""padding: 6px 0;"">Amount Paid:</td>
+              <td align=""right"" style=""color: #10b981; font-weight: 700;"">KES {amountKes:N0}</td>
+            </tr>
+            <tr>
+              <td style=""padding: 6px 0;"">M-PESA Receipt:</td>
+              <td align=""right"" style=""color: #ffffff; font-family: monospace;"">{receiptNumber}</td>
+            </tr>
+            <tr>
+              <td style=""padding: 6px 0;"">Valid Until:</td>
+              <td align=""right"" style=""color: #ffffff;"">{formattedDate}</td>
+            </tr>
+          </table>
+        </div>
+
+        <table align=""center"" border=""0"" cellpadding=""0"" cellspacing=""0"" style=""margin-top: 24px;"">
+          <tr>
+            <td align=""center"" style=""border-radius: 9999px; background-color: #10b981;"">
+              <a href=""{dashboardUrl}/dashboard"" target=""_blank"" style=""display: inline-block; padding: 14px 32px; font-size: 14px; font-weight: 600; color: #000000; text-decoration: none; border-radius: 9999px;"">
+                Open Dashboard &rarr;
+              </a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style=""padding: 20px 32px; background-color: #0c0c10; border-top: 1px solid rgba(255, 255, 255, 0.06); text-align: center;"">
+        <p style=""margin: 0; font-size: 11px; color: #6b7280;"">
+          Markopilot Ltd • Mirage Tower, Chiromo Rd, Nairobi, Kenya
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>";
+
+            var payload = new
+            {
+                from = fromEmail,
+                to = new[] { recipientEmail },
+                subject = subject,
+                html = html
+            };
+
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://api.resend.com/emails");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+            request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("Sent payment confirmation email to {Email} (Receipt: {Receipt})", recipientEmail, receiptNumber);
+                return true;
+            }
+
+            var err = await response.Content.ReadAsStringAsync();
+            _logger.LogWarning("Resend payment email error: {Error}", err);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send payment confirmation email to {Email}", recipientEmail);
+            return false;
+        }
+    }
 }

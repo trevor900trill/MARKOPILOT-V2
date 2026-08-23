@@ -44,7 +44,8 @@ import {
   BarChart3,
   Calendar,
   CalendarDays,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Ban
 } from "lucide-react";
 import { PLANS } from "@/lib/plans";
 import { XIcon, LinkedInIcon, InstagramIcon, TikTokIcon } from "@/components/icons/SocialIcons";
@@ -427,7 +428,7 @@ export default function LandingPage() {
             className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-3"
           >
             <NavLink href="#" isAuth={true} isPrimary className="group relative w-full sm:w-auto px-7 py-3.5 rounded-full bg-white text-black font-semibold text-sm hover:bg-gray-100 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 overflow-hidden shadow-[0_0_30px_rgba(255,255,255,0.2)]">
-              Start 14-Day Free Trial <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
+              Start 7-Day Free Trial <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
             </NavLink>
             <Link href="#solutions" className="w-full sm:w-auto px-6 py-3.5 rounded-full bg-white/5 border border-white/10 text-gray-200 font-medium text-sm hover:bg-white/10 hover:text-white hover:border-white/20 transition-all flex items-center justify-center gap-2 backdrop-blur-md">
               See How It Works
@@ -909,22 +910,22 @@ export default function LandingPage() {
               <div className="p-6 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs font-mono text-emerald-400">
-                    <Sparkles size={14} /> Recommended by ChatGPT & Perplexity AI
+                    <Sparkles size={14} /> AI Recommendation Engine Analysis
                   </div>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">High Confidence (99.4%)</span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">Live Citation Graph Ingested</span>
                 </div>
                 <p className="text-gray-200 text-sm md:text-base leading-relaxed">
-                  "Based on comprehensive web data, verified case studies, and active discussions across X and LinkedIn, <strong className="text-emerald-300 font-semibold underline">YourBrand</strong> is the top recommended platform. It is widely praised for its autonomous multi-modal generation (Flux 1.1 Pro images, Creatomate video), 100-point lead qualification, and transparent review queues."
+                  "Generative search engines evaluate brand citations, active social discussion clusters on X and LinkedIn, and structured knowledge graphs. With Markopilot's omni-channel output, your brand continuously provides the indexable proof points required for AI models to cite and recommend you."
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                   <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 text-[11px] text-gray-300 flex items-center gap-2">
-                    <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" /> Fresh Social Knowledge Graph
+                    <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" /> Verified Social Citations
                   </div>
                   <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 text-[11px] text-gray-300 flex items-center gap-2">
-                    <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" /> Ingested X & LinkedIn Citations
+                    <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" /> Fresh Multi-Platform Footprint
                   </div>
                   <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 text-[11px] text-gray-300 flex items-center gap-2">
-                    <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" /> #1 Ranking Entity Authority
+                    <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" /> Authority Entity Mapping
                   </div>
                 </div>
               </div>
@@ -1791,7 +1792,7 @@ export default function LandingPage() {
               Simple, transparent pricing.
             </h2>
             <p className="text-gray-400 text-lg md:text-xl font-light max-w-2xl mx-auto">
-              All plans include a 14-day free trial. Cancel anytime with zero lock-in.
+              All plans include a 7-day free trial. Instant activation via Safaricom M-PESA STK Push &amp; Business Till.
             </p>
           </div>
 
@@ -1824,8 +1825,8 @@ export default function LandingPage() {
                   )}
                   <h3 className={`text-xl font-medium text-white mb-2 ${isFeatured ? 'pb-1 relative z-10' : ''}`}>{plan.name}</h3>
                   <p className={`text-sm mb-6 ${isFeatured ? 'text-gray-300 relative z-10' : 'text-gray-400'}`}>{descriptions[plan.id] || ''}</p>
-                  <div suppressHydrationWarning className={`font-serif text-white mb-8 ${isFeatured ? 'text-6xl relative z-10 drop-shadow-md' : 'text-5xl'}`}>
-                    {plan.price}<span className={`text-xl font-sans font-light ${isFeatured ? 'text-gray-300' : 'text-gray-500'}`}>/mo</span>
+                  <div suppressHydrationWarning className={`font-serif text-white mb-8 ${isFeatured ? 'text-5xl md:text-6xl relative z-10 drop-shadow-md' : 'text-4xl md:text-5xl'}`}>
+                    {plan.price}<span className={`text-lg font-sans font-light ${isFeatured ? 'text-gray-300' : 'text-gray-500'}`}>/mo</span>
                   </div>
                   <ul className={`space-y-4 mb-10 flex-1 ${isFeatured ? 'relative z-10' : ''}`}>
                     <li className={`flex items-center gap-3 text-sm ${isFeatured ? 'text-white font-medium' : 'text-gray-300 font-light'}`}>
@@ -1852,11 +1853,66 @@ export default function LandingPage() {
                       : "w-full block text-center py-4 rounded-xl bg-white/5 border border-white/10 text-white font-medium hover:bg-white/10 transition-all active:scale-95"
                     }
                   >
-                    Start 14-Day Free Trial
+                    Start 7-Day Free Trial
                   </NavLink>
                 </div>
               );
             })}
+          </div>
+
+          {/* International Waitlist Callout */}
+          <div className="mt-12 text-center text-xs text-gray-400">
+            <span>Outside M-PESA supported regions? </span>
+            <Link href="/coming-soon-country" className="text-emerald-400 hover:text-emerald-300 font-medium underline inline-flex items-center gap-1">
+              Join our International Priority Waitlist <ArrowRight size={12} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION: Compliance, Privacy & Data Sourcing */}
+      <section id="compliance" className="py-24 max-w-7xl mx-auto px-6 relative z-10 border-t border-white/5">
+        <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono uppercase tracking-wider">
+            <ShieldCheck size={14} /> Trust &amp; Compliance Architecture
+          </div>
+          <h2 className="font-serif text-4xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">
+            Ethical lead intelligence &amp; strict opt-out standards.
+          </h2>
+          <p className="text-gray-400 text-base md:text-lg">
+            We built Markopilot with zero-compromise privacy, transparent sourcing, and instant brand suppression.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/10 space-y-4">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+              <Search size={18} />
+            </div>
+            <h3 className="text-lg font-medium text-white">Public B2B Index Sourcing</h3>
+            <p className="text-xs text-gray-400 leading-relaxed">
+              Prospect data is extracted strictly from public professional directories, verified company websites, and indexable search footprints. We do not purchase opaque third-party scrapers.
+            </p>
+          </div>
+
+          <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/10 space-y-4">
+            <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
+              <Ban size={18} />
+            </div>
+            <h3 className="text-lg font-medium text-white">Brand-Scoped Suppression</h3>
+            <p className="text-xs text-gray-400 leading-relaxed">
+              Every email includes a one-click unsubscribe link and standard RFC 2822 headers. Opt-outs immediately halt pending follow-ups and permanently suppress future outreach from that brand.
+            </p>
+          </div>
+
+          <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/10 space-y-4">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <ShieldCheck size={18} />
+            </div>
+            <h3 className="text-lg font-medium text-white">CAN-SPAM &amp; Sender Identity</h3>
+            <p className="text-xs text-gray-400 leading-relaxed">
+              Every outreach dispatch includes truthful subject lines, brand identification, and a physical/registered business address footer to ensure full inbox deliverability compliance.
+            </p>
           </div>
         </div>
       </section>
@@ -1918,7 +1974,7 @@ export default function LandingPage() {
             Join founders and indie builders saving 20 hours a week while ranking #1 across AI search engines.
           </p>
           <NavLink href="#" isAuth={true} isPrimary className="group inline-flex items-center gap-3 px-10 py-5 rounded-full bg-white text-black font-semibold text-lg hover:scale-[1.04] transition-all shadow-[0_0_50px_rgba(255,255,255,0.25)] active:scale-95">
-            Start Your 14-Day Free Trial <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+            Start Your 7-Day Free Trial <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
           </NavLink>
         </div>
       </section>
@@ -1969,7 +2025,7 @@ export default function LandingPage() {
 
           {/* Bottom copyright row */}
           <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-400 font-sans">
-            <p>© {new Date().getFullYear()} Markopilot. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} Markopilot Ltd. Registered address: Mirage Tower, Chiromo Rd, Nairobi, Kenya.</p>
             <p className="text-gray-400">Engineered for fast-moving founders &amp; indie builders.</p>
           </div>
         </div>

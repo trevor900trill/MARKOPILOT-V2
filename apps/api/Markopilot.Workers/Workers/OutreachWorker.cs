@@ -145,6 +145,14 @@ public class OutreachWorker : IOutreachWorker
                 {
                     try
                     {
+                        // 0. Brand-specific suppression check
+                        if (await _outreachRepo.IsEmailSuppressedAsync(brand.Id, original.RecipientEmail))
+                        {
+                            _logger.LogInformation("Follow-up skipped for {Email}: address is suppressed for brand {BrandId}.", original.RecipientEmail, brand.Id);
+                            await _outreachRepo.MarkFollowUpScheduledAsync(original.Id);
+                            continue;
+                        }
+
                         _logger.LogInformation("Processing follow-up for email {EmailId} from Lead {LeadId}.", original.Id, original.LeadId);
                         
                         // 1. Fetch lead for feedback and generation

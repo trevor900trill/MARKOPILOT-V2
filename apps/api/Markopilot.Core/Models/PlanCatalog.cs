@@ -12,6 +12,8 @@ public static class PlanCatalog
     public static readonly PlanDefinition Starter = new()
     {
         Name = "Starter",
+        PriceKes = 3800,
+        PriceUsd = 29,
         LeadsPerMonth = 150,
         PostsPerMonth = 45,
         BrandsAllowed = 1,
@@ -21,6 +23,8 @@ public static class PlanCatalog
     public static readonly PlanDefinition Growth = new()
     {
         Name = "Growth",
+        PriceKes = 10200,
+        PriceUsd = 79,
         LeadsPerMonth = 750,
         PostsPerMonth = 180,
         BrandsAllowed = 3,
@@ -30,6 +34,8 @@ public static class PlanCatalog
     public static readonly PlanDefinition Scale = new()
     {
         Name = "Scale",
+        PriceKes = 25800,
+        PriceUsd = 199,
         LeadsPerMonth = 2500,
         PostsPerMonth = 600,
         BrandsAllowed = 10,
@@ -56,6 +62,8 @@ public static class PlanCatalog
 public class PlanDefinition
 {
     public required string Name { get; init; }
+    public required decimal PriceKes { get; init; }
+    public required decimal PriceUsd { get; init; }
     public required int LeadsPerMonth { get; init; }
     public required int PostsPerMonth { get; init; }
     public required int BrandsAllowed { get; init; }

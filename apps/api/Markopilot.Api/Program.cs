@@ -82,7 +82,7 @@ builder.Services.AddHttpClient<Markopilot.Infrastructure.Social.OAuthService>();
 builder.Services.AddSingleton<Markopilot.Core.Interfaces.IContentGenerationService, Markopilot.Infrastructure.AI.ContentGenerationService>();
 builder.Services.AddHttpClient<Markopilot.Core.Interfaces.ISearchClient, Markopilot.Infrastructure.Search.SerperClient>();
 builder.Services.AddHttpClient<Markopilot.Core.Interfaces.ISearchClient, Markopilot.Infrastructure.Search.ExaClient>();
-builder.Services.AddHttpClient<Markopilot.Infrastructure.LemonSqueezy.LemonSqueezyClient>();
+builder.Services.AddHttpClient<Markopilot.Infrastructure.Mpesa.DarajaMpesaClient>();
 builder.Services.AddHttpClient<Markopilot.Core.Interfaces.IAiRoutingService, Markopilot.Infrastructure.OpenRouter.AiRoutingService>();
 builder.Services.AddHttpClient<Markopilot.Infrastructure.Search.JinaReaderClient>();
 builder.Services.AddHttpClient<Markopilot.Core.Interfaces.ILeadDiscoveryService, Markopilot.Infrastructure.Services.LeadDiscoveryService>()

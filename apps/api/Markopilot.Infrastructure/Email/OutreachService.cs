@@ -219,11 +219,35 @@ public class OutreachService : IOutreachService
         var boundary = $"--=_NextPart_{Guid.NewGuid():N}";
         var senderName = brand.Name;
         var senderEmail = brand.GmailEmail;
+        var appBaseUrl = _config["App:BaseUrl"] ?? "https://markopilot.com";
+        var unsubscribeUrl = $"{appBaseUrl.TrimEnd('/')}/api/outreach/unsubscribe?brandId={brand.Id}&email={Uri.EscapeDataString(toEmail)}";
+        var businessAddress = !string.IsNullOrWhiteSpace(brand.BusinessAddress) 
+            ? brand.BusinessAddress 
+            : $"{brand.Name} • Markopilot Platform, Mirage Tower, Chiromo Rd, Nairobi, Kenya";
+
+        // Append truthful sender identification and real unsubscribe link to plain text
+        var textFooter = $"\n\n---\nSent by {brand.Name}\n{businessAddress}\nTo opt out of future emails from {brand.Name}: {unsubscribeUrl}";
+        var formattedBodyText = bodyText + textFooter;
+
+        // Append truthful sender identification and real unsubscribe link to HTML
+        var htmlFooter = $@"
+<div style=""margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #6b7280; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.5;"">
+  <p style=""margin: 0 0 4px 0;"">Sent by <strong>{brand.Name}</strong></p>
+  <p style=""margin: 0 0 8px 0;"">{businessAddress}</p>
+  <p style=""margin: 0;"">
+    <a href=""{unsubscribeUrl}"" style=""color: #4b5563; text-decoration: underline;"">Unsubscribe from this sender</a>
+  </p>
+</div>";
+        var formattedBodyHtml = bodyHtml.Contains("</body>", StringComparison.OrdinalIgnoreCase)
+            ? bodyHtml.Replace("</body>", $"{htmlFooter}</body>", StringComparison.OrdinalIgnoreCase)
+            : $"{bodyHtml}{htmlFooter}";
 
         var builder = new StringBuilder();
         builder.AppendLine($"From: \"{senderName}\" <{senderEmail}>");
         builder.AppendLine($"To: {toEmail}");
         builder.AppendLine($"Subject: {subject}");
+        builder.AppendLine($"List-Unsubscribe: <{unsubscribeUrl}>");
+        builder.AppendLine("List-Unsubscribe-Post: List-Unsubscribe=One-Click");
         builder.AppendLine("MIME-Version: 1.0");
         builder.AppendLine($"Content-Type: multipart/alternative; boundary=\"{boundary}\"");
         builder.AppendLine();
@@ -233,14 +257,14 @@ public class OutreachService : IOutreachService
         builder.AppendLine("Content-Type: text/plain; charset=\"UTF-8\"");
         builder.AppendLine("Content-Transfer-Encoding: base64");
         builder.AppendLine();
-        builder.AppendLine(Convert.ToBase64String(Encoding.UTF8.GetBytes(bodyText)));
+        builder.AppendLine(Convert.ToBase64String(Encoding.UTF8.GetBytes(formattedBodyText)));
         
         // HTML part
         builder.AppendLine($"--{boundary}");
         builder.AppendLine("Content-Type: text/html; charset=\"UTF-8\"");
         builder.AppendLine("Content-Transfer-Encoding: base64");
         builder.AppendLine();
-        builder.AppendLine(Convert.ToBase64String(Encoding.UTF8.GetBytes(bodyHtml)));
+        builder.AppendLine(Convert.ToBase64String(Encoding.UTF8.GetBytes(formattedBodyHtml)));
         
         builder.AppendLine($"--{boundary}--");
 

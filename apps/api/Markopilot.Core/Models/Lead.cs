@@ -20,6 +20,7 @@ public class Lead
     public double EmailConfidence { get; set; }
     public string? EmailSource { get; set; }
     public bool IsCatchAll { get; set; }
+    public bool IsSuppressed { get; set; }
     public string? VerificationStatus { get; set; }
     public DateTimeOffset? LastVerifiedAt { get; set; }
     public string? Fingerprint { get; set; }

@@ -1,6 +1,7 @@
-using Markopilot.Infrastructure.LemonSqueezy;
 using Markopilot.Api.Middleware;
 using Markopilot.Core.Interfaces;
+using Markopilot.Core.Models;
+using Markopilot.Infrastructure.Mpesa;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Markopilot.Api.Controllers;
@@ -9,45 +10,30 @@ namespace Markopilot.Api.Controllers;
 [Route("api/[controller]")]
 public class SubscriptionsController : ControllerBase
 {
-    private readonly LemonSqueezyClient _lemonSqueezyClient;
+    private readonly DarajaMpesaClient _mpesaClient;
     private readonly IUserRepository _userRepo;
     private readonly IQuotaService _quotaService;
+    private readonly IAlertEmailService? _alertEmailService;
+    private readonly IBrandRepository _brandRepo;
     private readonly IConfiguration _configuration;
     private readonly ILogger<SubscriptionsController> _logger;
 
     public SubscriptionsController(
-        LemonSqueezyClient lemonSqueezyClient,
+        DarajaMpesaClient mpesaClient,
         IUserRepository userRepo,
         IQuotaService quotaService,
+        IBrandRepository brandRepo,
         IConfiguration configuration,
-        ILogger<SubscriptionsController> logger)
+        ILogger<SubscriptionsController> logger,
+        IAlertEmailService? alertEmailService = null)
     {
-        _lemonSqueezyClient = lemonSqueezyClient;
+        _mpesaClient = mpesaClient;
         _userRepo = userRepo;
         _quotaService = quotaService;
+        _brandRepo = brandRepo;
         _configuration = configuration;
         _logger = logger;
-    }
-
-    [HttpGet("checkout")]
-    public async Task<IActionResult> GetCheckoutUrl([FromQuery] string planId)
-    {
-        var userId = HttpContext.GetUserId();
-        if (userId == Guid.Empty) throw new UnauthorizedAccessException();
-        
-        var user = await _userRepo.GetUserByIdAsync(userId);
-        if (user == null) return NotFound(new { error = new { code = "NOT_FOUND", message = "User not found" } });
-
-        // Get variant path from config
-        var variantId = _configuration[$"LemonSqueezy:Variants:{planId}"];
-        if (string.IsNullOrEmpty(variantId))
-        {
-            _logger.LogWarning("Plan variant not found for {PlanId}", planId);
-            return StatusCode(400, new { error = new { code = "INVALID_PLAN", message = $"Invalid plan: {planId}. Available: Starter, Growth, Scale" } });
-        }
-
-        var url = await _lemonSqueezyClient.CreateCheckoutAsync(variantId, user.Email, userId.ToString());
-        return Ok(new { url });
+        _alertEmailService = alertEmailService;
     }
 
     [HttpGet("status")]
@@ -57,32 +43,239 @@ public class SubscriptionsController : ControllerBase
         if (userId == Guid.Empty) return Unauthorized();
         
         var user = await _userRepo.GetUserByIdAsync(userId);
-        var quota = await _quotaService.GetQuotaStatusAsync(userId);
+        if (user == null) return NotFound();
 
-        return Ok(new { user, quota });
+        var quota = await _quotaService.GetQuotaStatusAsync(userId);
+        var plan = PlanCatalog.GetByName(user.PlanName);
+
+        // Check if trial or subscription is active
+        var isTrialing = user.SubscriptionStatus == "trialing";
+        var trialExpiry = user.TrialEndsAt ?? user.CreatedAt.AddDays(7);
+        var isTrialExpired = isTrialing && DateTimeOffset.UtcNow > trialExpiry;
+        var isSubscriptionExpired = user.SubscriptionStatus == "active" && user.CurrentPeriodEnd.HasValue && DateTimeOffset.UtcNow > user.CurrentPeriodEnd.Value;
+
+        var isEnginePaused = isTrialExpired || isSubscriptionExpired || user.SubscriptionStatus == "expired" || user.SubscriptionStatus == "cancelled";
+
+        return Ok(new
+        {
+            user,
+            quota,
+            plan = new
+            {
+                plan.Name,
+                plan.PriceKes,
+                plan.PriceUsd,
+                plan.LeadsPerMonth,
+                plan.PostsPerMonth,
+                plan.BrandsAllowed
+            },
+            isTrialing,
+            trialEndsAt = trialExpiry,
+            isTrialExpired,
+            isSubscriptionExpired,
+            isEnginePaused,
+            mpesaDetails = new
+            {
+                tillNumber = _configuration["Mpesa:TillNumber"] ?? "1635990",
+                storeNumber = _configuration["Mpesa:StoreNumber"] ?? "1162771",
+                msisdn = _configuration["Mpesa:Msisdn"] ?? "0117849456"
+            }
+        });
     }
 
-    [HttpPost("billing-portal")]
-    public async Task<IActionResult> GetBillingPortalUrl()
+    [HttpPost("mpesa/stk-push")]
+    public async Task<IActionResult> InitiateMpesaStkPush([FromBody] MpesaStkPushRequest request)
     {
         var userId = HttpContext.GetUserId();
         if (userId == Guid.Empty) return Unauthorized();
-        
+
+        var user = await _userRepo.GetUserByIdAsync(userId);
+        if (user == null) return NotFound();
+
+        if (string.IsNullOrWhiteSpace(request.PhoneNumber))
+        {
+            return BadRequest(new { error = "Please provide a valid M-PESA phone number." });
+        }
+
+        var plan = PlanCatalog.GetByName(request.PlanId);
+        var amount = plan.PriceKes;
+
+        _logger.LogInformation("Initiating M-PESA STK Push for user {UserId}, plan {Plan}, amount KES {Amount}, phone {Phone}",
+            userId, plan.Name, amount, request.PhoneNumber);
+
+        var result = await _mpesaClient.SendStkPushAsync(
+            request.PhoneNumber,
+            amount,
+            $"Markopilot-{plan.Name}",
+            $"Markopilot {plan.Name} Plan");
+
+        if (result.Success && !string.IsNullOrEmpty(result.CheckoutRequestId))
+        {
+            var tx = new MpesaTransaction
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                PlanName = plan.Name,
+                Amount = amount,
+                PhoneNumber = _mpesaClient.NormalizePhoneNumber(request.PhoneNumber),
+                CheckoutRequestId = result.CheckoutRequestId,
+                MerchantRequestId = result.MerchantRequestId,
+                Status = "pending",
+                CreatedAt = DateTimeOffset.UtcNow
+            };
+
+            await _userRepo.RecordMpesaTransactionAsync(tx);
+
+            return Ok(new
+            {
+                success = true,
+                checkoutRequestId = result.CheckoutRequestId,
+                merchantRequestId = result.MerchantRequestId,
+                customerMessage = result.CustomerMessage ?? "STK Push sent. Please check your phone and enter your M-PESA PIN.",
+                amountKes = amount,
+                planName = plan.Name
+            });
+        }
+
+        return BadRequest(new { error = result.ResponseDescription ?? "Failed to initiate M-PESA payment prompt." });
+    }
+
+    [HttpGet("mpesa/status/{checkoutRequestId}")]
+    public async Task<IActionResult> CheckMpesaStatus(string checkoutRequestId)
+    {
+        var userId = HttpContext.GetUserId();
+        if (userId == Guid.Empty) return Unauthorized();
+
+        var tx = await _userRepo.GetMpesaTransactionAsync(checkoutRequestId);
+        if (tx == null) return NotFound(new { error = "Transaction not found." });
+
+        if (tx.Status == "completed")
+        {
+            return Ok(new { status = "completed", message = "Payment confirmed! Plan is now active." });
+        }
+
+        // Query Daraja STK query
+        var queryResult = await _mpesaClient.QueryStkPushStatusAsync(checkoutRequestId);
+
+        if (queryResult.IsCompleted)
+        {
+            var plan = PlanCatalog.GetByName(tx.PlanName);
+            var periodEnd = DateTimeOffset.UtcNow.AddDays(30);
+
+            await _userRepo.UpdateMpesaTransactionStatusAsync(checkoutRequestId, "completed", tx.MpesaReceiptNumber, 0, "Success");
+            await _userRepo.UpdateUserSubscriptionAsync(
+                userId,
+                checkoutRequestId,
+                "active",
+                plan.Name,
+                periodEnd,
+                plan.LeadsPerMonth,
+                plan.PostsPerMonth,
+                plan.BrandsAllowed);
+
+            await _userRepo.ResetQuotaCountersAsync(userId);
+
+            await NotifyPaymentSuccessAsync(userId, plan, tx.Amount, tx.MpesaReceiptNumber ?? checkoutRequestId, periodEnd);
+
+            return Ok(new { status = "completed", message = $"Payment confirmed! You are now subscribed to the {plan.Name} plan." });
+        }
+
+        if (queryResult.IsFailed)
+        {
+            await _userRepo.UpdateMpesaTransactionStatusAsync(checkoutRequestId, "failed", null, queryResult.ResultCode, queryResult.ResultDesc);
+            return Ok(new { status = "failed", message = queryResult.ResultDesc ?? "Payment was declined or cancelled." });
+        }
+
+        return Ok(new { status = "pending", message = "Awaiting PIN entry on phone..." });
+    }
+
+    [HttpPost("manual-verify")]
+    public async Task<IActionResult> ManualVerify([FromBody] ManualMpesaVerifyRequest request)
+    {
+        var userId = HttpContext.GetUserId();
+        if (userId == Guid.Empty) return Unauthorized();
+
+        if (string.IsNullOrWhiteSpace(request.ReceiptCode) || string.IsNullOrWhiteSpace(request.PlanId))
+        {
+            return BadRequest(new { error = "Receipt code and plan are required." });
+        }
+
+        var plan = PlanCatalog.GetByName(request.PlanId);
+        var periodEnd = DateTimeOffset.UtcNow.AddDays(30);
+
+        // Record transaction
+        var tx = new MpesaTransaction
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            PlanName = plan.Name,
+            Amount = plan.PriceKes,
+            PhoneNumber = request.PhoneNumber ?? "Manual Till",
+            CheckoutRequestId = "manual_" + request.ReceiptCode.Trim().ToUpperInvariant(),
+            MpesaReceiptNumber = request.ReceiptCode.Trim().ToUpperInvariant(),
+            Status = "completed",
+            ResultCode = 0,
+            ResultDesc = "Manual Till Confirmation",
+            CreatedAt = DateTimeOffset.UtcNow,
+            CompletedAt = DateTimeOffset.UtcNow
+        };
+
+        await _userRepo.RecordMpesaTransactionAsync(tx);
+
+        await _userRepo.UpdateUserSubscriptionAsync(
+            userId,
+            tx.CheckoutRequestId,
+            "active",
+            plan.Name,
+            periodEnd,
+            plan.LeadsPerMonth,
+            plan.PostsPerMonth,
+            plan.BrandsAllowed);
+
+        await _userRepo.ResetQuotaCountersAsync(userId);
+
+        await NotifyPaymentSuccessAsync(userId, plan, tx.Amount, tx.MpesaReceiptNumber, periodEnd);
+
+        return Ok(new { success = true, message = $"Subscription activated for {plan.Name} plan (30 days)." });
+    }
+
+    private async Task NotifyPaymentSuccessAsync(Guid userId, PlanDefinition plan, decimal amount, string receiptNumber, DateTimeOffset periodEnd)
+    {
         try
         {
             var user = await _userRepo.GetUserByIdAsync(userId);
-            if (string.IsNullOrEmpty(user?.SubscriptionId)) 
+            if (user != null && _alertEmailService != null && !string.IsNullOrEmpty(user.Email))
             {
-                return BadRequest(new { error = "No active subscription found to manage." });
+                _ = _alertEmailService.SendPaymentConfirmationEmailAsync(
+                    user.Email,
+                    user.DisplayName ?? "Founder",
+                    plan.Name,
+                    amount,
+                    receiptNumber,
+                    periodEnd);
             }
 
-            var url = await _lemonSqueezyClient.GetSubscriptionPortalUrlAsync(user.SubscriptionId);
-            return Ok(new { url });
+            var brands = await _brandRepo.GetBrandsByOwnerAsync(userId);
+            foreach (var brand in brands)
+            {
+                await _brandRepo.InsertActivityAsync(
+                    brand.Id,
+                    "subscription_activated",
+                    $"M-PESA payment confirmed ({receiptNumber}). {plan.Name} plan active for 30 days.",
+                    new Dictionary<string, object>
+                    {
+                        ["plan"] = plan.Name,
+                        ["amount"] = amount,
+                        ["receipt"] = receiptNumber
+                    });
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to get billing portal URL");
-            return BadRequest(new { error = "Could not generate billing portal link. Please ensure your subscription is active." });
+            _logger.LogError(ex, "Error dispatching payment notification/activity log for user {UserId}", userId);
         }
     }
 }
+
+public record MpesaStkPushRequest(string PlanId, string PhoneNumber);
+public record ManualMpesaVerifyRequest(string PlanId, string ReceiptCode, string? PhoneNumber = null);

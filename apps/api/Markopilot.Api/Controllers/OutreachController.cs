@@ -103,11 +103,35 @@ public class OutreachController : ControllerBase
     [HttpGet("unsubscribe")]
     public async Task<IActionResult> UnsubscribeGet([FromQuery] Guid brandId, [FromQuery] string email)
     {
-        if (brandId == Guid.Empty || string.IsNullOrWhiteSpace(email)) return BadRequest("Invalid unsubscription parameters.");
-        await _outreachRepo.AddToSuppressionListAsync(brandId, email, "User requested unsubscription via email link.");
+        if (brandId == Guid.Empty || string.IsNullOrWhiteSpace(email)) 
+            return Content("<html><body style='font-family: sans-serif; text-align: center; padding: 50px;'><h2>Invalid Unsubscribe Link</h2><p>Missing brand identifier or email address.</p></body></html>", "text/html");
+
+        await _outreachRepo.AddToSuppressionListAsync(brandId, email, "User requested unsubscription via email footer link.");
         
-        // Return a simple HTML message for the browser
-        var htmlResponse = "<html><body><h2>You have been successfully unsubscribed.</h2><p>You will no longer receive automated outreach from this brand.</p></body></html>";
+        var htmlResponse = @"<!DOCTYPE html>
+<html lang=""en"">
+<head>
+  <meta charset=""UTF-8"">
+  <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+  <title>Unsubscribed Successfully</title>
+  <style>
+    body { background-color: #07070a; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+    .card { background-color: #121217; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 40px; max-width: 480px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+    .icon { width: 56px; height: 56px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #10b981; font-size: 24px; }
+    h1 { font-size: 22px; margin: 0 0 12px; font-weight: 600; letter-spacing: -0.02em; }
+    p { color: #9ca3af; font-size: 14px; line-height: 1.6; margin: 0 0 24px; }
+    .badge { display: inline-block; padding: 6px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; font-size: 12px; color: #e5e7eb; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <div class=""card"">
+    <div class=""icon"">✓</div>
+    <h1>You have been unsubscribed</h1>
+    <p>Your email address has been added to this brand's global suppression list. You will not receive any further automated outreach or follow-up communications.</p>
+    <div class=""badge"">" + System.Net.WebUtility.HtmlEncode(email) + @"</div>
+  </div>
+</body>
+</html>";
         return Content(htmlResponse, "text/html");
     }
 
@@ -116,7 +140,7 @@ public class OutreachController : ControllerBase
     public async Task<IActionResult> UnsubscribePost([FromQuery] Guid brandId, [FromQuery] string email)
     {
         if (brandId == Guid.Empty || string.IsNullOrWhiteSpace(email)) return BadRequest("Invalid unsubscription parameters.");
-        await _outreachRepo.AddToSuppressionListAsync(brandId, email, "User requested unsubscription via email client.");
+        await _outreachRepo.AddToSuppressionListAsync(brandId, email, "User requested unsubscription via email client header.");
         return Ok(new { success = true, message = "Unsubscribed successfully." });
     }
 }

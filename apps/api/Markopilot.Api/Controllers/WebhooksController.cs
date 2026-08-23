@@ -137,6 +137,138 @@ public class WebhooksController : ControllerBase
         return Ok();
     }
 
+    [HttpPost("mpesa-callback")]
+    public async Task<IActionResult> MpesaCallback()
+    {
+        using var reader = new StreamReader(Request.Body);
+        var body = await reader.ReadToEndAsync();
+        _logger.LogInformation("Received M-PESA Daraja Callback: {Payload}", body);
+
+        try
+        {
+            using var doc = JsonDocument.Parse(body);
+            if (!doc.RootElement.TryGetProperty("Body", out var bodyElem) ||
+                !bodyElem.TryGetProperty("stkCallback", out var callback))
+            {
+                return Ok(new { ResponseCode = "0", ResponseDesc = "Accepted" });
+            }
+
+            var checkoutRequestId = callback.GetProperty("CheckoutRequestID").GetString() ?? "";
+            var resultCode = callback.GetProperty("ResultCode").GetInt32();
+            var resultDesc = callback.GetProperty("ResultDesc").GetString() ?? "";
+
+            var repo = HttpContext.RequestServices.GetRequiredService<IUserRepository>();
+            var tx = await repo.GetMpesaTransactionAsync(checkoutRequestId);
+
+            if (tx == null)
+            {
+                _logger.LogWarning("M-PESA callback for unknown CheckoutRequestID: {Id}", checkoutRequestId);
+                return Ok(new { ResponseCode = "0", ResponseDesc = "Accepted" });
+            }
+
+            if (resultCode == 0)
+            {
+                string? receiptNumber = null;
+                if (callback.TryGetProperty("CallbackMetadata", out var meta) &&
+                    meta.TryGetProperty("Item", out var items))
+                {
+                    foreach (var item in items.EnumerateArray())
+                    {
+                        var name = item.GetProperty("Name").GetString();
+                        if (name == "MpesaReceiptNumber" && item.TryGetProperty("Value", out var val))
+                        {
+                            receiptNumber = val.GetString();
+                        }
+                    }
+                }
+
+                _logger.LogInformation("M-PESA payment success for user {UserId}, receipt {Receipt}", tx.UserId, receiptNumber);
+
+                await repo.UpdateMpesaTransactionStatusAsync(checkoutRequestId, "completed", receiptNumber, resultCode, resultDesc);
+
+                var plan = Markopilot.Core.Models.PlanCatalog.GetByName(tx.PlanName);
+                var periodEnd = DateTimeOffset.UtcNow.AddDays(30);
+
+                await repo.UpdateUserSubscriptionAsync(
+                    tx.UserId,
+                    checkoutRequestId,
+                    "active",
+                    plan.Name,
+                    periodEnd,
+                    plan.LeadsPerMonth,
+                    plan.PostsPerMonth,
+                    plan.BrandsAllowed);
+
+                await repo.ResetQuotaCountersAsync(tx.UserId);
+
+                // 1. Send transactional confirmation email
+                var user = await repo.GetUserByIdAsync(tx.UserId);
+                var emailService = HttpContext.RequestServices.GetService<IAlertEmailService>();
+                if (user != null && emailService != null && !string.IsNullOrEmpty(user.Email))
+                {
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await emailService.SendPaymentConfirmationEmailAsync(
+                                user.Email,
+                                user.DisplayName ?? "Founder",
+                                plan.Name,
+                                tx.Amount,
+                                receiptNumber ?? checkoutRequestId,
+                                periodEnd);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Failed to send payment confirmation email for user {UserId}", tx.UserId);
+                        }
+                    });
+                }
+
+                // 2. Insert activity log for user's brands
+                var brandRepo = HttpContext.RequestServices.GetService<IBrandRepository>();
+                if (brandRepo != null)
+                {
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            var brands = await brandRepo.GetBrandsByOwnerAsync(tx.UserId);
+                            foreach (var brand in brands)
+                            {
+                                await brandRepo.InsertActivityAsync(
+                                    brand.Id,
+                                    "subscription_activated",
+                                    $"M-PESA payment confirmed ({receiptNumber ?? checkoutRequestId}). {plan.Name} plan active for 30 days.",
+                                    new Dictionary<string, object>
+                                    {
+                                        ["plan"] = plan.Name,
+                                        ["amount"] = tx.Amount,
+                                        ["receipt"] = receiptNumber ?? checkoutRequestId
+                                    });
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Failed to record activity log for subscription activation for user {UserId}", tx.UserId);
+                        }
+                    });
+                }
+            }
+            else
+            {
+                _logger.LogWarning("M-PESA payment failed ({Code}): {Desc}", resultCode, resultDesc);
+                await repo.UpdateMpesaTransactionStatusAsync(checkoutRequestId, "failed", null, resultCode, resultDesc);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error parsing M-PESA callback");
+        }
+
+        return Ok(new { ResponseCode = "0", ResponseDesc = "Accepted" });
+    }
+
     private static bool VerifyHmacSha256(string payload, string signature, string secret)
     {
         var keyBytes = Encoding.UTF8.GetBytes(secret);

@@ -697,16 +697,39 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         await using var conn = CreateConnection();
         await conn.OpenAsync();
 
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+
+        // 1. Insert into suppression_list (per brand)
         await using var cmd = new NpgsqlCommand(@"
             INSERT INTO suppression_list (brand_id, email, reason)
             VALUES (@brandId, @email, @reason)
             ON CONFLICT (brand_id, email) DO NOTHING", conn);
 
         cmd.Parameters.AddWithValue("brandId", brandId);
-        cmd.Parameters.AddWithValue("email", email);
+        cmd.Parameters.AddWithValue("email", normalizedEmail);
         cmd.Parameters.AddWithValue("reason", reason);
-
         await cmd.ExecuteNonQueryAsync();
+
+        // 2. Immediately cancel any queued or pending_approval outreach emails for this brand + email
+        await using var cancelCmd = new NpgsqlCommand(@"
+            UPDATE outreach_emails 
+            SET status = 'cancelled', error_message = 'Recipient unsubscribed from brand outreach.'
+            WHERE brand_id = @brandId 
+              AND LOWER(recipient_email) = @email
+              AND status IN ('queued', 'pending_approval')", conn);
+        cancelCmd.Parameters.AddWithValue("brandId", brandId);
+        cancelCmd.Parameters.AddWithValue("email", normalizedEmail);
+        await cancelCmd.ExecuteNonQueryAsync();
+
+        // 3. Mark lead as disqualified in leads table
+        await using var leadCmd = new NpgsqlCommand(@"
+            UPDATE leads 
+            SET status = 'disqualified'
+            WHERE brand_id = @brandId 
+              AND LOWER(email) = @email", conn);
+        leadCmd.Parameters.AddWithValue("brandId", brandId);
+        leadCmd.Parameters.AddWithValue("email", normalizedEmail);
+        await leadCmd.ExecuteNonQueryAsync();
     }
 
     public async Task<bool> IsEmailSuppressedAsync(Guid brandId, string email)
@@ -1109,9 +1132,11 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         if (maxScore.HasValue) countCmd.Parameters.AddWithValue("maxScore", maxScore.Value);
         var total = Convert.ToInt32(await countCmd.ExecuteScalarAsync());
 
-        // Fetch page
+        // Fetch page with brand suppression join
         await using var cmd = new NpgsqlCommand($@"
-            SELECT l.* FROM leads l
+            SELECT l.*, 
+                   EXISTS(SELECT 1 FROM suppression_list sl WHERE sl.brand_id = l.brand_id AND LOWER(sl.email) = LOWER(l.email)) AS is_suppressed
+            FROM leads l
             JOIN brands b ON b.id = l.brand_id
             WHERE {where}
             ORDER BY l.discovered_at DESC
@@ -1782,6 +1807,7 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         EmailConfidence = r.IsDBNull(r.GetOrdinal("email_confidence")) ? 0.0 : r.GetDouble(r.GetOrdinal("email_confidence")),
         EmailSource = r.IsDBNull(r.GetOrdinal("email_source")) ? null : r.GetString(r.GetOrdinal("email_source")),
         IsCatchAll = r.IsDBNull(r.GetOrdinal("is_catch_all")) ? false : r.GetBoolean(r.GetOrdinal("is_catch_all")),
+        IsSuppressed = HasColumn(r, "is_suppressed") && !r.IsDBNull(r.GetOrdinal("is_suppressed")) && r.GetBoolean(r.GetOrdinal("is_suppressed")),
         VerificationStatus = r.IsDBNull(r.GetOrdinal("verification_status")) ? null : r.GetString(r.GetOrdinal("verification_status")),
         LastVerifiedAt = r.IsDBNull(r.GetOrdinal("last_verified_at")) ? null : r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("last_verified_at")),
         Fingerprint = r.IsDBNull(r.GetOrdinal("fingerprint")) ? null : r.GetString(r.GetOrdinal("fingerprint")),
@@ -1808,4 +1834,112 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         ErrorMessage = r.IsDBNull(r.GetOrdinal("error_message")) ? null : r.GetString(r.GetOrdinal("error_message")),
         GeneratedAt = r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("generated_at")),
     };
+
+    private static bool HasColumn(NpgsqlDataReader r, string columnName)
+    {
+        try { return r.GetOrdinal(columnName) >= 0; }
+        catch (IndexOutOfRangeException) { return false; }
+    }
+
+    // ── M-PESA TRANSACTIONS & COUNTRY WAITLIST ───────
+
+    public async Task RecordMpesaTransactionAsync(MpesaTransaction tx)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            INSERT INTO mpesa_transactions (id, user_id, plan_name, amount, phone_number, checkout_request_id, merchant_request_id, status, created_at)
+            VALUES (@id, @userId, @planName, @amount, @phone, @checkoutReqId, @merchantReqId, @status, @createdAt)", conn);
+
+        cmd.Parameters.AddWithValue("id", tx.Id == Guid.Empty ? Guid.NewGuid() : tx.Id);
+        cmd.Parameters.AddWithValue("userId", tx.UserId);
+        cmd.Parameters.AddWithValue("planName", tx.PlanName);
+        cmd.Parameters.AddWithValue("amount", tx.Amount);
+        cmd.Parameters.AddWithValue("phone", tx.PhoneNumber);
+        cmd.Parameters.AddWithValue("checkoutReqId", (object?)tx.CheckoutRequestId ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("merchantReqId", (object?)tx.MerchantRequestId ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("status", tx.Status);
+        cmd.Parameters.AddWithValue("createdAt", tx.CreatedAt);
+
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task UpdateMpesaTransactionStatusAsync(string checkoutRequestId, string status, string? mpesaReceiptNumber = null, int? resultCode = null, string? resultDesc = null)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            UPDATE mpesa_transactions
+            SET status = @status,
+                mpesa_receipt_number = COALESCE(@receipt, mpesa_receipt_number),
+                result_code = @resultCode,
+                result_desc = @resultDesc,
+                completed_at = CASE WHEN @status = 'completed' THEN NOW() ELSE completed_at END
+            WHERE checkout_request_id = @checkoutRequestId", conn);
+
+        cmd.Parameters.AddWithValue("checkoutRequestId", checkoutRequestId);
+        cmd.Parameters.AddWithValue("status", status);
+        cmd.Parameters.AddWithValue("receipt", (object?)mpesaReceiptNumber ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("resultCode", (object?)resultCode ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("resultDesc", (object?)resultDesc ?? DBNull.Value);
+
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task<MpesaTransaction?> GetMpesaTransactionAsync(string checkoutRequestId)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            SELECT * FROM mpesa_transactions
+            WHERE checkout_request_id = @checkoutRequestId
+            LIMIT 1", conn);
+        cmd.Parameters.AddWithValue("checkoutRequestId", checkoutRequestId);
+
+        await using var reader = await cmd.ExecuteReaderAsync();
+        if (!await reader.ReadAsync()) return null;
+
+        return new MpesaTransaction
+        {
+            Id = reader.GetGuid(reader.GetOrdinal("id")),
+            UserId = reader.GetGuid(reader.GetOrdinal("user_id")),
+            PlanName = reader.GetString(reader.GetOrdinal("plan_name")),
+            Amount = reader.GetDecimal(reader.GetOrdinal("amount")),
+            PhoneNumber = reader.GetString(reader.GetOrdinal("phone_number")),
+            CheckoutRequestId = reader.IsDBNull(reader.GetOrdinal("checkout_request_id")) ? null : reader.GetString(reader.GetOrdinal("checkout_request_id")),
+            MerchantRequestId = reader.IsDBNull(reader.GetOrdinal("merchant_request_id")) ? null : reader.GetString(reader.GetOrdinal("merchant_request_id")),
+            MpesaReceiptNumber = reader.IsDBNull(reader.GetOrdinal("mpesa_receipt_number")) ? null : reader.GetString(reader.GetOrdinal("mpesa_receipt_number")),
+            Status = reader.GetString(reader.GetOrdinal("status")),
+            ResultCode = reader.IsDBNull(reader.GetOrdinal("result_code")) ? null : reader.GetInt32(reader.GetOrdinal("result_code")),
+            ResultDesc = reader.IsDBNull(reader.GetOrdinal("result_desc")) ? null : reader.GetString(reader.GetOrdinal("result_desc")),
+            CreatedAt = reader.GetFieldValue<DateTimeOffset>(reader.GetOrdinal("created_at")),
+            CompletedAt = reader.IsDBNull(reader.GetOrdinal("completed_at")) ? null : reader.GetFieldValue<DateTimeOffset>(reader.GetOrdinal("completed_at")),
+        };
+    }
+
+    public async Task AddToCountryWaitlistAsync(CountryWaitlist entry)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            INSERT INTO country_waitlist (id, email, country_code, country_name, ip_address, created_at)
+            VALUES (@id, @email, @code, @name, @ip, @createdAt)
+            ON CONFLICT (email) DO UPDATE 
+            SET country_code = EXCLUDED.country_code,
+                country_name = EXCLUDED.country_name,
+                ip_address = EXCLUDED.ip_address", conn);
+
+        cmd.Parameters.AddWithValue("id", entry.Id == Guid.Empty ? Guid.NewGuid() : entry.Id);
+        cmd.Parameters.AddWithValue("email", entry.Email.Trim().ToLowerInvariant());
+        cmd.Parameters.AddWithValue("code", (object?)entry.CountryCode ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("name", (object?)entry.CountryName ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("ip", (object?)entry.IpAddress ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("createdAt", entry.CreatedAt);
+
+        await cmd.ExecuteNonQueryAsync();
+    }
 }
