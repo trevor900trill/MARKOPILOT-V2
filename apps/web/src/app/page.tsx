@@ -315,6 +315,10 @@ export default function LandingPage() {
       a: "Yes! You can connect custom Gmail or custom SMTP accounts. Markopilot includes smart deliverability governors, automated rate limits, and deduplication heuristics to safeguard your sender reputation while reaching qualified leads."
     },
     {
+      q: "Is the lead and email discovery process compliant?",
+      a: "Markopilot is designed for B2B outreach to public professional contacts, not consumer spam. It uses public business sources, verifies and deduplicates contacts, avoids suppressed addresses, includes sender identity and unsubscribe handling, and gives you Review Mode before outreach is sent. You are still responsible for using it lawfully in your market, but the product is built around permission-respecting outreach workflows."
+    },
+    {
       q: "How does the Autonomous Marketing Calendar schedule content and background workers?",
       a: "The Autonomous Marketing Calendar acts as the unified mission control for all your engines. It projects upcoming autonomous social posting, AI lead discovery sweeps, and cold email cadences across peak engagement windows. You can filter by channel, inspect AI reasoning for each post, make quick edits in Review Mode, or let the engine run hands-free."
     }
@@ -378,6 +382,7 @@ export default function LandingPage() {
             <Link href="#channels" className="hover:text-white hover:-translate-y-0.5 transition-all">Channels</Link>
             <Link href="#calendar" className="hover:text-white hover:-translate-y-0.5 transition-all flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse"></span>Calendar</Link>
             <Link href="#how-it-works" className="hover:text-white hover:-translate-y-0.5 transition-all">How It Works</Link>
+            <Link href="#compliance" className="hover:text-white hover:-translate-y-0.5 transition-all">Compliance</Link>
             <Link href="#pricing" className="hover:text-white hover:-translate-y-0.5 transition-all">Pricing</Link>
             <Link href="#faq" className="hover:text-white hover:-translate-y-0.5 transition-all">FAQ</Link>
           </div>
@@ -445,124 +450,54 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Dashboard Preview Presentation */}
+        {/* Clear Problem/Solution Explanation */}
         <div
           className="mt-16 w-full max-w-6xl mx-auto px-6 relative z-10 opacity-0 animate-[fadeUpIn_1.5s_cubic-bezier(0.16,1,0.3,1)_700ms_forwards]"
         >
-          <div className="w-full aspect-[21/10] rounded-2xl bg-gradient-to-t from-[#111] to-[#1a1a23] border border-white/10 shadow-[0_0_120px_rgba(168,85,247,0.18)] flex flex-col overflow-hidden ring-1 ring-white/5 backdrop-blur-3xl relative group">
-            <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent h-px w-full"></div>
-            <div className="h-10 border-b border-white/5 flex items-center px-4 justify-between bg-black/40">
-              <div className="flex gap-2">
-                <div className="w-3 h-3 rounded-full bg-red-400/80 hover:bg-red-500 cursor-pointer transition shadow-[0_0_10px_rgba(248,113,113,0.5)]"></div>
-                <div className="w-3 h-3 rounded-full bg-yellow-400/80 hover:bg-yellow-500 cursor-pointer transition shadow-[0_0_10px_rgba(250,204,21,0.5)]"></div>
-                <div className="w-3 h-3 rounded-full bg-green-400/80 hover:bg-green-500 cursor-pointer transition shadow-[0_0_10px_rgba(74,222,128,0.5)]"></div>
+          <div className="grid lg:grid-cols-3 gap-5">
+            <div className="rounded-2xl bg-red-500/[0.06] border border-red-400/20 p-6 text-left space-y-4">
+              <div className="w-11 h-11 rounded-xl bg-red-500/10 border border-red-400/20 text-red-300 flex items-center justify-center">
+                <Flame size={20} />
               </div>
-              <div className="text-xs text-white/40 font-mono tracking-widest bg-black/40 px-3 py-1 rounded w-72 text-center border border-white/5 flex items-center justify-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                markopilot.com/dashboard/pipeline
+              <div>
+                <p className="text-xs font-mono uppercase tracking-wider text-red-300 mb-2">The pain</p>
+                <h2 className="text-2xl font-serif text-white">Great products still lose because founders stop marketing.</h2>
               </div>
-              <div className="w-16"></div>
+              <ul className="space-y-3 text-sm text-gray-300">
+                <li className="flex gap-2"><XCircle size={16} className="text-red-300 flex-shrink-0 mt-0.5" /> You forget to post when product work gets intense.</li>
+                <li className="flex gap-2"><XCircle size={16} className="text-red-300 flex-shrink-0 mt-0.5" /> Qualified buyers never hear from you.</li>
+                <li className="flex gap-2"><XCircle size={16} className="text-red-300 flex-shrink-0 mt-0.5" /> AI search engines cannot recommend a brand with no fresh public proof.</li>
+              </ul>
             </div>
-            
-            {/* Cockpit Simulation Visual */}
-            <div className="relative flex-1 w-full h-full bg-[#0a0a0e] p-6 grid grid-cols-1 md:grid-cols-3 gap-4 overflow-hidden">
-              {/* Left Column: Live Generation Feed */}
-              <div className="bg-white/[0.02] border border-white/5 rounded-xl p-4 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-mono uppercase text-gray-400 flex items-center gap-1.5"><Sparkles size={13} className="text-purple-400" /> Multi-Modal Dispatch</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 font-mono">Running</span>
-                  </div>
-                  <div className="space-y-2.5 text-xs">
-                    <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 flex items-start gap-2.5">
-                      <MessageSquare size={15} className="text-blue-400 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <div className="font-semibold text-white/90">X (Twitter) Thread</div>
-                        <div className="text-gray-400 text-[11px] mt-0.5 truncate">"Why traditional SEO is dying and how GEO is taking over..."</div>
-                      </div>
-                    </div>
-                    <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 flex items-start gap-2.5">
-                      <Camera size={15} className="text-pink-400 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <div className="font-semibold text-white/90">Instagram (Flux 1.1)</div>
-                        <div className="text-gray-400 text-[11px] mt-0.5 truncate">Generated 4K cybernetic workspace asset</div>
-                      </div>
-                    </div>
-                    <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 flex items-start gap-2.5">
-                      <Video size={15} className="text-cyan-400 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <div className="font-semibold text-white/90">TikTok (Creatomate MP4)</div>
-                        <div className="text-gray-400 text-[11px] mt-0.5 truncate">34s Video render with animated captions</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="text-[10px] text-gray-400 font-mono border-t border-white/5 pt-2 flex items-center justify-between">
-                  <span>Engine: GPT-4o + Flux Pro</span>
-                  <span className="text-emerald-400 font-medium">9 scheduled</span>
-                </div>
-              </div>
 
-              {/* Middle Column: Review Queue Cockpit */}
-              <div className="bg-white/[0.03] border border-[var(--accent-primary)]/30 rounded-xl p-4 flex flex-col justify-between shadow-[0_0_30px_rgba(124,110,255,0.08)]">
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-mono uppercase text-white flex items-center gap-1.5"><Eye size={13} className="text-amber-400" /> Human Review Queue</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono">3 Pending</span>
-                  </div>
-                  <div className="p-3 rounded-lg bg-black/60 border border-white/10 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-medium text-white flex items-center gap-1.5"><Briefcase size={13} className="text-blue-400" /> LinkedIn Authority Post</span>
-                      <span className="text-[9px] text-gray-400">Drafted 4m ago</span>
-                    </div>
-                    <p className="text-[11px] text-gray-300 line-clamp-3 leading-relaxed">
-                      "Building in public isn't just about sharing revenue numbers. It's about feeding the modern AI recommendation index with verifiable proof..."
-                    </p>
-                    <div className="flex gap-2 pt-1">
-                      <button className="flex-1 py-1 rounded bg-white text-black text-[11px] font-semibold flex items-center justify-center gap-1 hover:bg-gray-200 transition"><Check size={12} /> Approve (1-Click)</button>
-                      <button className="px-2 py-1 rounded bg-white/10 text-gray-300 text-[11px] hover:bg-white/20 transition">Edit</button>
-                    </div>
-                  </div>
-                </div>
-                <div className="text-[10px] text-gray-400 font-mono border-t border-white/5 pt-2 flex items-center justify-between">
-                  <span>Review Mode: Active</span>
-                  <span className="text-amber-400 font-medium">100% Control</span>
-                </div>
+            <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-6 text-left space-y-4 shadow-[0_0_60px_rgba(124,110,255,0.16)]">
+              <div className="w-11 h-11 rounded-xl bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)]/30 text-purple-200 flex items-center justify-center">
+                <Bot size={20} />
               </div>
+              <div>
+                <p className="text-xs font-mono uppercase tracking-wider text-purple-300 mb-2">What Markopilot does</p>
+                <h2 className="text-2xl font-serif text-white">Turns your brand inputs into scheduled growth work.</h2>
+              </div>
+              <ul className="space-y-3 text-sm text-gray-300">
+                <li className="flex gap-2"><CheckCircle2 size={16} className="text-emerald-300 flex-shrink-0 mt-0.5" /> Writes and schedules social posts from your website, releases, and voice.</li>
+                <li className="flex gap-2"><CheckCircle2 size={16} className="text-emerald-300 flex-shrink-0 mt-0.5" /> Finds public B2B prospects, scores fit, and drafts compliant outreach.</li>
+                <li className="flex gap-2"><CheckCircle2 size={16} className="text-emerald-300 flex-shrink-0 mt-0.5" /> Lets you approve everything or run the system on autopilot.</li>
+              </ul>
+            </div>
 
-              {/* Right Column: Lead Radar & AI Ingestion */}
-              <div className="bg-white/[0.02] border border-white/5 rounded-xl p-4 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-mono uppercase text-gray-400 flex items-center gap-1.5"><Search size={13} className="text-emerald-400" /> Lead Radar & SEO</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">Scoring ICP</span>
-                  </div>
-                  <div className="space-y-2.5 text-xs">
-                    <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 flex items-center justify-between">
-                      <div>
-                        <div className="font-semibold text-white/90">Sarah Jenkins</div>
-                        <div className="text-gray-400 text-[11px]">VP of Growth @ CloudScale</div>
-                      </div>
-                      <span className="text-[11px] font-mono px-2 py-1 rounded bg-emerald-500/20 text-emerald-300 font-bold">98/100</span>
-                    </div>
-                    <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 flex items-center justify-between">
-                      <div>
-                        <div className="font-semibold text-white/90">Alex Rivera</div>
-                        <div className="text-gray-400 text-[11px]">Founder @ DevTools.io</div>
-                      </div>
-                      <span className="text-[11px] font-mono px-2 py-1 rounded bg-emerald-500/20 text-emerald-300 font-bold">94/100</span>
-                    </div>
-                    <div className="p-2 rounded-lg bg-purple-500/10 border border-purple-500/20 text-[11px] text-purple-200 flex items-center gap-2">
-                      <Globe size={13} className="text-purple-400 flex-shrink-0" />
-                      <span>AI Engine citation index refreshed</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="text-[10px] text-gray-400 font-mono border-t border-white/5 pt-2 flex items-center justify-between">
-                  <span>Cold Email Queue: 12 Drafts</span>
-                  <span className="text-blue-400 font-medium">Ready</span>
-                </div>
+            <div className="rounded-2xl bg-emerald-500/[0.06] border border-emerald-400/20 p-6 text-left space-y-4">
+              <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-400/20 text-emerald-300 flex items-center justify-center">
+                <TrendingUp size={20} />
               </div>
+              <div>
+                <p className="text-xs font-mono uppercase tracking-wider text-emerald-300 mb-2">The outcome</p>
+                <h2 className="text-2xl font-serif text-white">You stay visible, followed up, and discoverable.</h2>
+              </div>
+              <ul className="space-y-3 text-sm text-gray-300">
+                <li className="flex gap-2"><CheckCircle2 size={16} className="text-emerald-300 flex-shrink-0 mt-0.5" /> Consistent authority content across the channels buyers already check.</li>
+                <li className="flex gap-2"><CheckCircle2 size={16} className="text-emerald-300 flex-shrink-0 mt-0.5" /> Warmer outbound because prospects see proof before your email arrives.</li>
+                <li className="flex gap-2"><CheckCircle2 size={16} className="text-emerald-300 flex-shrink-0 mt-0.5" /> More public signals for ChatGPT, Perplexity, Google, and buyers to trust.</li>
+              </ul>
             </div>
           </div>
         </div>
@@ -1877,44 +1812,102 @@ export default function LandingPage() {
             <ShieldCheck size={14} /> Trust &amp; Compliance Architecture
           </div>
           <h2 className="font-serif text-4xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">
-            Ethical lead intelligence &amp; strict opt-out standards.
+            B2B outreach without becoming a spam machine.
           </h2>
           <p className="text-gray-400 text-base md:text-lg">
-            We built Markopilot with zero-compromise privacy, transparent sourcing, and instant brand suppression.
+            Markopilot discovers public business contacts, verifies fit, writes context-aware emails, and enforces opt-out and sender-identity rules before anything leaves your inbox.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/10 space-y-4">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-              <Search size={18} />
+        <div className="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto mb-8">
+          <div className="rounded-3xl bg-white/[0.03] border border-white/10 p-8 md:p-10 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-300 flex items-center justify-center">
+                <Search size={20} />
+              </div>
+              <div>
+                <p className="text-xs font-mono uppercase tracking-wider text-blue-300">How discovery works</p>
+                <h3 className="text-2xl font-serif text-white">Public, professional, relevance-first.</h3>
+              </div>
             </div>
-            <h3 className="text-lg font-medium text-white">Public B2B Index Sourcing</h3>
+            <div className="space-y-4">
+              <div className="flex gap-3">
+                <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-gray-300 leading-relaxed">Markopilot searches public professional pages, company websites, public social profiles, and indexable business footprints. It is built for B2B contacts, not consumer lists.</p>
+              </div>
+              <div className="flex gap-3">
+                <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-gray-300 leading-relaxed">Every prospect is scored against your ICP before outreach. Low-fit contacts should not enter the queue just because an email can be guessed.</p>
+              </div>
+              <div className="flex gap-3">
+                <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-gray-300 leading-relaxed">Emails are verified, deduplicated, and checked against suppression data before a message is drafted or sent.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-3xl bg-emerald-500/[0.05] border border-emerald-400/20 p-8 md:p-10 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-400/20 text-emerald-300 flex items-center justify-center">
+                <ShieldCheck size={20} />
+              </div>
+              <div>
+                <p className="text-xs font-mono uppercase tracking-wider text-emerald-300">How sending stays controlled</p>
+                <h3 className="text-2xl font-serif text-white">Reviewable, identifiable, and opt-out safe.</h3>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="flex gap-3">
+                <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-gray-300 leading-relaxed">Review Mode lets you approve, edit, or reject every outbound email before it sends. Autopilot is available only when you are comfortable with the workflow.</p>
+              </div>
+              <div className="flex gap-3">
+                <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-gray-300 leading-relaxed">Outbound messages include truthful subject lines, your brand identity, business address/footer details, and unsubscribe handling.</p>
+              </div>
+              <div className="flex gap-3">
+                <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-gray-300 leading-relaxed">Smart throttles, daily limits, and follow-up rules protect sender reputation and prevent aggressive blasting.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <div className="p-7 rounded-2xl bg-white/[0.02] border border-white/10 space-y-4">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+              <Globe size={18} />
+            </div>
+            <h3 className="text-lg font-medium text-white">Public Sources Only</h3>
             <p className="text-xs text-gray-400 leading-relaxed">
-              Prospect data is extracted strictly from public professional directories, verified company websites, and indexable search footprints. We do not purchase opaque third-party scrapers.
+              No purchased mystery lists, no consumer databases, and no hidden broker dumps. The system works from public B2B context and company-level signals.
             </p>
           </div>
 
-          <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/10 space-y-4">
+          <div className="p-7 rounded-2xl bg-white/[0.02] border border-white/10 space-y-4">
             <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
               <Ban size={18} />
             </div>
-            <h3 className="text-lg font-medium text-white">Brand-Scoped Suppression</h3>
+            <h3 className="text-lg font-medium text-white">Instant Suppression</h3>
             <p className="text-xs text-gray-400 leading-relaxed">
-              Every email includes a one-click unsubscribe link and standard RFC 2822 headers. Opt-outs immediately halt pending follow-ups and permanently suppress future outreach from that brand.
+              One unsubscribe suppresses that contact for the brand, cancels pending follow-ups, and blocks future outreach from being queued.
             </p>
           </div>
 
-          <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/10 space-y-4">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-              <ShieldCheck size={18} />
+          <div className="p-7 rounded-2xl bg-white/[0.02] border border-white/10 space-y-4">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-300">
+              <Mail size={18} />
             </div>
-            <h3 className="text-lg font-medium text-white">CAN-SPAM &amp; Sender Identity</h3>
+            <h3 className="text-lg font-medium text-white">Your Inbox, Your Identity</h3>
             <p className="text-xs text-gray-400 leading-relaxed">
-              Every outreach dispatch includes truthful subject lines, brand identification, and a physical/registered business address footer to ensure full inbox deliverability compliance.
+              Messages send through connected Gmail or SMTP accounts with your sender details, so outreach stays accountable instead of anonymous.
             </p>
           </div>
         </div>
+
+        <p className="max-w-4xl mx-auto mt-8 text-center text-xs text-gray-500 leading-relaxed">
+          Compliance requirements vary by jurisdiction. Markopilot provides guardrails for responsible B2B outreach, but users remain responsible for reviewing campaigns and following the laws that apply to their business and recipients.
+        </p>
       </section>
 
       {/* SECTION: FAQ Accordion */}
