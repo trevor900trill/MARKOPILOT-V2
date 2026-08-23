@@ -207,6 +207,12 @@ public class BrandsController : ControllerBase
         var brand = await _repo.GetBrandByIdAsync(brandId, userId);
         if (brand == null) return NotFound(new { error = new { code = "NOT_FOUND", message = "Brand not found" } });
 
+        var user = await _userRepo.GetUserByIdAsync(userId);
+        if (user?.Status == "paused")
+        {
+            return StatusCode(403, new { error = new { code = "ENGINE_PAUSED", message = "Your autonomous engine is paused due to expired trial or subscription. Please renew your subscription to resume operations." } });
+        }
+
         switch (workerType.ToLower())
         {
             case "leads":

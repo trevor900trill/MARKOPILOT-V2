@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useBrand } from "@/lib/brand-context";
 import { apiGet, apiPost } from "@/lib/api-client";
+import { toast } from "sonner";
 import {
   Calendar as CalendarIcon,
   Clock,
@@ -78,6 +79,7 @@ export default function CalendarPage() {
   const [selectedPost, setSelectedPost] = useState<ActualPost | null>(null);
   const [triggeringWorker, setTriggeringWorker] = useState<string | null>(null);
   const [triggerToast, setTriggerToast] = useState<string | null>(null);
+  const [isEnginePaused, setIsEnginePaused] = useState(false);
 
   // Live countdown ticker state
   const [now, setNow] = useState(new Date());
@@ -104,8 +106,25 @@ export default function CalendarPage() {
     fetchCalendar();
   }, [fetchCalendar]);
 
+  useEffect(() => {
+    const checkEngineStatus = async () => {
+      try {
+        const statusData = await apiGet<{ isEnginePaused?: boolean }>("/subscriptions/status");
+        setIsEnginePaused(statusData?.isEnginePaused ?? false);
+      } catch (err) {
+        console.error("Failed to check engine status:", err);
+      }
+    };
+
+    checkEngineStatus();
+  }, []);
+
   const handleTriggerWorker = async (workerType: "leads" | "posts" | "outreach") => {
     if (!activeBrand) return;
+    if (isEnginePaused) {
+      toast.error("Your autonomous engine is paused due to expired trial or subscription. Please renew your subscription to resume operations.");
+      return;
+    }
     setTriggeringWorker(workerType);
     try {
       await apiPost(`/brands/${activeBrand.id}/trigger/${workerType}`, {});
@@ -315,11 +334,12 @@ export default function CalendarPage() {
             <span className="text-xs text-[var(--text-muted)]">Batch: {data?.telemetry?.leads?.dailyQuota ?? 10} leads/day</span>
             <button
               onClick={() => handleTriggerWorker("leads")}
-              disabled={triggeringWorker === "leads"}
+              disabled={triggeringWorker === "leads" || isEnginePaused}
+              title={isEnginePaused ? "Engine paused - renew subscription to resume" : "Run lead discovery now"}
               className="px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-medium flex items-center gap-1.5 transition disabled:opacity-50"
             >
-              {triggeringWorker === "leads" ? <RefreshCw size={12} className="animate-spin" /> : <Play size={12} />}
-              Run Now
+              {triggeringWorker === "leads" ? <RefreshCw size={12} className="animate-spin" /> : isEnginePaused ? <Lock size={12} /> : <Play size={12} />}
+              {isEnginePaused ? "Paused" : "Run Now"}
             </button>
           </div>
         </div>
@@ -352,11 +372,12 @@ export default function CalendarPage() {
             <span className="text-xs text-[var(--text-muted)]">{data?.telemetry?.social?.postsPerWeek ?? 5} posts / week</span>
             <button
               onClick={() => handleTriggerWorker("posts")}
-              disabled={triggeringWorker === "posts"}
+              disabled={triggeringWorker === "posts" || isEnginePaused}
+              title={isEnginePaused ? "Engine paused - renew subscription to resume" : "Generate social posts now"}
               className="px-3 py-1.5 rounded-xl bg-[var(--accent-primary)]/10 hover:bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30 text-xs font-medium flex items-center gap-1.5 transition disabled:opacity-50"
             >
-              {triggeringWorker === "posts" ? <RefreshCw size={12} className="animate-spin" /> : <Play size={12} />}
-              Generate Now
+              {triggeringWorker === "posts" ? <RefreshCw size={12} className="animate-spin" /> : isEnginePaused ? <Lock size={12} /> : <Play size={12} />}
+              {isEnginePaused ? "Paused" : "Generate Now"}
             </button>
           </div>
         </div>
@@ -389,11 +410,12 @@ export default function CalendarPage() {
             <span className="text-xs text-[var(--text-muted)]">Max {data?.telemetry?.outreach?.dailyLimit ?? 20}/day</span>
             <button
               onClick={() => handleTriggerWorker("outreach")}
-              disabled={triggeringWorker === "outreach"}
+              disabled={triggeringWorker === "outreach" || isEnginePaused}
+              title={isEnginePaused ? "Engine paused - renew subscription to resume" : "Send outreach batch now"}
               className="px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs font-medium flex items-center gap-1.5 transition disabled:opacity-50"
             >
-              {triggeringWorker === "outreach" ? <RefreshCw size={12} className="animate-spin" /> : <Play size={12} />}
-              Send Batch
+              {triggeringWorker === "outreach" ? <RefreshCw size={12} className="animate-spin" /> : isEnginePaused ? <Lock size={12} /> : <Play size={12} />}
+              {isEnginePaused ? "Paused" : "Send Batch"}
             </button>
           </div>
         </div>

@@ -2,7 +2,7 @@
 
 import { LayoutDashboard, Send, Users, Activity, Settings, ChevronDown, ChevronsLeft, ChevronsRight, Mail, Briefcase, Calendar, HelpCircle } from "lucide-react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useBrand } from "@/lib/brand-context";
 import { replayTour } from "@/components/dashboard/OnboardingTour";
@@ -10,7 +10,6 @@ import { replayTour } from "@/components/dashboard/OnboardingTour";
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [switcherOpen, setSwitcherOpen] = useState(false);
-  const router = useRouter();
   const pathname = usePathname();
   const { brands, activeBrand, setActiveBrandId, user, isLoading } = useBrand();
 
@@ -132,10 +131,10 @@ export function AppSidebar() {
         </Link>
 
         <Link
-          href="/account"
+          href="/dashboard/account"
           title={collapsed ? "Account Settings" : undefined}
           className={`flex items-center rounded-xl text-sm font-medium transition-all ${collapsed ? "w-11 h-11 mx-auto justify-center p-0" : "gap-3 px-3 py-2"
-            } ${isActive("/account") ? "bg-[var(--accent-primary)] text-white" : "text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-elevated)]"}`}
+            } ${isActive("/dashboard/account") ? "bg-[var(--accent-primary)] text-white" : "text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-elevated)]"}`}
         >
           <Settings size={18} className="flex-shrink-0" />
           {!collapsed && <span>Account Settings</span>}
@@ -146,7 +145,7 @@ export function AppSidebar() {
           <div data-tour="quota-widget" className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-xl p-3 space-y-2">
             <div className="flex items-center justify-between text-xs">
               <span className="capitalize font-medium text-white">{planName} Plan</span>
-              <Link href="/pricing" className="text-[var(--accent-primary)] hover:underline text-[10px]">Upgrade</Link>
+              <Link href="/dashboard/account" className="text-[var(--accent-primary)] hover:underline text-[10px]">Upgrade</Link>
             </div>
 
             {isLoading ? (

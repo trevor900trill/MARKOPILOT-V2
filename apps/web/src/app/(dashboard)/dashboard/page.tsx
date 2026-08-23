@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { useBrand } from "@/lib/brand-context";
 import { apiGet, apiPut } from "@/lib/api-client";
+import { toast } from "sonner";
 
 type OverviewData = {
   postsPublished: number;
@@ -20,14 +21,30 @@ export default function DashboardOverviewPage() {
   const { data: session } = useSession();
   const { activeBrand, refreshBrands } = useBrand();
   const [engineState, setEngineState] = useState<"RUNNING" | "PAUSED">("RUNNING");
+  const [isEnginePaused, setIsEnginePaused] = useState(false);
+  const [isTogglingEngine, setIsTogglingEngine] = useState(false);
   const [overview, setOverview] = useState<OverviewData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (activeBrand) {
-      setEngineState(activeBrand.automationPostsEnabled ? "RUNNING" : "PAUSED");
+      const hasEnabledAutomation = activeBrand.automationPostsEnabled || activeBrand.automationLeadsEnabled || activeBrand.automationOutreachEnabled;
+      setEngineState(!isEnginePaused && hasEnabledAutomation ? "RUNNING" : "PAUSED");
     }
-  }, [activeBrand]);
+  }, [activeBrand, isEnginePaused]);
+
+  useEffect(() => {
+    const checkEngineStatus = async () => {
+      try {
+        const statusData = await apiGet<{ isEnginePaused?: boolean }>("/subscriptions/status");
+        setIsEnginePaused(statusData?.isEnginePaused ?? false);
+      } catch (err) {
+        console.error("Failed to check engine status:", err);
+      }
+    };
+
+    checkEngineStatus();
+  }, []);
 
   const fetchOverview = useCallback(async () => {
     if (!activeBrand) return;
@@ -48,8 +65,14 @@ export default function DashboardOverviewPage() {
 
   const handleToggleEngine = async () => {
     if (!activeBrand) return;
+    if (isEnginePaused) {
+      toast.error("Your autonomous engine is paused due to expired trial or subscription. Please renew your subscription to resume operations.");
+      return;
+    }
+
     const newState = engineState === "RUNNING" ? "PAUSED" : "RUNNING";
     setEngineState(newState);
+    setIsTogglingEngine(true);
     try {
       await apiPut(`/brands/${activeBrand.id}`, {
         ...activeBrand,
@@ -61,6 +84,8 @@ export default function DashboardOverviewPage() {
     } catch (err) {
       console.error("Failed to toggle engine:", err);
       setEngineState(engineState); // revert
+    } finally {
+      setIsTogglingEngine(false);
     }
   };
 
@@ -95,8 +120,10 @@ export default function DashboardOverviewPage() {
                <div className="h-8 w-px bg-[var(--border)] mx-2"></div>
                <button 
                   onClick={handleToggleEngine}
-                  className="p-2 border border-[var(--border)] hover:bg-[var(--bg-surface)] hover:text-white rounded-lg transition text-[var(--text-secondary)]">
-                   {engineState === 'RUNNING' ? <Pause size={18}/> : <Play size={18}/>}
+                  disabled={isTogglingEngine}
+                  title={isEnginePaused ? "Engine paused - renew subscription to resume" : engineState === "RUNNING" ? "Pause all brand automation" : "Resume all brand automation"}
+                  className="p-2 border border-[var(--border)] hover:bg-[var(--bg-surface)] hover:text-white rounded-lg transition text-[var(--text-secondary)] disabled:opacity-50 disabled:cursor-not-allowed">
+                   {isTogglingEngine ? <RefreshCw size={18} className="animate-spin" /> : engineState === 'RUNNING' ? <Pause size={18}/> : <Play size={18}/>}
                </button>
            </div>
        </div>

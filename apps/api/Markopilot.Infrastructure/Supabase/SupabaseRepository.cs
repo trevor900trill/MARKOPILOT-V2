@@ -1704,6 +1704,7 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         SubscriptionStatus = r.GetString(r.GetOrdinal("subscription_status")),
         PlanName = r.GetString(r.GetOrdinal("plan_name")),
         CurrentPeriodEnd = r.IsDBNull(r.GetOrdinal("current_period_end")) ? null : r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("current_period_end")),
+        TrialEndsAt = HasColumn(r, "trial_ends_at") && !r.IsDBNull(r.GetOrdinal("trial_ends_at")) ? r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("trial_ends_at")) : null,
         QuotaLeadsPerMonth = r.GetInt32(r.GetOrdinal("quota_leads_per_month")),
         QuotaPostsPerMonth = r.GetInt32(r.GetOrdinal("quota_posts_per_month")),
         QuotaBrandsAllowed = r.GetInt32(r.GetOrdinal("quota_brands_allowed")),
@@ -1967,7 +1968,7 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         var users = new List<User>();
         while (await reader.ReadAsync())
         {
-            users.Add(MapUserFromReader(reader));
+            users.Add(MapUser(reader));
         }
         return users;
     }
@@ -1994,7 +1995,7 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         var users = new List<User>();
         while (await reader.ReadAsync())
         {
-            users.Add(MapUserFromReader(reader));
+            users.Add(MapUser(reader));
         }
         return users;
     }
@@ -2023,7 +2024,7 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         var users = new List<User>();
         while (await reader.ReadAsync())
         {
-            users.Add(MapUserFromReader(reader));
+            users.Add(MapUser(reader));
         }
         return users;
     }
@@ -2050,7 +2051,7 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         var users = new List<User>();
         while (await reader.ReadAsync())
         {
-            users.Add(MapUserFromReader(reader));
+            users.Add(MapUser(reader));
         }
         return users;
     }

@@ -120,25 +120,25 @@ public class UsersController : ControllerBase
             {
                 _logger.LogWarning("Failed to get country info for IP {IP}", ipAddress);
                 return Ok(new { 
-                    countryCode = null,
-                    countryName = null,
+                    countryCode = (string?)null,
+                    countryName = (string?)null,
                     isSupported = false,
                     ipAddress = ipAddress
                 });
             }
 
             var content = await response.Content.ReadAsStringAsync();
-            var ipInfo = System.Text.Json.JsonDocument.Parse(content);
+            using var ipInfo = System.Text.Json.JsonDocument.Parse(content);
             
-            var countryCode = ipInfo.GetProperty("country").GetString();
-            var countryName = ipInfo.TryGetProperty("country", out var countryElement) 
+            var countryCode = ipInfo.RootElement.GetProperty("country").GetString();
+            var countryName = ipInfo.RootElement.TryGetProperty("country", out var countryElement) 
                 ? countryElement.GetString() 
                 : null;
             
             // ipinfo.io returns country code in 'country' field, not full name
             // We'll use the code for both and can map to full name if needed
             
-            isSupported = mpesaSupportedCountries.Contains(countryCode ?? "");
+            var isSupported = mpesaSupportedCountries.Contains(countryCode ?? "");
 
             if (!isSupported && !string.IsNullOrEmpty(countryCode))
             {
