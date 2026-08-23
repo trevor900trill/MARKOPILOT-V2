@@ -62,7 +62,7 @@ export default function AccountPage() {
             </p>
          </div>
 
-         {/* ENGINE PAUSED BANNER (IF EXPIRED) */}
+         {/* ENGINE PAUSED BANNER (ALL AUTOMATION SWITCHES OFF) */}
          {isEnginePaused && (
             <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                <div className="flex items-start gap-3">
@@ -70,7 +70,7 @@ export default function AccountPage() {
                   <div>
                      <h3 className="text-sm font-semibold text-white">Autonomous Engine Paused</h3>
                      <p className="text-xs text-amber-200/80 mt-0.5">
-                        Your 7-day trial or monthly subscription has ended. Renew via M-PESA to resume autonomous lead extraction and posting.
+                        All autonomous engines (posting, lead discovery, outreach) are currently paused. This usually happens when your trial or subscription ends — pay via M-PESA to resume.
                      </p>
                   </div>
                </div>

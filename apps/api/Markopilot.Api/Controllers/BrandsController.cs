@@ -1,5 +1,6 @@
 using Hangfire;
 using Markopilot.Api.Middleware;
+using Markopilot.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Markopilot.Core.Interfaces;
 
@@ -13,20 +14,17 @@ public class BrandsController : ControllerBase
     private readonly IBrandRepository _repo;
     private readonly ISocialRepository _socialRepo;
     private readonly IQuotaService _quotaService;
-    private readonly IUserRepository _userRepo;
     private readonly ILogger<BrandsController> _logger;
 
     public BrandsController(
         IBrandRepository repo,
         ISocialRepository socialRepo,
         IQuotaService quotaService,
-        IUserRepository userRepo,
         ILogger<BrandsController> logger)
     {
         _repo = repo;
         _socialRepo = socialRepo;
         _quotaService = quotaService;
-        _userRepo = userRepo;
         _logger = logger;
     }
 
@@ -63,8 +61,7 @@ public class BrandsController : ControllerBase
         var created = await _repo.CreateBrandAsync(brand);
 
         // Immediately schedule workers based on initial settings
-        ScheduleSocialPostingWorker(created);
-        ScheduleLeadExtractionWorker(created);
+        AutomationScheduler.RescheduleBrand(created, _logger);
 
         _logger.LogInformation("New brand {BrandId} created and automation initialized by user {UserId}", created.Id, userId);
 
@@ -82,8 +79,7 @@ public class BrandsController : ControllerBase
         brand.OwnerId = userId;
         var updated = await _repo.UpdateBrandAsync(brand);
 
-        ScheduleSocialPostingWorker(updated);
-        ScheduleLeadExtractionWorker(updated);
+        AutomationScheduler.RescheduleBrand(updated, _logger);
 
         return Ok(updated);
     }
@@ -96,8 +92,7 @@ public class BrandsController : ControllerBase
         var success = await _repo.DeleteBrandAsync(brandId, userId);
         if (!success) return NotFound(new { error = new { code = "NOT_FOUND", message = "Brand not found or could not be deleted" } });
 
-        RecurringJob.RemoveIfExists($"brand-leads-gen-{brandId}");
-        RecurringJob.RemoveIfExists($"brand-post-gen-{brandId}");
+        AutomationScheduler.RemoveAllJobs(brandId);
 
         _logger.LogInformation("Brand {BrandId} and its associated automation jobs deleted by user {UserId}", brandId, userId);
 
@@ -207,23 +202,31 @@ public class BrandsController : ControllerBase
         var brand = await _repo.GetBrandByIdAsync(brandId, userId);
         if (brand == null) return NotFound(new { error = new { code = "NOT_FOUND", message = "Brand not found" } });
 
-        var user = await _userRepo.GetUserByIdAsync(userId);
-        if (user?.Status == "paused")
-        {
-            return StatusCode(403, new { error = new { code = "ENGINE_PAUSED", message = "Your autonomous engine is paused due to expired trial or subscription. Please renew your subscription to resume operations." } });
-        }
-
+        // Gate purely on the automation switches — the subscription lifecycle controls these flags,
+        // so no plan/subscription check is needed here.
         switch (workerType.ToLower())
         {
             case "leads":
+                if (!brand.AutomationLeadsEnabled)
+                {
+                    return StatusCode(403, new { error = new { code = "AUTOMATION_DISABLED", message = "Lead discovery automation is disabled for this brand. Enable it in Settings to run it manually." } });
+                }
                 BackgroundJob.Enqueue<ILeadExtractionWorker>(w => w.ExecuteAsync(brandId));
                 await _repo.InsertActivityAsync(brandId, "worker_triggered", "Lead discovery worker triggered manually.");
                 break;
             case "posts":
+                if (!brand.AutomationPostsEnabled)
+                {
+                    return StatusCode(403, new { error = new { code = "AUTOMATION_DISABLED", message = "Social posting automation is disabled for this brand. Enable it in Settings to run it manually." } });
+                }
                 BackgroundJob.Enqueue<ISocialPostingWorker>(w => w.ExecuteAsync(brandId));
                 await _repo.InsertActivityAsync(brandId, "worker_triggered", "Social post generation worker triggered manually.");
                 break;
             case "outreach":
+                if (!brand.AutomationOutreachEnabled)
+                {
+                    return StatusCode(403, new { error = new { code = "AUTOMATION_DISABLED", message = "Email outreach automation is disabled for this brand. Enable it in Settings to run it manually." } });
+                }
                 BackgroundJob.Enqueue<IOutreachWorker>(w => w.ExecuteAsync());
                 await _repo.InsertActivityAsync(brandId, "worker_triggered", "Email outreach worker triggered manually.");
                 break;
@@ -343,80 +346,5 @@ public class BrandsController : ControllerBase
         }
 
         return list;
-    }
-
-    private void ScheduleLeadExtractionWorker(Core.Models.Brand brand)
-    {
-        var jobId = $"brand-leads-gen-{brand.Id}";
-        if (!brand.AutomationLeadsEnabled)
-        {
-            RecurringJob.RemoveIfExists(jobId);
-            return;
-        }
-
-        try
-        {
-            var minuteOffset = Math.Abs(brand.Id.GetHashCode() % 60);
-            var cron = $"{minuteOffset} 2 * * *";
-
-            RecurringJob.AddOrUpdate<ILeadExtractionWorker>(
-                jobId,
-                worker => worker.ExecuteAsync(brand.Id),
-                cron);
-            
-            _logger.LogInformation("Scheduled lead extraction job for brand {BrandId} with staggered cron: {Cron}", brand.Id, cron);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to schedule lead extraction job for brand {BrandId}", brand.Id);
-        }
-    }
-
-    private void ScheduleSocialPostingWorker(Core.Models.Brand brand)
-    {
-        var jobId = $"brand-post-gen-{brand.Id}";
-        if (!brand.AutomationPostsEnabled)
-        {
-            RecurringJob.RemoveIfExists(jobId);
-            return;
-        }
-
-        try
-        {
-            var (hour, minute) = ParsePostingTime(brand.AutomationPostingTimeUtc);
-
-            var daysMap = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
-            {
-                { "sunday", 0 }, { "monday", 1 }, { "tuesday", 2 },
-                { "wednesday", 3 }, { "thursday", 4 }, { "friday", 5 }, { "saturday", 6 }
-            };
-
-            var selectedDays = brand.AutomationPostingDays
-                .Where(d => daysMap.ContainsKey(d))
-                .Select(d => daysMap[d])
-                .Distinct()
-                .OrderBy(d => d)
-                .ToList();
-
-            if (!selectedDays.Any())
-            {
-                RecurringJob.RemoveIfExists(jobId);
-                return;
-            }
-
-            var daysExpression = string.Join(",", selectedDays);
-            var cron = $"{minute} {hour} * * {daysExpression}";
-
-            RecurringJob.AddOrUpdate<ISocialPostingWorker>(
-                jobId,
-                worker => worker.ExecuteAsync(brand.Id),
-                cron);
-            
-            _logger.LogInformation("Scheduled social posting job for brand {BrandId} with cron: {Cron}", brand.Id, cron);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to schedule social posting job for brand {BrandId}", brand.Id);
-        }
     }
 }

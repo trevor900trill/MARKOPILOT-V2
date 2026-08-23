@@ -36,6 +36,11 @@ type FilterType = "all" | "enriched" | "high_value" | "suppressed";
 
 export default function LeadsPage() {
   const { activeBrand, user } = useBrand();
+
+  // Gate actions on the real automation switches — not the subscription record.
+  const leadsAutomationEnabled = activeBrand?.automationLeadsEnabled ?? false;
+  const outreachAutomationEnabled = activeBrand?.automationOutreachEnabled ?? false;
+
   const [leads, setLeads] = useState<Lead[]>([]);
   const [totalLeads, setTotalLeads] = useState(0);
   const [page, setPage] = useState(1);
@@ -48,7 +53,6 @@ export default function LeadsPage() {
   const [performance, setPerformance] = useState<QueryPerformance[]>([]);
   const [isPerformanceLoading, setIsPerformanceLoading] = useState(false);
   const [expandedLeads, setExpandedLeads] = useState<Set<string>>(new Set());
-  const [isEnginePaused, setIsEnginePaused] = useState(false);
 
   const toggleExpand = (id: string) => {
     setExpandedLeads(prev => {
@@ -93,24 +97,12 @@ export default function LeadsPage() {
   useEffect(() => {
     fetchLeads();
     fetchPerformance();
-    
-    // Check if engine is paused
-    const checkEngineStatus = async () => {
-      try {
-        const statusData = await apiGet<any>('/subscriptions/status');
-        setIsEnginePaused(statusData?.isEnginePaused ?? false);
-      } catch (err) {
-        console.error("Failed to check engine status:", err);
-      }
-    };
-    
-    checkEngineStatus();
   }, [fetchLeads, fetchPerformance]);
 
   const handleRunDiscovery = async () => {
     if (!activeBrand) return;
-    if (isEnginePaused) {
-      toast.error("Your autonomous engine is paused due to expired trial or subscription. Please renew your subscription to resume operations.");
+    if (!leadsAutomationEnabled) {
+      toast.error("Lead discovery automation is disabled for this brand. Enable it in Settings to run it manually.");
       return;
     }
     setIsDiscovering(true);
@@ -127,8 +119,8 @@ export default function LeadsPage() {
 
   const handleQueueOutreach = async (leadId: string) => {
     if (!activeBrand) return;
-    if (isEnginePaused) {
-      toast.error("Your autonomous engine is paused due to expired trial or subscription. Please renew your subscription to resume operations.");
+    if (!outreachAutomationEnabled) {
+      toast.error("Email outreach automation is disabled for this brand. Enable it in Settings to queue leads.");
       return;
     }
     try {
@@ -291,12 +283,12 @@ export default function LeadsPage() {
           </button>
           <button
             onClick={handleRunDiscovery}
-            disabled={isDiscovering || isEnginePaused}
+            disabled={isDiscovering || !leadsAutomationEnabled}
             className="flex items-center gap-2 px-4 py-2 bg-[var(--accent-primary)] text-white hover:bg-opacity-90 rounded-xl transition font-medium text-xs disabled:opacity-50"
-            title={isEnginePaused ? "Engine paused - renew subscription to resume" : "Run discovery now"}
+            title={!leadsAutomationEnabled ? "Lead discovery automation is disabled for this brand" : "Run discovery now"}
           >
             <Play size={14} className={isDiscovering ? "animate-pulse" : ""} />
-            {isEnginePaused ? "Engine Paused" : (isDiscovering ? "Dispatching Agents..." : "Run Discovery Now")}
+            {!leadsAutomationEnabled ? "Discovery Disabled" : (isDiscovering ? "Dispatching Agents..." : "Run Discovery Now")}
           </button>
         </div>
       </div>
@@ -326,14 +318,14 @@ export default function LeadsPage() {
 
       <DiscoveryInsights performance={performance} isLoading={isPerformanceLoading} />
 
-      {/* Engine Paused Banner */}
-      {isEnginePaused && (
+      {/* Engine Paused Banner (lead + outreach switches off) */}
+      {!leadsAutomationEnabled && !outreachAutomationEnabled && (
         <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-3 mb-6">
           <AlertCircle className="text-amber-400 flex-shrink-0" size={20} />
           <div className="flex-1">
             <h3 className="text-sm font-semibold text-white">Autonomous Engine Paused</h3>
             <p className="text-xs text-amber-200/80 mt-0.5">
-              Your 7-day trial or monthly subscription has ended. Renew via M-PESA to resume autonomous lead extraction and outreach.
+              Lead discovery and email outreach are currently paused. This usually happens when your trial or subscription ends — renew via M-PESA to resume.
             </p>
           </div>
           <button

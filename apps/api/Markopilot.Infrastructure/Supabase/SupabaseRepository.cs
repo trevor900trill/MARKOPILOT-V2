@@ -2056,18 +2056,23 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         return users;
     }
 
-    public async Task UpdateUserStatusAsync(Guid userId, string status)
+    public async Task SetUserAutomationEnabledAsync(Guid ownerId, bool postsEnabled, bool leadsEnabled, bool outreachEnabled)
     {
         await using var conn = CreateConnection();
         await conn.OpenAsync();
 
         await using var cmd = new NpgsqlCommand(@"
-            UPDATE users
-            SET status = @status, updated_at = @updatedAt
-            WHERE id = @userId", conn);
+            UPDATE brands
+            SET automation_posts_enabled = @postsEnabled,
+                automation_leads_enabled = @leadsEnabled,
+                automation_outreach_enabled = @outreachEnabled,
+                updated_at = @updatedAt
+            WHERE owner_id = @ownerId AND status != 'archived'", conn);
 
-        cmd.Parameters.AddWithValue("userId", userId);
-        cmd.Parameters.AddWithValue("status", status);
+        cmd.Parameters.AddWithValue("ownerId", ownerId);
+        cmd.Parameters.AddWithValue("postsEnabled", postsEnabled);
+        cmd.Parameters.AddWithValue("leadsEnabled", leadsEnabled);
+        cmd.Parameters.AddWithValue("outreachEnabled", outreachEnabled);
         cmd.Parameters.AddWithValue("updatedAt", DateTimeOffset.UtcNow);
 
         await cmd.ExecuteNonQueryAsync();

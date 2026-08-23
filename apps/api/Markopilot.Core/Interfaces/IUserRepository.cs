@@ -53,5 +53,4 @@ public interface IUserRepository
     Task<List<User>> GetUsersWithExpiredTrialsAsync(DateTimeOffset now);
     Task<List<User>> GetUsersWithSubscriptionExpiringAsync(DateTimeOffset expiryDate);
     Task<List<User>> GetUsersWithExpiredSubscriptionsAsync(DateTimeOffset now);
-    Task UpdateUserStatusAsync(Guid userId, string status);
 }

@@ -1,4 +1,5 @@
 using Markopilot.Api.Middleware;
+using Markopilot.Api.Services;
 using Markopilot.Core.Interfaces;
 using Markopilot.Core.Models;
 using Markopilot.Infrastructure.Mpesa;
@@ -54,7 +55,11 @@ public class SubscriptionsController : ControllerBase
         var isTrialExpired = isTrialing && DateTimeOffset.UtcNow > trialExpiry;
         var isSubscriptionExpired = user.SubscriptionStatus == "active" && user.CurrentPeriodEnd.HasValue && DateTimeOffset.UtcNow > user.CurrentPeriodEnd.Value;
 
-        var isEnginePaused = isTrialExpired || isSubscriptionExpired || user.SubscriptionStatus == "expired" || user.SubscriptionStatus == "cancelled" || user.Status == "paused";
+        // Engine state reflects the real automation switches on the user's brands — not the payment record.
+        var brands = await _brandRepo.GetBrandsByOwnerAsync(userId);
+        var hasEnabledAutomation = brands.Any(b =>
+            b.AutomationPostsEnabled || b.AutomationLeadsEnabled || b.AutomationOutreachEnabled);
+        var isEnginePaused = brands.Count > 0 && !hasEnabledAutomation;
 
         return Ok(new
         {
@@ -173,8 +178,8 @@ public class SubscriptionsController : ControllerBase
                 plan.PostsPerMonth,
                 plan.BrandsAllowed);
 
-            // Reactivate engine if it was paused
-            await _userRepo.UpdateUserStatusAsync(userId, "active");
+            // Reactivate automation on all brands if it was paused
+            await ResumeUserAutomationsAsync(userId);
 
             await _userRepo.ResetQuotaCountersAsync(userId);
 
@@ -235,14 +240,40 @@ public class SubscriptionsController : ControllerBase
             plan.PostsPerMonth,
             plan.BrandsAllowed);
 
-        // Reactivate engine if it was paused
-        await _userRepo.UpdateUserStatusAsync(userId, "active");
+        // Reactivate automation on all brands if it was paused
+        await ResumeUserAutomationsAsync(userId);
 
         await _userRepo.ResetQuotaCountersAsync(userId);
 
         await NotifyPaymentSuccessAsync(userId, plan, tx.Amount, tx.MpesaReceiptNumber, periodEnd);
 
         return Ok(new { success = true, message = $"Subscription activated for {plan.Name} plan (30 days)." });
+    }
+
+    private async Task ResumeUserAutomationsAsync(Guid userId)
+    {
+        try
+        {
+            await _brandRepo.SetUserAutomationEnabledAsync(userId, postsEnabled: true, leadsEnabled: true, outreachEnabled: true);
+
+            var brands = await _brandRepo.GetBrandsByOwnerAsync(userId);
+            foreach (var brand in brands)
+            {
+                AutomationScheduler.RescheduleBrand(brand, _logger);
+
+                await _brandRepo.InsertActivityAsync(
+                    brand.Id,
+                    "automation_resumed",
+                    "Automation resumed: payment confirmed. Autonomous posting, lead discovery, and outreach are live again.",
+                    new Dictionary<string, object> { ["source"] = "payment_confirmed" });
+            }
+
+            _logger.LogInformation("Resumed automation for {BrandCount} brands owned by user {UserId} after payment confirmation", brands.Count, userId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to resume automations for user {UserId}", userId);
+        }
     }
 
     private async Task NotifyPaymentSuccessAsync(Guid userId, PlanDefinition plan, decimal amount, string receiptNumber, DateTimeOffset periodEnd)

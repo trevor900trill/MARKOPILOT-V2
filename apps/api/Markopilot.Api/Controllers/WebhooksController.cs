@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Markopilot.Api.Services;
 using Markopilot.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -87,11 +88,15 @@ public class WebhooksController : ControllerBase
                         plan.LeadsPerMonth, 
                         plan.PostsPerMonth, 
                         plan.BrandsAllowed);
+
+                    // Subscription is active — make sure the automation engines are running.
+                    await ResumeUserAutomationsAsync(userId);
                 }
                 else if (eventName == "subscription_payment_success")
                 {
                     _logger.LogInformation("Processing payment success for User {UserId}. Resetting quotas.", userId);
                     await repo.ResetQuotaCountersAsync(userId);
+                    await ResumeUserAutomationsAsync(userId);
                 }
                 else if (eventName == "subscription_expired" || eventName == "subscription_cancelled")
                 {
@@ -111,6 +116,9 @@ public class WebhooksController : ControllerBase
                         starterPlan.LeadsPerMonth, 
                         starterPlan.PostsPerMonth, 
                         starterPlan.BrandsAllowed);
+
+                    // Subscription is over — immediately shut down the automation engines.
+                    await PauseUserAutomationsAsync(userId);
                 }
                 
                 _logger.LogInformation("Successfully processed webhook for user {UserId}", userId);
@@ -267,6 +275,50 @@ public class WebhooksController : ControllerBase
         }
 
         return Ok(new { ResponseCode = "0", ResponseDesc = "Accepted" });
+    }
+
+    private async Task ResumeUserAutomationsAsync(Guid userId)
+    {
+        try
+        {
+            var brandRepo = HttpContext.RequestServices.GetRequiredService<IBrandRepository>();
+            await brandRepo.SetUserAutomationEnabledAsync(userId, postsEnabled: true, leadsEnabled: true, outreachEnabled: true);
+
+            var brands = await brandRepo.GetBrandsByOwnerAsync(userId);
+            foreach (var brand in brands)
+            {
+                AutomationScheduler.RescheduleBrand(brand, _logger);
+                await brandRepo.InsertActivityAsync(brand.Id, "automation_resumed", "Automation resumed: subscription is active.");
+            }
+
+            _logger.LogInformation("Resumed automation for {BrandCount} brands owned by user {UserId} via webhook", brands.Count, userId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to resume automations for user {UserId} via webhook", userId);
+        }
+    }
+
+    private async Task PauseUserAutomationsAsync(Guid userId)
+    {
+        try
+        {
+            var brandRepo = HttpContext.RequestServices.GetRequiredService<IBrandRepository>();
+            await brandRepo.SetUserAutomationEnabledAsync(userId, postsEnabled: false, leadsEnabled: false, outreachEnabled: false);
+
+            var brands = await brandRepo.GetBrandsByOwnerAsync(userId);
+            foreach (var brand in brands)
+            {
+                AutomationScheduler.RemoveAllJobs(brand.Id);
+                await brandRepo.InsertActivityAsync(brand.Id, "automation_paused", "Automation paused: subscription ended or was cancelled. Renew to resume.");
+            }
+
+            _logger.LogInformation("Paused automation for {BrandCount} brands owned by user {UserId} via webhook", brands.Count, userId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to pause automations for user {UserId} via webhook", userId);
+        }
     }
 
     private static bool VerifyHmacSha256(string payload, string signature, string secret)

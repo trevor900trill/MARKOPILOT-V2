@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { useBrand } from "@/lib/brand-context";
 import { apiGet, apiPut } from "@/lib/api-client";
-import { toast } from "sonner";
 
 type OverviewData = {
   postsPublished: number;
@@ -21,7 +20,6 @@ export default function DashboardOverviewPage() {
   const { data: session } = useSession();
   const { activeBrand, refreshBrands } = useBrand();
   const [engineState, setEngineState] = useState<"RUNNING" | "PAUSED">("RUNNING");
-  const [isEnginePaused, setIsEnginePaused] = useState(false);
   const [isTogglingEngine, setIsTogglingEngine] = useState(false);
   const [overview, setOverview] = useState<OverviewData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,22 +27,9 @@ export default function DashboardOverviewPage() {
   useEffect(() => {
     if (activeBrand) {
       const hasEnabledAutomation = activeBrand.automationPostsEnabled || activeBrand.automationLeadsEnabled || activeBrand.automationOutreachEnabled;
-      setEngineState(!isEnginePaused && hasEnabledAutomation ? "RUNNING" : "PAUSED");
+      setEngineState(hasEnabledAutomation ? "RUNNING" : "PAUSED");
     }
-  }, [activeBrand, isEnginePaused]);
-
-  useEffect(() => {
-    const checkEngineStatus = async () => {
-      try {
-        const statusData = await apiGet<{ isEnginePaused?: boolean }>("/subscriptions/status");
-        setIsEnginePaused(statusData?.isEnginePaused ?? false);
-      } catch (err) {
-        console.error("Failed to check engine status:", err);
-      }
-    };
-
-    checkEngineStatus();
-  }, []);
+  }, [activeBrand]);
 
   const fetchOverview = useCallback(async () => {
     if (!activeBrand) return;
@@ -65,10 +50,6 @@ export default function DashboardOverviewPage() {
 
   const handleToggleEngine = async () => {
     if (!activeBrand) return;
-    if (isEnginePaused) {
-      toast.error("Your autonomous engine is paused due to expired trial or subscription. Please renew your subscription to resume operations.");
-      return;
-    }
 
     const newState = engineState === "RUNNING" ? "PAUSED" : "RUNNING";
     setEngineState(newState);
@@ -93,6 +74,14 @@ export default function DashboardOverviewPage() {
   const upcomingPosts = overview?.upcomingPosts || [];
   const recentLeads = overview?.recentLeads || [];
 
+  // Per-engine status chip for the actual automation switches
+  const EngineChip = ({ label, enabled }: { label: string; enabled?: boolean }) => (
+    <span className={`inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full border ${enabled ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-red-500/10 text-red-400 border-red-500/20"}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${enabled ? "bg-emerald-400 animate-pulse" : "bg-red-400"}`} />
+      {label}: {enabled ? "On" : "Off"}
+    </span>
+  );
+
   // Skeleton block
   const Skeleton = () => (
     <div className="animate-pulse space-y-3 p-6">
@@ -108,6 +97,12 @@ export default function DashboardOverviewPage() {
            <div>
                <h1 className="text-3xl font-serif text-white">Hub Overview</h1>
                <p className="text-[var(--text-secondary)] mt-2">Welcome back, {session?.user?.name || "Pilot"}. Here is your automation telemetry.</p>
+               {/* Live per-engine automation status */}
+               <div className="flex flex-wrap items-center gap-2 mt-3">
+                   <EngineChip label="Social Posts" enabled={activeBrand?.automationPostsEnabled} />
+                   <EngineChip label="Lead Discovery" enabled={activeBrand?.automationLeadsEnabled} />
+                   <EngineChip label="Email Outreach" enabled={activeBrand?.automationOutreachEnabled} />
+               </div>
            </div>
            <div data-tour="engine-status" className="flex items-center gap-4 bg-[var(--bg-elevated)] border border-[var(--border)] p-2 pr-4 rounded-2xl shadow-xl">
                <div className={`w-12 h-12 flex justify-center items-center rounded-xl text-white ${engineState === 'RUNNING' ? 'bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.3)]' : 'bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)]'}`}>
@@ -121,7 +116,7 @@ export default function DashboardOverviewPage() {
                <button 
                   onClick={handleToggleEngine}
                   disabled={isTogglingEngine}
-                  title={isEnginePaused ? "Engine paused - renew subscription to resume" : engineState === "RUNNING" ? "Pause all brand automation" : "Resume all brand automation"}
+                  title={engineState === "RUNNING" ? "Pause all brand automation" : "Resume all brand automation"}
                   className="p-2 border border-[var(--border)] hover:bg-[var(--bg-surface)] hover:text-white rounded-lg transition text-[var(--text-secondary)] disabled:opacity-50 disabled:cursor-not-allowed">
                    {isTogglingEngine ? <RefreshCw size={18} className="animate-spin" /> : engineState === 'RUNNING' ? <Pause size={18}/> : <Play size={18}/>}
                </button>

@@ -48,6 +48,13 @@ public interface IBrandRepository
     /// <remarks>Used by: API</remarks>
     Task<Brand> UpdateBrandAsync(Brand brand);
 
+    /// <summary>Enable or disable every automation type on all non-archived brands owned by a user.</summary>
+    /// <remarks>
+    /// This is the single switch the subscription lifecycle uses to pause/resume the engine:
+    /// Used by: API (SubscriptionsController, WebhooksController), Workers (SubscriptionMonitoringWorker)
+    /// </remarks>
+    Task SetUserAutomationEnabledAsync(Guid ownerId, bool postsEnabled, bool leadsEnabled, bool outreachEnabled);
+
     /// <summary>Delete a brand and all associated data.</summary>
     /// <remarks>Used by: API</remarks>
     Task<bool> DeleteBrandAsync(Guid brandId, Guid ownerId);
