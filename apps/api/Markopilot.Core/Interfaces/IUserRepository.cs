@@ -47,4 +47,11 @@ public interface IUserRepository
     Task UpdateMpesaTransactionStatusAsync(string checkoutRequestId, string status, string? mpesaReceiptNumber = null, int? resultCode = null, string? resultDesc = null);
     Task<MpesaTransaction?> GetMpesaTransactionAsync(string checkoutRequestId);
     Task AddToCountryWaitlistAsync(CountryWaitlist entry);
+
+    // ── Subscription Monitoring ─────────────────────
+    Task<List<User>> GetUsersWithTrialExpiringAsync(DateTimeOffset expiryDate);
+    Task<List<User>> GetUsersWithExpiredTrialsAsync(DateTimeOffset now);
+    Task<List<User>> GetUsersWithSubscriptionExpiringAsync(DateTimeOffset expiryDate);
+    Task<List<User>> GetUsersWithExpiredSubscriptionsAsync(DateTimeOffset now);
+    Task UpdateUserStatusAsync(Guid userId, string status);
 }

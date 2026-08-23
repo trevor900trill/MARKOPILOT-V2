@@ -265,4 +265,420 @@ public class ResendAlertEmailService : IAlertEmailService
             return false;
         }
     }
+
+    public async Task<bool> SendTrialExpiringSoonEmailAsync(
+        string recipientEmail,
+        string recipientName,
+        DateTimeOffset trialEndsAt)
+    {
+        var apiKey = _config["Resend:ApiKey"];
+        var fromEmail = _config["Resend:FromEmail"] ?? "Markopilot Billing <billing@markopilot.com>";
+        var dashboardUrl = _config["Frontend:BaseUrl"] ?? "https://markopilot.com";
+
+        if (string.IsNullOrEmpty(apiKey))
+        {
+            _logger.LogWarning("Resend:ApiKey is not configured. Skipping trial expiry email to {Email}", recipientEmail);
+            return false;
+        }
+
+        try
+        {
+            var subject = $"Your Markopilot Trial Ends Tomorrow";
+            var formattedDate = trialEndsAt.ToString("MMMM dd, yyyy");
+            var html = $@"
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset=""utf-8"">
+  <title>Trial Ending Soon</title>
+</head>
+<body style=""margin: 0; padding: 40px 16px; background-color: #07070a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #f3f4f6;"">
+  <table align=""center"" border=""0"" cellpadding=""0"" cellspacing=""0"" width=""100%"" style=""max-width: 560px; background-color: #111116; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5);"">
+    <tr>
+      <td style=""padding: 32px 32px 24px 32px; background: linear-gradient(180deg, rgba(245, 158, 11, 0.15) 0%, transparent 100%); text-align: center;"">
+        <div style=""width: 48px; height: 48px; background: rgba(245, 158, 11, 0.2); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #f59e0b; font-size: 24px; line-height: 48px; text-align: center;"">⏰</div>
+        <h1 style=""margin: 16px 0 4px 0; font-size: 22px; font-weight: 700; color: #ffffff;"">Your Trial Ends Tomorrow</h1>
+        <p style=""margin: 0; font-size: 13px; color: #9ca3af;"">Keep your autonomous marketing engine running</p>
+      </td>
+    </tr>
+    <tr>
+      <td style=""padding: 0 32px 32px 32px;"">
+        <p style=""font-size: 14px; line-height: 1.6; color: #d1d5db;"">
+          Hi {recipientName},<br><br>
+          Your 7-day free trial of Markopilot ends on <strong style=""color: #f59e0b;"">{formattedDate}</strong>. To avoid interruption of your autonomous lead extraction and social posting, please activate your subscription via M-PESA.
+        </p>
+
+        <div style=""background-color: #18181f; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 20px; margin: 20px 0;"">
+          <p style=""margin: 0 0 12px 0; font-size: 13px; color: #9ca3af;"">To continue using Markopilot:</p>
+          <ol style=""margin: 0; padding-left: 20px; font-size: 13px; color: #d1d5db; line-height: 1.8;"">
+            <li>Go to Account Settings in your dashboard</li>
+            <li>Click ""Activate Subscription""</li>
+            <li>Complete M-PESA payment (STK Push or Till Number)</li>
+          </ol>
+        </div>
+
+        <table align=""center"" border=""0"" cellpadding=""0"" cellspacing=""0"" style=""margin-top: 24px;"">
+          <tr>
+            <td align=""center"" style=""border-radius: 9999px; background-color: #f59e0b;"">
+              <a href=""{dashboardUrl}/dashboard/account"" target=""_blank"" style=""display: inline-block; padding: 14px 32px; font-size: 14px; font-weight: 600; color: #000000; text-decoration: none; border-radius: 9999px;"">
+                Activate Subscription &rarr;
+              </a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style=""padding: 20px 32px; background-color: #0c0c10; border-top: 1px solid rgba(255, 255, 255, 0.06); text-align: center;"">
+        <p style=""margin: 0; font-size: 11px; color: #6b7280;"">
+          Markopilot Ltd • Mirage Tower, Chiromo Rd, Nairobi, Kenya
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>";
+
+            var payload = new
+            {
+                from = fromEmail,
+                to = new[] { recipientEmail },
+                subject = subject,
+                html = html
+            };
+
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://api.resend.com/emails");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+            request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("Sent trial expiring soon email to {Email}", recipientEmail);
+                return true;
+            }
+
+            var err = await response.Content.ReadAsStringAsync();
+            _logger.LogWarning("Resend trial expiry email error: {Error}", err);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send trial expiring soon email to {Email}", recipientEmail);
+            return false;
+        }
+    }
+
+    public async Task<bool> SendTrialExpiredEmailAsync(
+        string recipientEmail,
+        string recipientName,
+        string planName)
+    {
+        var apiKey = _config["Resend:ApiKey"];
+        var fromEmail = _config["Resend:FromEmail"] ?? "Markopilot Billing <billing@markopilot.com>";
+        var dashboardUrl = _config["Frontend:BaseUrl"] ?? "https://markopilot.com";
+
+        if (string.IsNullOrEmpty(apiKey))
+        {
+            _logger.LogWarning("Resend:ApiKey is not configured. Skipping trial expired email to {Email}", recipientEmail);
+            return false;
+        }
+
+        try
+        {
+            var subject = $"Your Markopilot Trial Has Ended";
+            var html = $@"
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset=""utf-8"">
+  <title>Trial Ended</title>
+</head>
+<body style=""margin: 0; padding: 40px 16px; background-color: #07070a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #f3f4f6;"">
+  <table align=""center"" border=""0"" cellpadding=""0"" cellspacing=""0"" width=""100%"" style=""max-width: 560px; background-color: #111116; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5);"">
+    <tr>
+      <td style=""padding: 32px 32px 24px 32px; background: linear-gradient(180deg, rgba(239, 68, 68, 0.15) 0%, transparent 100%); text-align: center;"">
+        <div style=""width: 48px; height: 48px; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #ef4444; font-size: 24px; line-height: 48px; text-align: center;"">⏸️</div>
+        <h1 style=""margin: 16px 0 4px 0; font-size: 22px; font-weight: 700; color: #ffffff;"">Your Trial Has Ended</h1>
+        <p style=""margin: 0; font-size: 13px; color: #9ca3af;"">Your autonomous engine has been paused</p>
+      </td>
+    </tr>
+    <tr>
+      <td style=""padding: 0 32px 32px 32px;"">
+        <p style=""font-size: 14px; line-height: 1.6; color: #d1d5db;"">
+          Hi {recipientName},<br><br>
+          Your 7-day free trial of Markopilot has ended. Your autonomous marketing engine has been paused to prevent overage. To resume service, please activate your {planName} subscription via M-PESA.
+        </p>
+
+        <div style=""background-color: #18181f; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 20px; margin: 20px 0;"">
+          <p style=""margin: 0 0 12px 0; font-size: 13px; color: #9ca3af;"">To resume your autonomous marketing:</p>
+          <ol style=""margin: 0; padding-left: 20px; font-size: 13px; color: #d1d5db; line-height: 1.8;"">
+            <li>Go to Account Settings in your dashboard</li>
+            <li>Click ""Activate Subscription""</li>
+            <li>Complete M-PESA payment (KES {PlanCatalog.GetByName(planName).PriceKes:N0})</li>
+          </ol>
+        </div>
+
+        <table align=""center"" border=""0"" cellpadding=""0"" cellspacing=""0"" style=""margin-top: 24px;"">
+          <tr>
+            <td align=""center"" style=""border-radius: 9999px; background-color: #ef4444;"">
+              <a href=""{dashboardUrl}/dashboard/account"" target=""_blank"" style=""display: inline-block; padding: 14px 32px; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 9999px;"">
+                Reactivate Engine &rarr;
+              </a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style=""padding: 20px 32px; background-color: #0c0c10; border-top: 1px solid rgba(255, 255, 255, 0.06); text-align: center;"">
+        <p style=""margin: 0; font-size: 11px; color: #6b7280;"">
+          Markopilot Ltd • Mirage Tower, Chiromo Rd, Nairobi, Kenya
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>";
+
+            var payload = new
+            {
+                from = fromEmail,
+                to = new[] { recipientEmail },
+                subject = subject,
+                html = html
+            };
+
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://api.resend.com/emails");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+            request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("Sent trial expired email to {Email}", recipientEmail);
+                return true;
+            }
+
+            var err = await response.Content.ReadAsStringAsync();
+            _logger.LogWarning("Resend trial expired email error: {Error}", err);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send trial expired email to {Email}", recipientEmail);
+            return false;
+        }
+    }
+
+    public async Task<bool> SendSubscriptionExpiringSoonEmailAsync(
+        string recipientEmail,
+        string recipientName,
+        string planName,
+        DateTimeOffset currentPeriodEnd)
+    {
+        var apiKey = _config["Resend:ApiKey"];
+        var fromEmail = _config["Resend:FromEmail"] ?? "Markopilot Billing <billing@markopilot.com>";
+        var dashboardUrl = _config["Frontend:BaseUrl"] ?? "https://markopilot.com";
+
+        if (string.IsNullOrEmpty(apiKey))
+        {
+            _logger.LogWarning("Resend:ApiKey is not configured. Skipping subscription expiry email to {Email}", recipientEmail);
+            return false;
+        }
+
+        try
+        {
+            var subject = $"Your Markopilot Subscription Renews in 3 Days";
+            var formattedDate = currentPeriodEnd.ToString("MMMM dd, yyyy");
+            var html = $@"
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset=""utf-8"">
+  <title>Subscription Renewing</title>
+</head>
+<body style=""margin: 0; padding: 40px 16px; background-color: #07070a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #f3f4f6;"">
+  <table align=""center"" border=""0"" cellpadding=""0"" cellspacing=""0"" width=""100%"" style=""max-width: 560px; background-color: #111116; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5);"">
+    <tr>
+      <td style=""padding: 32px 32px 24px 32px; background: linear-gradient(180deg, rgba(59, 130, 246, 0.15) 0%, transparent 100%); text-align: center;"">
+        <div style=""width: 48px; height: 48px; background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #3b82f6; font-size: 24px; line-height: 48px; text-align: center;"">🔄</div>
+        <h1 style=""margin: 16px 0 4px 0; font-size: 22px; font-weight: 700; color: #ffffff;"">Subscription Renews in 3 Days</h1>
+        <p style=""margin: 0; font-size: 13px; color: #9ca3af;"">Keep your autonomous marketing running uninterrupted</p>
+      </td>
+    </tr>
+    <tr>
+      <td style=""padding: 0 32px 32px 32px;"">
+        <p style=""font-size: 14px; line-height: 1.6; color: #d1d5db;"">
+          Hi {recipientName},<br><br>
+          Your {planName} subscription will renew on <strong style=""color: #3b82f6;"">{formattedDate}</strong>. Your autonomous marketing and lead extraction will continue without interruption if payment is successful.
+        </p>
+
+        <div style=""background-color: #18181f; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 20px; margin: 20px 0;"">
+          <p style=""margin: 0 0 12px 0; font-size: 13px; color: #9ca3af;"">Subscription details:</p>
+          <table width=""100%"" style=""font-size: 13px; color: #9ca3af;"">
+            <tr>
+              <td style=""padding: 6px 0;"">Plan:</td>
+              <td align=""right"" style=""color: #ffffff; font-weight: 600;"">{planName}</td>
+            </tr>
+            <tr>
+              <td style=""padding: 6px 0;"">Renewal Date:</td>
+              <td align=""right"" style=""color: #ffffff;"">{formattedDate}</td>
+            </tr>
+          </table>
+        </div>
+
+        <table align=""center"" border=""0"" cellpadding=""0"" cellspacing=""0"" style=""margin-top: 24px;"">
+          <tr>
+            <td align=""center"" style=""border-radius: 9999px; background-color: #3b82f6;"">
+              <a href=""{dashboardUrl}/dashboard/account"" target=""_blank"" style=""display: inline-block; padding: 14px 32px; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 9999px;"">
+                Manage Subscription &rarr;
+              </a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style=""padding: 20px 32px; background-color: #0c0c10; border-top: 1px solid rgba(255, 255, 255, 0.06); text-align: center;"">
+        <p style=""margin: 0; font-size: 11px; color: #6b7280;"">
+          Markopilot Ltd • Mirage Tower, Chiromo Rd, Nairobi, Kenya
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>";
+
+            var payload = new
+            {
+                from = fromEmail,
+                to = new[] { recipientEmail },
+                subject = subject,
+                html = html
+            };
+
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://api.resend.com/emails");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+            request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("Sent subscription expiring soon email to {Email}", recipientEmail);
+                return true;
+            }
+
+            var err = await response.Content.ReadAsStringAsync();
+            _logger.LogWarning("Resend subscription expiry email error: {Error}", err);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send subscription expiring soon email to {Email}", recipientEmail);
+            return false;
+        }
+    }
+
+    public async Task<bool> SendSubscriptionExpiredEmailAsync(
+        string recipientEmail,
+        string recipientName,
+        string planName)
+    {
+        var apiKey = _config["Resend:ApiKey"];
+        var fromEmail = _config["Resend:FromEmail"] ?? "Markopilot Billing <billing@markopilot.com>";
+        var dashboardUrl = _config["Frontend:BaseUrl"] ?? "https://markopilot.com";
+
+        if (string.IsNullOrEmpty(apiKey))
+        {
+            _logger.LogWarning("Resend:ApiKey is not configured. Skipping subscription expired email to {Email}", recipientEmail);
+            return false;
+        }
+
+        try
+        {
+            var subject = $"Your Markopilot Subscription Has Expired";
+            var html = $@"
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset=""utf-8"">
+  <title>Subscription Expired</title>
+</head>
+<body style=""margin: 0; padding: 40px 16px; background-color: #07070a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #f3f4f6;"">
+  <table align=""center"" border=""0"" cellpadding=""0"" cellspacing=""0"" width=""100%"" style=""max-width: 560px; background-color: #111116; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5);"">
+    <tr>
+      <td style=""padding: 32px 32px 24px 32px; background: linear-gradient(180deg, rgba(239, 68, 68, 0.15) 0%, transparent 100%); text-align: center;"">
+        <div style=""width: 48px; height: 48px; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #ef4444; font-size: 24px; line-height: 48px; text-align: center;"">⏸️</div>
+        <h1 style=""margin: 16px 0 4px 0; font-size: 22px; font-weight: 700; color: #ffffff;"">Subscription Expired</h1>
+        <p style=""margin: 0; font-size: 13px; color: #9ca3af;"">Your autonomous engine has been paused</p>
+      </td>
+    </tr>
+    <tr>
+      <td style=""padding: 0 32px 32px 32px;"">
+        <p style=""font-size: 14px; line-height: 1.6; color: #d1d5db;"">
+          Hi {recipientName},<br><br>
+          Your {planName} subscription has expired. Your autonomous marketing engine has been paused. To resume service, please renew your subscription via M-PESA.
+        </p>
+
+        <div style=""background-color: #18181f; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 20px; margin: 20px 0;"">
+          <p style=""margin: 0 0 12px 0; font-size: 13px; color: #9ca3af;"">To resume your autonomous marketing:</p>
+          <ol style=""margin: 0; padding-left: 20px; font-size: 13px; color: #d1d5db; line-height: 1.8;"">
+            <li>Go to Account Settings in your dashboard</li>
+            <li>Click ""Renew Subscription""</li>
+            <li>Complete M-PESA payment (KES {PlanCatalog.GetByName(planName).PriceKes:N0})</li>
+          </ol>
+        </div>
+
+        <table align=""center"" border=""0"" cellpadding=""0"" cellspacing=""0"" style=""margin-top: 24px;"">
+          <tr>
+            <td align=""center"" style=""border-radius: 9999px; background-color: #ef4444;"">
+              <a href=""{dashboardUrl}/dashboard/account"" target=""_blank"" style=""display: inline-block; padding: 14px 32px; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 9999px;"">
+                Renew Subscription &rarr;
+              </a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style=""padding: 20px 32px; background-color: #0c0c10; border-top: 1px solid rgba(255, 255, 255, 0.06); text-align: center;"">
+        <p style=""margin: 0; font-size: 11px; color: #6b7280;"">
+          Markopilot Ltd • Mirage Tower, Chiromo Rd, Nairobi, Kenya
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>";
+
+            var payload = new
+            {
+                from = fromEmail,
+                to = new[] { recipientEmail },
+                subject = subject,
+                html = html
+            };
+
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://api.resend.com/emails");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+            request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("Sent subscription expired email to {Email}", recipientEmail);
+                return true;
+            }
+
+            var err = await response.Content.ReadAsStringAsync();
+            _logger.LogWarning("Resend subscription expired email error: {Error}", err);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send subscription expired email to {Email}", recipientEmail);
+            return false;
+        }
+    }
 }

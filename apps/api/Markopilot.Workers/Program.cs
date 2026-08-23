@@ -2,6 +2,7 @@ using Hangfire;
 using Hangfire.PostgreSql;
 using Markopilot.Core.Interfaces;
 using Markopilot.Core.Services;
+using Markopilot.Infrastructure.Email;
 using Markopilot.Infrastructure.Social;
 using Markopilot.Infrastructure.Supabase;
 using Markopilot.Workers.Workers;
@@ -38,7 +39,7 @@ builder.Services.AddHangfireServer(options =>
 });
 
 // ── Services ─────────────────────────────────────
-builder.Services.AddHttpClient<IAlertEmailService, Markopilot.Infrastructure.Email.ResendAlertEmailService>();
+builder.Services.AddHttpClient<IAlertEmailService, ResendAlertEmailService>();
 
 builder.Services.AddSingleton(sp =>
     new SupabaseRepository(
@@ -105,6 +106,9 @@ builder.Services.AddTransient<SocialPublishingWorker>();
 builder.Services.AddHttpClient<Markopilot.Core.Interfaces.IMediaGenerationService, Markopilot.Infrastructure.AI.MediaGenerationService>();
 builder.Services.AddHttpClient<Markopilot.Core.Interfaces.ISupabaseStorageService, Markopilot.Infrastructure.Supabase.SupabaseStorageService>();
 
+// ── Subscription Monitoring ──────────────────────
+builder.Services.AddTransient<SubscriptionMonitoringWorker>();
+
 var host = builder.Build();
 
 using (var scope = host.Services.CreateScope())
@@ -132,6 +136,12 @@ using (var scope = host.Services.CreateScope())
         "SocialPublishingWorker",
         worker => worker.ProcessScheduledPostsAsync(),
         "*/5 * * * *");
+
+    // Subscription Monitoring: runs daily to check trial/subscription expiry
+    jobManager.AddOrUpdate<Markopilot.Workers.Workers.SubscriptionMonitoringWorker>(
+        "SubscriptionMonitoringWorker",
+        worker => worker.ExecuteAsync(),
+        "0 0 * * *"); // Daily at midnight UTC
 }
 
 host.Run();

@@ -54,7 +54,7 @@ public class SubscriptionsController : ControllerBase
         var isTrialExpired = isTrialing && DateTimeOffset.UtcNow > trialExpiry;
         var isSubscriptionExpired = user.SubscriptionStatus == "active" && user.CurrentPeriodEnd.HasValue && DateTimeOffset.UtcNow > user.CurrentPeriodEnd.Value;
 
-        var isEnginePaused = isTrialExpired || isSubscriptionExpired || user.SubscriptionStatus == "expired" || user.SubscriptionStatus == "cancelled";
+        var isEnginePaused = isTrialExpired || isSubscriptionExpired || user.SubscriptionStatus == "expired" || user.SubscriptionStatus == "cancelled" || user.Status == "paused";
 
         return Ok(new
         {
@@ -173,6 +173,9 @@ public class SubscriptionsController : ControllerBase
                 plan.PostsPerMonth,
                 plan.BrandsAllowed);
 
+            // Reactivate engine if it was paused
+            await _userRepo.UpdateUserStatusAsync(userId, "active");
+
             await _userRepo.ResetQuotaCountersAsync(userId);
 
             await NotifyPaymentSuccessAsync(userId, plan, tx.Amount, tx.MpesaReceiptNumber ?? checkoutRequestId, periodEnd);
@@ -231,6 +234,9 @@ public class SubscriptionsController : ControllerBase
             plan.LeadsPerMonth,
             plan.PostsPerMonth,
             plan.BrandsAllowed);
+
+        // Reactivate engine if it was paused
+        await _userRepo.UpdateUserStatusAsync(userId, "active");
 
         await _userRepo.ResetQuotaCountersAsync(userId);
 

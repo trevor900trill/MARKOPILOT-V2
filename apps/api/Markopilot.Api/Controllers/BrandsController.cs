@@ -13,17 +13,20 @@ public class BrandsController : ControllerBase
     private readonly IBrandRepository _repo;
     private readonly ISocialRepository _socialRepo;
     private readonly IQuotaService _quotaService;
+    private readonly IUserRepository _userRepo;
     private readonly ILogger<BrandsController> _logger;
 
     public BrandsController(
         IBrandRepository repo,
         ISocialRepository socialRepo,
         IQuotaService quotaService,
+        IUserRepository userRepo,
         ILogger<BrandsController> logger)
     {
         _repo = repo;
         _socialRepo = socialRepo;
         _quotaService = quotaService;
+        _userRepo = userRepo;
         _logger = logger;
     }
 

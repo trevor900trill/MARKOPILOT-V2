@@ -176,4 +176,8 @@ public interface IAlertEmailService
 {
     Task<bool> SendErrorAlertAsync(string recipientEmail, string recipientName, string brandName, string errorDescription, string? actionUrl = null);
     Task<bool> SendPaymentConfirmationEmailAsync(string recipientEmail, string recipientName, string planName, decimal amountKes, string receiptNumber, DateTimeOffset periodEnd);
+    Task<bool> SendTrialExpiringSoonEmailAsync(string recipientEmail, string recipientName, DateTimeOffset trialEndsAt);
+    Task<bool> SendTrialExpiredEmailAsync(string recipientEmail, string recipientName, string planName);
+    Task<bool> SendSubscriptionExpiringSoonEmailAsync(string recipientEmail, string recipientName, string planName, DateTimeOffset currentPeriodEnd);
+    Task<bool> SendSubscriptionExpiredEmailAsync(string recipientEmail, string recipientName, string planName);
 }

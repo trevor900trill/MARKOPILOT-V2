@@ -104,15 +104,13 @@ export function AppSidebar() {
               key={link.name}
               href={link.href}
               title={collapsed ? link.name : undefined}
-              className={`flex items-center rounded-xl text-sm font-medium transition-all ${
-                collapsed 
-                  ? "w-11 h-11 mx-auto justify-center p-0" 
+              className={`flex items-center rounded-xl text-sm font-medium transition-all ${collapsed
+                  ? "w-11 h-11 mx-auto justify-center p-0"
                   : "gap-3 px-3 py-2.5"
-              } ${
-                active 
-                  ? "bg-[var(--accent-primary)] text-white shadow-lg shadow-[var(--accent-glow)]/20" 
+                } ${active
+                  ? "bg-[var(--accent-primary)] text-white shadow-lg shadow-[var(--accent-glow)]/20"
                   : "text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-elevated)]"
-              }`}
+                }`}
             >
               <link.icon size={18} className="flex-shrink-0" />
               {!collapsed && <span>{link.name}</span>}
@@ -126,9 +124,8 @@ export function AppSidebar() {
         <Link
           href="/dashboard/settings"
           title={collapsed ? "Brand Settings" : undefined}
-          className={`flex items-center rounded-xl text-sm font-medium transition-all ${
-            collapsed ? "w-11 h-11 mx-auto justify-center p-0" : "gap-3 px-3 py-2"
-          } ${isActive("/dashboard/settings") ? "bg-[var(--accent-primary)] text-white" : "text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-elevated)]"}`}
+          className={`flex items-center rounded-xl text-sm font-medium transition-all ${collapsed ? "w-11 h-11 mx-auto justify-center p-0" : "gap-3 px-3 py-2"
+            } ${isActive("/dashboard/settings") ? "bg-[var(--accent-primary)] text-white" : "text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-elevated)]"}`}
         >
           <Settings size={18} className="flex-shrink-0" />
           {!collapsed && <span>Brand Settings</span>}
@@ -137,9 +134,8 @@ export function AppSidebar() {
         <Link
           href="/account"
           title={collapsed ? "Account Settings" : undefined}
-          className={`flex items-center rounded-xl text-sm font-medium transition-all ${
-            collapsed ? "w-11 h-11 mx-auto justify-center p-0" : "gap-3 px-3 py-2"
-          } ${isActive("/account") ? "bg-[var(--accent-primary)] text-white" : "text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-elevated)]"}`}
+          className={`flex items-center rounded-xl text-sm font-medium transition-all ${collapsed ? "w-11 h-11 mx-auto justify-center p-0" : "gap-3 px-3 py-2"
+            } ${isActive("/account") ? "bg-[var(--accent-primary)] text-white" : "text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-elevated)]"}`}
         >
           <Settings size={18} className="flex-shrink-0" />
           {!collapsed && <span>Account Settings</span>}

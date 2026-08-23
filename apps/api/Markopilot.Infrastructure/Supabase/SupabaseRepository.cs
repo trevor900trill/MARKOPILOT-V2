@@ -1942,4 +1942,133 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
 
         await cmd.ExecuteNonQueryAsync();
     }
+
+    public async Task<List<User>> GetUsersWithTrialExpiringAsync(DateTimeOffset expiryDate)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            SELECT id, google_id, email, display_name, photo_url, onboarding_completed, 
+                   subscription_id, subscription_status, plan_name, current_period_end, 
+                   trial_ends_at, quota_leads_per_month, quota_posts_per_month, quota_brands_allowed,
+                   quota_leads_used, quota_posts_used, quota_reset_date, status, created_at, updated_at
+            FROM users
+            WHERE subscription_status = 'trialing'
+              AND trial_ends_at IS NOT NULL
+              AND trial_ends_at <= @expiryDate
+              AND trial_ends_at > @now
+              AND status = 'active'", conn);
+
+        cmd.Parameters.AddWithValue("expiryDate", expiryDate);
+        cmd.Parameters.AddWithValue("now", DateTimeOffset.UtcNow);
+
+        await using var reader = await cmd.ExecuteReaderAsync();
+        var users = new List<User>();
+        while (await reader.ReadAsync())
+        {
+            users.Add(MapUserFromReader(reader));
+        }
+        return users;
+    }
+
+    public async Task<List<User>> GetUsersWithExpiredTrialsAsync(DateTimeOffset now)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            SELECT id, google_id, email, display_name, photo_url, onboarding_completed, 
+                   subscription_id, subscription_status, plan_name, current_period_end, 
+                   trial_ends_at, quota_leads_per_month, quota_posts_per_month, quota_brands_allowed,
+                   quota_leads_used, quota_posts_used, quota_reset_date, status, created_at, updated_at
+            FROM users
+            WHERE subscription_status = 'trialing'
+              AND trial_ends_at IS NOT NULL
+              AND trial_ends_at <= @now
+              AND status = 'active'", conn);
+
+        cmd.Parameters.AddWithValue("now", now);
+
+        await using var reader = await cmd.ExecuteReaderAsync();
+        var users = new List<User>();
+        while (await reader.ReadAsync())
+        {
+            users.Add(MapUserFromReader(reader));
+        }
+        return users;
+    }
+
+    public async Task<List<User>> GetUsersWithSubscriptionExpiringAsync(DateTimeOffset expiryDate)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            SELECT id, google_id, email, display_name, photo_url, onboarding_completed, 
+                   subscription_id, subscription_status, plan_name, current_period_end, 
+                   trial_ends_at, quota_leads_per_month, quota_posts_per_month, quota_brands_allowed,
+                   quota_leads_used, quota_posts_used, quota_reset_date, status, created_at, updated_at
+            FROM users
+            WHERE subscription_status = 'active'
+              AND current_period_end IS NOT NULL
+              AND current_period_end <= @expiryDate
+              AND current_period_end > @now
+              AND status = 'active'", conn);
+
+        cmd.Parameters.AddWithValue("expiryDate", expiryDate);
+        cmd.Parameters.AddWithValue("now", DateTimeOffset.UtcNow);
+
+        await using var reader = await cmd.ExecuteReaderAsync();
+        var users = new List<User>();
+        while (await reader.ReadAsync())
+        {
+            users.Add(MapUserFromReader(reader));
+        }
+        return users;
+    }
+
+    public async Task<List<User>> GetUsersWithExpiredSubscriptionsAsync(DateTimeOffset now)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            SELECT id, google_id, email, display_name, photo_url, onboarding_completed, 
+                   subscription_id, subscription_status, plan_name, current_period_end, 
+                   trial_ends_at, quota_leads_per_month, quota_posts_per_month, quota_brands_allowed,
+                   quota_leads_used, quota_posts_used, quota_reset_date, status, created_at, updated_at
+            FROM users
+            WHERE subscription_status = 'active'
+              AND current_period_end IS NOT NULL
+              AND current_period_end <= @now
+              AND status = 'active'", conn);
+
+        cmd.Parameters.AddWithValue("now", now);
+
+        await using var reader = await cmd.ExecuteReaderAsync();
+        var users = new List<User>();
+        while (await reader.ReadAsync())
+        {
+            users.Add(MapUserFromReader(reader));
+        }
+        return users;
+    }
+
+    public async Task UpdateUserStatusAsync(Guid userId, string status)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            UPDATE users
+            SET status = @status, updated_at = @updatedAt
+            WHERE id = @userId", conn);
+
+        cmd.Parameters.AddWithValue("userId", userId);
+        cmd.Parameters.AddWithValue("status", status);
+        cmd.Parameters.AddWithValue("updatedAt", DateTimeOffset.UtcNow);
+
+        await cmd.ExecuteNonQueryAsync();
+    }
 }

@@ -5,7 +5,6 @@ import { ArrowRight, Check, Sparkles, Loader2, Zap } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { apiGet, apiPost, apiPatch } from "@/lib/api-client";
-import { PLANS, DEFAULT_PLAN } from "@/lib/plans";
 
 const INDUSTRIES = [
   { value: "SaaS", label: "Software & SaaS" },
@@ -44,7 +43,6 @@ export function OnboardingWizard() {
     assertiveness: "Balanced",
     empathy: "Medium",
     contentPillars: [] as string[],
-    selectedPlan: DEFAULT_PLAN,
   });
 
   // Tag input helpers
@@ -56,18 +54,9 @@ export function OnboardingWizard() {
   const updateForm = (key: string, value: any) => setFormData(prev => ({ ...prev, [key]: value }));
 
   const nextStep = () => {
-    // Skip Plan Selection (Step 6) if user already has brands or is already onboarded
-    if (step === 5 && (session?.user as any)?.onboardingCompleted) {
-      setStep(7);
-      return;
-    }
     setStep(s => s + 1);
   };
   const prevStep = () => {
-    if (step === 7 && (session?.user as any)?.onboardingCompleted) {
-      setStep(5);
-      return;
-    }
     setStep(s => s - 1);
   };
 
@@ -175,21 +164,8 @@ export function OnboardingWizard() {
       // 3. Update the local session
       await update({ onboardingCompleted: true });
 
-      // 4. Handle Subscription (Redirect to LS for ALL plans to capture CC for trial)
-      // Only redirect if this is the user's first time onboarding (Global Plan Selection)
-      const wasOnboarded = (session?.user as any)?.onboardingCompleted;
-
-      if (!wasOnboarded) {
-        const checkoutData = await apiGet<{ url: string }>(`/subscriptions/checkout?planId=${formData.selectedPlan.toLowerCase()}`);
-
-        if (checkoutData?.url) {
-          window.location.href = checkoutData.url;
-          return; // Stop here, redirecting
-        }
-      }
-
-      // 5. Move to success step (for subsequent brands or if redirect fails)
-      setStep(8);
+      // 4. Move to success step
+      setStep(6);
     } catch (err) {
       console.error("Onboarding failed:", err);
       // alert("Failed to save your brand. Please try again.");
@@ -199,7 +175,7 @@ export function OnboardingWizard() {
   };
 
   const user = session?.user || { name: "Pilot", image: "" };
-  const totalSteps = 7;
+  const totalSteps = 5;
 
   const TagDisplay = ({ field }: { field: string }) => {
     const tags = (formData as any)[field] as string[];
@@ -421,38 +397,8 @@ export function OnboardingWizard() {
           </div>
         )}
 
-        {/* Step 6 — Choose a Plan */}
+        {/* Step 6 — Complete */}
         {step === 6 && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
-            <h2 className="font-serif text-3xl text-white text-center">Choose Your Plan</h2>
-            <div className="grid gap-4">
-              {PLANS.map((plan) => (
-                <button
-                  key={plan.id}
-                  onClick={() => updateForm("selectedPlan", plan.id)}
-                  className={`p-4 rounded-2xl border transition-all text-left flex justify-between items-center ${formData.selectedPlan === plan.id ? "bg-[var(--bg-elevated)] border-[var(--accent-primary)] shadow-lg shadow-[var(--accent-glow)]/10" : "bg-transparent border-[var(--border)] hover:border-white/20"}`}
-                >
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-white">{plan.id}</span>
-                      {plan.featured && <span className="text-[10px] bg-[var(--accent-primary)] px-2 py-0.5 rounded-full text-white font-bold uppercase">Popular</span>}
-                    </div>
-                    <div className="text-xs text-[var(--text-secondary)]">{plan.brands}, {plan.posts}, {plan.leads}</div>
-                  </div>
-                  <div className="text-xl font-serif text-white">{plan.price}<span className="text-[10px] text-[var(--text-muted)] font-sans">/mo</span></div>
-                </button>
-              ))}
-            </div>
-            <p className="text-center text-[var(--text-muted)] text-[10px]">All plans start with a 14-day free trial.</p>
-            <div className="flex gap-4">
-              <button onClick={prevStep} className="flex-1 py-4 mt-4 rounded-full border border-[var(--border)] text-[var(--text-secondary)] font-medium hover:bg-white/5">Back</button>
-              <button onClick={nextStep} className="flex-[2] py-4 mt-4 rounded-full bg-[var(--accent-primary)] text-white font-medium hover:opacity-90">Continue</button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 7 — Complete */}
-        {step === 7 && (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
             <h2 className="font-serif text-3xl text-center text-white">Ready to Launch</h2>
             <div className="p-6 rounded-2xl bg-white/5 border border-white/10 text-center space-y-4">
@@ -485,8 +431,8 @@ export function OnboardingWizard() {
           </div>
         )}
 
-        {/* Success Screen (after step 7 completes) */}
-        {step === 8 && (
+        {/* Success Screen (after step 6 completes) */}
+        {step === 7 && (
           <div className="text-center space-y-6 animate-in fade-in slide-in-from-bottom-4">
             <div className="w-20 h-20 bg-[var(--success)]/20 text-[var(--success)] rounded-full mx-auto flex items-center justify-center">
               <Check size={40} />

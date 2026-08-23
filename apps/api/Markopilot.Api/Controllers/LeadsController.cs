@@ -13,6 +13,7 @@ public class LeadsController : ControllerBase
     private readonly IQuotaService _quotaService;
     private readonly ILeadRepository _leadRepo;
     private readonly IOutreachRepository _outreachRepo;
+    private readonly IUserRepository _userRepo;
     private readonly ILogger<LeadsController> _logger;
 
     public LeadsController(
@@ -20,12 +21,14 @@ public class LeadsController : ControllerBase
         IQuotaService quotaService, 
         ILeadRepository leadRepo,
         IOutreachRepository outreachRepo,
+        IUserRepository userRepo,
         ILogger<LeadsController> logger)
     {
         _backgroundJobs = backgroundJobs;
         _quotaService = quotaService;
         _leadRepo = leadRepo;
         _outreachRepo = outreachRepo;
+        _userRepo = userRepo;
         _logger = logger;
     }
 
@@ -57,6 +60,14 @@ public class LeadsController : ControllerBase
     public async Task<IActionResult> QueueForOutreach(Guid brandId, Guid leadId)
     {
         var ownerId = HttpContext.GetUserId();
+        
+        // Check if engine is paused due to expired trial/subscription
+        var user = await _userRepo.GetUserByIdAsync(ownerId);
+        if (user?.Status == "paused")
+        {
+            return StatusCode(403, new { error = new { code = "ENGINE_PAUSED", message = "Your autonomous engine is paused due to expired trial or subscription. Please renew your subscription to resume operations." } });
+        }
+        
         var lead = await _leadRepo.GetLeadByIdAsync(brandId, leadId, ownerId);
         if (lead == null) return NotFound(new { error = new { code = "NOT_FOUND", message = "Lead not found" } });
         
@@ -103,6 +114,14 @@ public class LeadsController : ControllerBase
     public async Task<IActionResult> RunDiscoveryNow(Guid brandId)
     {
         var ownerId = HttpContext.GetUserId();
+        
+        // Check if engine is paused due to expired trial/subscription
+        var user = await _userRepo.GetUserByIdAsync(ownerId);
+        if (user?.Status == "paused")
+        {
+            return StatusCode(403, new { error = new { code = "ENGINE_PAUSED", message = "Your autonomous engine is paused due to expired trial or subscription. Please renew your subscription to resume operations." } });
+        }
+        
         if (!await _quotaService.CanDiscoverLeadAsync(ownerId))
         {
             return StatusCode(403, new { error = new { code = "QUOTA_EXCEEDED", message = "Lead discovery limit reached for this month." } });

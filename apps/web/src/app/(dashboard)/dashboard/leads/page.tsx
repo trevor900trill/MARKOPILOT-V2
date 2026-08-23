@@ -3,7 +3,8 @@
 import { 
   Users, Search, Play, Filter, Download, MailPlus, Trash2, ShieldBan, 
   ExternalLink, RefreshCw, Sparkles, ChevronDown, ChevronUp, Mail, 
-  HelpCircle, CheckCircle2, AlertTriangle, XCircle, Clock, ShieldCheck, X, Ban
+  HelpCircle, CheckCircle2, AlertTriangle, XCircle, Clock, ShieldCheck, X, Ban,
+  ChevronLeft, ChevronRight, AlertCircle
 } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useEffect, useCallback } from "react";
@@ -47,6 +48,7 @@ export default function LeadsPage() {
   const [performance, setPerformance] = useState<QueryPerformance[]>([]);
   const [isPerformanceLoading, setIsPerformanceLoading] = useState(false);
   const [expandedLeads, setExpandedLeads] = useState<Set<string>>(new Set());
+  const [isEnginePaused, setIsEnginePaused] = useState(false);
 
   const toggleExpand = (id: string) => {
     setExpandedLeads(prev => {
@@ -91,10 +93,26 @@ export default function LeadsPage() {
   useEffect(() => {
     fetchLeads();
     fetchPerformance();
+    
+    // Check if engine is paused
+    const checkEngineStatus = async () => {
+      try {
+        const statusData = await apiGet<any>('/subscriptions/status');
+        setIsEnginePaused(statusData?.isEnginePaused ?? false);
+      } catch (err) {
+        console.error("Failed to check engine status:", err);
+      }
+    };
+    
+    checkEngineStatus();
   }, [fetchLeads, fetchPerformance]);
 
   const handleRunDiscovery = async () => {
     if (!activeBrand) return;
+    if (isEnginePaused) {
+      toast.error("Your autonomous engine is paused due to expired trial or subscription. Please renew your subscription to resume operations.");
+      return;
+    }
     setIsDiscovering(true);
     try {
       await apiPost(`/leads/${activeBrand.id}/run-now`);
@@ -109,6 +127,10 @@ export default function LeadsPage() {
 
   const handleQueueOutreach = async (leadId: string) => {
     if (!activeBrand) return;
+    if (isEnginePaused) {
+      toast.error("Your autonomous engine is paused due to expired trial or subscription. Please renew your subscription to resume operations.");
+      return;
+    }
     try {
       await apiPost(`/leads/${activeBrand.id}/${leadId}/queue-outreach`);
       setLeads(leads.map(l => l.id === leadId ? { ...l, status: "outreach_queued" } : l));
@@ -269,11 +291,12 @@ export default function LeadsPage() {
           </button>
           <button
             onClick={handleRunDiscovery}
-            disabled={isDiscovering}
+            disabled={isDiscovering || isEnginePaused}
             className="flex items-center gap-2 px-4 py-2 bg-[var(--accent-primary)] text-white hover:bg-opacity-90 rounded-xl transition font-medium text-xs disabled:opacity-50"
+            title={isEnginePaused ? "Engine paused - renew subscription to resume" : "Run discovery now"}
           >
             <Play size={14} className={isDiscovering ? "animate-pulse" : ""} />
-            {isDiscovering ? "Dispatching Agents..." : "Run Discovery Now"}
+            {isEnginePaused ? "Engine Paused" : (isDiscovering ? "Dispatching Agents..." : "Run Discovery Now")}
           </button>
         </div>
       </div>
@@ -303,6 +326,25 @@ export default function LeadsPage() {
 
       <DiscoveryInsights performance={performance} isLoading={isPerformanceLoading} />
 
+      {/* Engine Paused Banner */}
+      {isEnginePaused && (
+        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-3 mb-6">
+          <AlertCircle className="text-amber-400 flex-shrink-0" size={20} />
+          <div className="flex-1">
+            <h3 className="text-sm font-semibold text-white">Autonomous Engine Paused</h3>
+            <p className="text-xs text-amber-200/80 mt-0.5">
+              Your 7-day trial or monthly subscription has ended. Renew via M-PESA to resume autonomous lead extraction and outreach.
+            </p>
+          </div>
+          <button
+            onClick={() => window.location.href = "/dashboard/account"}
+            className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black font-semibold text-xs rounded-lg transition"
+          >
+            Renew Subscription
+          </button>
+        </div>
+      )}
+
       {/* Main Table Area */}
       <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl overflow-hidden flex flex-col">
         {/* Toolbar & Filters */}
@@ -314,7 +356,7 @@ export default function LeadsPage() {
               type="text"
               placeholder="Search by name, title, company, or email..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
               className="w-full pl-9 pr-4 py-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl outline-none focus:border-[var(--accent-primary)] text-xs text-white transition placeholder:text-[var(--text-muted)]"
             />
           </div>
@@ -322,7 +364,7 @@ export default function LeadsPage() {
           {/* Filter Pills */}
           <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
             <button
-              onClick={() => setFilterMode("all")}
+              onClick={() => { setFilterMode("all"); setPage(1); }}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap ${
                 filterMode === "all"
                   ? "bg-white text-black font-semibold shadow"
@@ -332,7 +374,7 @@ export default function LeadsPage() {
               All Leads ({leads.length})
             </button>
             <button
-              onClick={() => setFilterMode("enriched")}
+              onClick={() => { setFilterMode("enriched"); setPage(1); }}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap ${
                 filterMode === "enriched"
                   ? "bg-emerald-500 text-black font-semibold shadow"
@@ -342,7 +384,7 @@ export default function LeadsPage() {
               Enriched with Email ({enrichedCount})
             </button>
             <button
-              onClick={() => setFilterMode("high_value")}
+              onClick={() => { setFilterMode("high_value"); setPage(1); }}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap ${
                 filterMode === "high_value"
                   ? "bg-[var(--accent-primary)] text-white font-semibold shadow"
@@ -352,7 +394,7 @@ export default function LeadsPage() {
               High Quality &ge;80 ({highQualityCount})
             </button>
             <button
-              onClick={() => setFilterMode("suppressed")}
+              onClick={() => { setFilterMode("suppressed"); setPage(1); }}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap ${
                 filterMode === "suppressed"
                   ? "bg-red-500 text-white font-semibold shadow"
@@ -393,7 +435,7 @@ export default function LeadsPage() {
                 </tr>
               ) : filteredLeads.map(lead => (
                 <tr key={lead.id} className={`hover:bg-white/5 transition group ${lead.status === 'disqualified' || lead.isSuppressed ? 'opacity-60' : ''}`}>
-                  <td className="px-6 py-4 min-w-[250px]">
+                  <td className="px-6 py-4 min-w-[200px]">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-[var(--bg-primary)] border border-[var(--border)] flex items-center justify-center font-serif text-[var(--accent-primary)] font-bold text-sm">
                         {(lead.name || '?').charAt(0)}
@@ -492,6 +534,58 @@ export default function LeadsPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="px-6 py-4 border-t border-[var(--border)] flex items-center justify-between bg-[#111114]">
+            <div className="text-xs text-[var(--text-muted)]">
+              Showing page {page} of {totalPages} ({totalLeads} total leads)
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[var(--border)] text-xs font-medium text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-elevated)] disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                <ChevronLeft size={14} /> Previous
+              </button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (page <= 3) {
+                    pageNum = i + 1;
+                  } else if (page >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = page - 2 + i;
+                  }
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setPage(pageNum)}
+                      className={`w-8 h-8 rounded-lg text-xs font-medium transition ${
+                        page === pageNum
+                          ? "bg-[var(--accent-primary)] text-white"
+                          : "text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-elevated)]"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+              <button
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[var(--border)] text-xs font-medium text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-elevated)] disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                Next <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ENRICHMENT & STATUS GUIDE MODAL */}
