@@ -262,7 +262,7 @@ export default function CalendarPage() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in max-w-7xl pb-16">
+    <div data-tour="page-calendar-body" className="space-y-8 animate-in fade-in max-w-7xl pb-16">
       {/* Toast Alert */}
       {triggerToast && (
         <div className="fixed top-6 right-6 z-50 bg-emerald-500 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in slide-in-from-top duration-300 border border-emerald-400/30">
@@ -277,7 +277,7 @@ export default function CalendarPage() {
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-mono text-[var(--accent-primary)] uppercase tracking-wider font-bold">Automation Telemetry</span>
           </div>
-          <h1 className="text-3xl font-serif text-white flex items-center gap-3">
+          <h1 data-tour="page-calendar-head" className="text-3xl font-serif text-white flex items-center gap-3">
             <CalendarIcon className="text-[var(--accent-primary)]" size={32} />
             Execution Calendar & Schedule
           </h1>

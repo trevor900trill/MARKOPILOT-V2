@@ -77,9 +77,9 @@ export default function ActivityPage() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in max-w-5xl">
+    <div data-tour="page-activity-body" className="space-y-8 animate-in fade-in max-w-5xl">
        <div className="flex items-center justify-between">
-           <h1 className="text-3xl font-serif text-white flex items-center gap-3">
+           <h1 data-tour="page-activity-head" className="text-3xl font-serif text-white flex items-center gap-3">
               <Activity className="text-[var(--accent-primary)]" size={32} />
               Activity Log
            </h1>

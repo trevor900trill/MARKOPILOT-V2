@@ -258,11 +258,11 @@ export default function LeadsPage() {
   const suppressedCount = leads.filter(l => !!l.isSuppressed).length;
 
   return (
-    <div className="space-y-8 animate-in fade-in max-w-7xl pb-16">
+    <div data-tour="page-leads-body" className="space-y-8 animate-in fade-in max-w-7xl pb-16">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-serif text-white flex items-center gap-3">
+          <h1 data-tour="page-leads-head" className="text-3xl font-serif text-white flex items-center gap-3">
             <Users className="text-[var(--accent-primary)]" size={32} /> Lead Intelligence
           </h1>
           <p className="text-[var(--text-secondary)] mt-1">Autonomous mining pipeline sourcing and validating prospects 24/7.</p>

@@ -213,9 +213,9 @@ export default function OutreachPage() {
   const sentCount = emails.filter(e => e.status === 'sent').length;
 
   return (
-    <div className="space-y-8 animate-in fade-in max-w-6xl">
+    <div data-tour="page-outreach-body" className="space-y-8 animate-in fade-in max-w-6xl">
        <div className="flex items-center justify-between">
-           <h1 className="text-3xl font-serif text-white flex items-center gap-3">
+           <h1 data-tour="page-outreach-head" className="text-3xl font-serif text-white flex items-center gap-3">
               <Mail className="text-[var(--accent-primary)]" size={32} />
               Email Outreach
            </h1>

@@ -242,11 +242,11 @@ export default function SocialPage() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in max-w-6xl pb-12">
+    <div data-tour="page-social-body" className="space-y-8 animate-in fade-in max-w-6xl pb-12">
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-serif text-white flex items-center gap-3">
+          <h1 data-tour="page-social-head" className="text-3xl font-serif text-white flex items-center gap-3">
             Social Posting & Automation
           </h1>
           <p className="text-[var(--text-secondary)] text-sm mt-1">

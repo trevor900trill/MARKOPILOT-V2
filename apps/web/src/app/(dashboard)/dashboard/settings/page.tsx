@@ -155,9 +155,9 @@ export default function BrandSettingsPage() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in max-w-4xl pb-12">
+    <div data-tour="page-settings-body" className="space-y-8 animate-in fade-in max-w-4xl pb-12">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-serif text-white">Brand Settings</h1>
+        <h1 data-tour="page-settings-head" className="text-3xl font-serif text-white">Brand Settings</h1>
         <button onClick={handleSave} disabled={loading} className="px-5 py-2 rounded-full bg-[var(--accent-primary)] text-white font-medium hover:opacity-90 transition flex gap-2 items-center disabled:opacity-50 shadow-lg shadow-[var(--accent-primary)]/20">
           <Save size={16} /> {loading ? "Saving..." : saved ? "Saved ✓" : "Save Changes"}
         </button>

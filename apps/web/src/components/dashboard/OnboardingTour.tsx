@@ -1,7 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { X, ChevronRight, ChevronLeft, Sparkles, Rocket, PartyPopper, RotateCcw } from "lucide-react";
+import {
+  X, ChevronRight, ChevronLeft, Sparkles, Rocket, PartyPopper, RotateCcw, Loader2,
+  LayoutDashboard, Briefcase, Calendar, Send, Users, Mail, Activity, Settings, CreditCard,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
 
 // ── Tour Step Definitions ─────────────────────────────────────────
 
@@ -11,9 +16,19 @@ type TourStep = {
   body: string;
   emoji: string;
   position: "bottom" | "top" | "left" | "right";
+  route?: string;         // which dashboard route this step lives on (enables cross-page navigation)
 };
 
-const TOUR_STEPS: TourStep[] = [
+type TourMeta = {
+  id: string;
+  label: string;
+  route: string;
+  icon: LucideIcon;
+  steps: TourStep[];
+};
+
+// ── Overview (app shell) steps ────────────────────────────────────
+const OVERVIEW_STEPS: TourStep[] = [
   {
     target: "brand-switcher",
     title: "Your Brand Hub",
@@ -59,11 +74,115 @@ const TOUR_STEPS: TourStep[] = [
   {
     target: "nav-links",
     title: "Your Command Center",
-    body: "Social Posting, Lead Generation, Email Outreach, Calendar — everything lives here. Explore each module to set up your automation workflow.",
+    body: "Social Posting, Lead Generation, Email Outreach, Calendar — everything lives here. Keep going, the tour steps you through each one next.",
     emoji: "🧭",
     position: "right",
   },
+].map((s) => ({ ...s, route: "/dashboard" } as TourStep));
+// ── Per-page tours ────────────────────────────────────────────────
+const BRANDS_STEPS: TourStep[] = [
+  {
+    target: "page-brands-head", title: "Your Brands", emoji: "🗂️", position: "top",
+    body: "Every business you run appears here. Each brand keeps its own AI voice, posts, leads, and outreach pipeline separate.",
+  },
+  {
+    target: "page-brands-body", title: "One Workspace, Many Brands", emoji: "🏢", position: "bottom",
+    body: "Add a new brand with the Add New Brand button, then switch between them. Each one is a fully independent autopilot.",
+  },
+].map((s) => ({ ...s, route: "/dashboard/brands" } as TourStep));
+
+const CALENDAR_STEPS: TourStep[] = [
+  {
+    target: "page-calendar-head", title: "Execution Calendar & Schedule", emoji: "🗓️", position: "top",
+    body: "See exactly when Markopilot plans to publish content, run discovery, and send outreach — all on one timeline.",
+  },
+  {
+    target: "page-calendar-body", title: "Your Automation Timeline", emoji: "📅", position: "bottom",
+    body: "Jump between months, filter by type, and review every scheduled run. Nothing goes out without you seeing it first.",
+  },
+].map((s) => ({ ...s, route: "/dashboard/calendar" } as TourStep));
+
+const SOCIAL_STEPS: TourStep[] = [
+  {
+    target: "page-social-head", title: "Social Posting & Automation", emoji: "✍️", position: "top",
+    body: "Connect your social accounts so Markopilot can craft and publish posts for your brand.",
+  },
+  {
+    target: "page-social-body", title: "Post, Queue & Publish", emoji: "📢", position: "bottom",
+    body: "Draft a post, review AI-generated copy, and pick an account. Automation can post on autopilot once you're comfortable.",
+  },
+].map((s) => ({ ...s, route: "/dashboard/social" } as TourStep));
+
+const LEADS_STEPS: TourStep[] = [
+  {
+    target: "page-leads-head", title: "Lead Intelligence", emoji: "🎯", position: "top",
+    body: "AI scans the web for prospects matching your ideal customer profile and scores each from 0 to 100.",
+  },
+  {
+    target: "page-leads-body", title: "Filter, Score & Send", emoji: "🔍", position: "bottom",
+    body: "Search your pipeline, dig into a lead's profile, and push high-scored matches straight into Email Outreach.",
+  },
+].map((s) => ({ ...s, route: "/dashboard/leads" } as TourStep));
+
+const OUTREACH_STEPS: TourStep[] = [
+  {
+    target: "page-outreach-head", title: "Email Outreach", emoji: "📧", position: "top",
+    body: "Follow up with discovered leads automatically. Connect Gmail, then let AI craft personalized, on-brand emails.",
+  },
+  {
+    target: "page-outreach-body", title: "Send With Approval", emoji: "🕹️", position: "bottom",
+    body: "Set daily limits, pacing, and approval gates. You stay in control of everything that actually leaves your inbox.",
+  },
+].map((s) => ({ ...s, route: "/dashboard/outreach" } as TourStep));
+
+const ACTIVITY_STEPS: TourStep[] = [
+  {
+    target: "page-activity-head", title: "Activity Log", emoji: "📊", position: "top",
+    body: "A full audit trail of every action Markopilot took on your behalf — posts, leads, emails, and automation runs.",
+  },
+  {
+    target: "page-activity-body", title: "Your Automation Ledger", emoji: "🧾", position: "bottom",
+    body: "Filter by type and expand any entry to inspect exactly what happened and when.",
+  },
+].map((s) => ({ ...s, route: "/dashboard/activity" } as TourStep));
+
+const SETTINGS_STEPS: TourStep[] = [
+  {
+    target: "page-settings-head", title: "Brand Settings", emoji: "⚙️", position: "top",
+    body: "Define your brand's voice — name, description, ideal customer, and target rules that shape what the AI creates.",
+  },
+  {
+    target: "page-settings-body", title: "Tune Every Engine", emoji: "🎛️", position: "bottom",
+    body: "Flip posting, discovery, and outreach automation on or off, set approval gates, and save your changes here.",
+  },
+].map((s) => ({ ...s, route: "/dashboard/settings" } as TourStep));
+
+const ACCOUNT_STEPS: TourStep[] = [
+  {
+    target: "page-account-head", title: "Account & Subscription", emoji: "💳", position: "top",
+    body: "Manage your plan, subscription status, and billing details all in one place.",
+  },
+  {
+    target: "page-account-body", title: "Plan & Quota", emoji: "📈", position: "bottom",
+    body: "Review your current plan's limits and upgrade any time to unlock more posts, leads, and brands.",
+  },
+].map((s) => ({ ...s, route: "/dashboard/account" } as TourStep));
+
+// Registry of every available tour (used by the sidebar Tours menu)
+export const PAGE_TOURS: TourMeta[] = [
+  { id: "overview", label: "Overview", route: "/dashboard", icon: LayoutDashboard, steps: OVERVIEW_STEPS },
+  { id: "brands", label: "Brands", route: "/dashboard/brands", icon: Briefcase, steps: BRANDS_STEPS },
+  { id: "calendar", label: "Calendar & Schedule", route: "/dashboard/calendar", icon: Calendar, steps: CALENDAR_STEPS },
+  { id: "social", label: "Social Posting", route: "/dashboard/social", icon: Send, steps: SOCIAL_STEPS },
+  { id: "leads", label: "Lead Generation", route: "/dashboard/leads", icon: Users, steps: LEADS_STEPS },
+  { id: "outreach", label: "Email Outreach", route: "/dashboard/outreach", icon: Mail, steps: OUTREACH_STEPS },
+  { id: "activity", label: "Activity Log", route: "/dashboard/activity", icon: Activity, steps: ACTIVITY_STEPS },
+  { id: "settings", label: "Brand Settings", route: "/dashboard/settings", icon: Settings, steps: SETTINGS_STEPS },
+  { id: "account", label: "Account & Subscription", route: "/dashboard/account", icon: CreditCard, steps: ACCOUNT_STEPS },
 ];
+
+// The guided first-run walk across every module, in order
+const FULL_STEPS: TourStep[] = PAGE_TOURS.flatMap((t) => t.steps);
 
 const STORAGE_KEY = "markopilot_tour_completed";
 
@@ -150,14 +269,32 @@ function ConfettiCanvas() {
 type TourPhase = "idle" | "welcome" | "stepping" | "complete";
 
 export function OnboardingTour() {
+  const router = useRouter();
+  const pathname = usePathname();
   const [phase, setPhase] = useState<TourPhase>("idle");
+  const [steps, setSteps] = useState<TourStep[]>(FULL_STEPS);
   const [stepIndex, setStepIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [tooltipReady, setTooltipReady] = useState(false);
+  const [loading, setLoading] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const navLockRef = useRef("");
+  const currentStep = steps[stepIndex];
 
-  // Check if tour should auto-start
+  const routeLabel = (route?: string) =>
+    PAGE_TOURS.find((t) => t.route === route)?.label ?? "the next module";
+
+  const startTour = (id: string) => {
+    setSteps(id === "full" ? FULL_STEPS : (PAGE_TOURS.find((t) => t.id === id)?.steps ?? FULL_STEPS));
+    setStepIndex(0);
+    setLoading(true);
+    setTargetRect(null);
+    setTooltipReady(false);
+    setPhase("stepping");
+  };
+
+  // Check if tour should auto-start on first visit
   useEffect(() => {
     const timer = setTimeout(() => {
       if (typeof window === "undefined") return;
@@ -169,14 +306,11 @@ export function OnboardingTour() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Listen for manual replay trigger
+  // Listen for sidebar-launched tours (re-run the full tour, or a specific page tour)
   useEffect(() => {
-    const handler = () => {
-      setStepIndex(0);
-      setPhase("welcome");
-    };
-    window.addEventListener("markopilot:replay-tour", handler);
-    return () => window.removeEventListener("markopilot:replay-tour", handler);
+    const handler = (e: CustomEvent) => startTour(e.detail || "full");
+    window.addEventListener("markopilot:tour", handler as EventListener);
+    return () => window.removeEventListener("markopilot:tour", handler as EventListener);
   }, []);
 
   // Clear elevation from any previously-highlighted element
@@ -190,61 +324,86 @@ export function OnboardingTour() {
     });
   }, []);
 
-  // Locate target element for current step and elevate it
-  const locateTarget = useCallback(() => {
-    if (phase !== "stepping") {
+  // Navigate to the page a step lives on, when we're not there yet
+  useEffect(() => {
+    if (phase !== "stepping") return;
+    const step = steps[stepIndex];
+    if (!step?.route || step.route === pathname) return;
+    const key = `${stepIndex}:${step.route}`;
+    if (navLockRef.current === key) return;
+    navLockRef.current = key;
+    setLoading(true);
+    setTooltipReady(false);
+    router.push(step.route);
+  }, [phase, stepIndex, steps, pathname, router]);
+
+  // Actively find & elevate the current step's target (waits across page loads)
+  useEffect(() => {
+    if (phase !== "stepping") return;
+    const step = steps[stepIndex];
+    if (!step) return;
+
+    const applyElevate = (el: HTMLElement) => {
       clearElevation();
-      return;
-    }
-    const step = TOUR_STEPS[stepIndex];
-
-    // Clear previous elevation first
-    clearElevation();
-
-    const el = document.querySelector(`[data-tour="${step.target}"]`) as HTMLElement | null;
-    if (el) {
-      // Elevate above the overlay (z-9980) so it appears bright & clear
       el.style.position = "relative";
       el.style.zIndex = "9985";
       el.style.borderRadius = "16px";
       el.style.boxShadow = "0 0 0 4px rgba(139, 92, 246, 0.2), 0 0 30px 4px rgba(139, 92, 246, 0.08)";
       el.setAttribute("data-tour-elevated", "true");
-
-      // Scroll into view if needed
       el.scrollIntoView({ behavior: "smooth", block: "nearest" });
-
-      // Read rect after a tick so scroll settles
+      setLoading(false);
       setTooltipReady(false);
       setTimeout(() => {
-        const rect = el.getBoundingClientRect();
-        setTargetRect(rect);
+        setTargetRect(el.getBoundingClientRect());
         setTooltipReady(true);
-      }, 200);
-    } else {
+      }, 250);
+      return true;
+    };
+
+    const earlyEl = document.querySelector(`[data-tour="${step.target}"]`) as HTMLElement | null;
+    if (earlyEl && applyElevate(earlyEl)) return;
+
+    setLoading(true);
+    const iv = setInterval(() => {
+      const el = document.querySelector(`[data-tour="${step.target}"]`) as HTMLElement | null;
+      if (el) {
+        clearInterval(iv);
+        applyElevate(el);
+      }
+    }, 450);
+    const timeout = setTimeout(() => {
+      clearInterval(iv);
+      setLoading(false);
       setTargetRect(null);
       setTooltipReady(true);
-    }
-  }, [phase, stepIndex, clearElevation]);
-
-  useEffect(() => {
-    locateTarget();
-    // Recalculate on resize/scroll
-    window.addEventListener("resize", locateTarget);
-    window.addEventListener("scroll", locateTarget, true);
+    }, 7000);
     return () => {
-      window.removeEventListener("resize", locateTarget);
-      window.removeEventListener("scroll", locateTarget, true);
-      clearElevation(); // Clean up on unmount
+      clearInterval(iv);
+      clearTimeout(timeout);
     };
-  }, [locateTarget, clearElevation]);
+  }, [phase, stepIndex, steps, clearElevation]);
 
-  const handleStart = () => {
-    setStepIndex(0);
-    setPhase("stepping");
-  };
+  // Reposition the tooltip when the page scrolls or the window resizes
+  useEffect(() => {
+    if (phase !== "stepping" || loading) return;
+    const step = steps[stepIndex];
+    if (!step) return;
+    const recompute = () => {
+      const el = document.querySelector(`[data-tour="${step.target}"]`) as HTMLElement | null;
+      if (el) setTargetRect(el.getBoundingClientRect());
+    };
+    window.addEventListener("resize", recompute);
+    window.addEventListener("scroll", recompute, true);
+    return () => {
+      window.removeEventListener("resize", recompute);
+      window.removeEventListener("scroll", recompute, true);
+    };
+  }, [phase, loading, stepIndex, steps]);
+
+  const handleStart = () => startTour("full");
 
   const handleNext = () => {
-    if (stepIndex < TOUR_STEPS.length - 1) {
+    if (stepIndex < steps.length - 1) {
       setStepIndex((i) => i + 1);
     } else {
       handleComplete();
@@ -285,13 +444,13 @@ export function OnboardingTour() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [phase, stepIndex]);
+  }, [phase, stepIndex, steps]);
 
   // ── Compute tooltip position ──
   const getTooltipStyle = (): React.CSSProperties => {
     if (!targetRect) return { top: "50%", left: "50%", transform: "translate(-50%, -50%)" };
 
-    const step = TOUR_STEPS[stepIndex];
+    const step = steps[stepIndex];
     const pad = 16;
     const tooltipW = 360;
     const tooltipH = 200;
@@ -350,9 +509,9 @@ export function OnboardingTour() {
               Welcome to your cockpit! ✨
             </h2>
             <p className="text-[var(--text-secondary)] text-sm leading-relaxed mb-6">
-              {"Let's take a "}
-              <span className="text-white font-medium">90-second tour</span>
-              {" of your dashboard. We'll show you where everything lives so you can hit the ground running."}
+              {"Let's take a quick "}
+              <span className="text-white font-medium">guided tour</span>
+              {" of every module — we'll walk you through each tab so you can see exactly where everything lives."}
             </p>
 
             {/* What you'll learn */}
@@ -366,6 +525,12 @@ export function OnboardingTour() {
               </div>
               <div className="flex items-center gap-2 text-sm text-white/80">
                 <span className="text-base">📅</span> Your content pipeline at a glance
+              </div>
+              <div className="flex items-center gap-2 text-sm text-white/80">
+                <span className="text-base">📧</span> Email outreach & review flow
+              </div>
+              <div className="flex items-center gap-2 text-sm text-white/80">
+                <span className="text-base">🏢</span> Brands, activity log & settings
               </div>
             </div>
 
@@ -387,7 +552,7 @@ export function OnboardingTour() {
             </div>
 
             <p className="text-[10px] text-[var(--text-muted)] text-center mt-4 font-mono">
-              Only {TOUR_STEPS.length} quick stops • You can replay anytime from the sidebar
+              Only {FULL_STEPS.length} quick stops • Replay any section anytime from the sidebar
             </p>
           </div>
         </div>
@@ -415,7 +580,7 @@ export function OnboardingTour() {
                 {"You're all set! 🚀"}
               </h2>
               <p className="text-[var(--text-secondary)] text-sm leading-relaxed mb-6">
-                {"You now know the lay of the land. Start by setting up your brand's social accounts, or let the AI engine discover leads while you grab coffee."}
+                {"You've now seen every tab — posting, leads, outreach, calendar, and the rest. Jump into any module from the sidebar, or replay a tour for a section any time."}
               </p>
 
               <button
@@ -436,13 +601,21 @@ export function OnboardingTour() {
   }
 
   // ── STEPPING PHASE ──
-  const currentStep = TOUR_STEPS[stepIndex];
-  const progress = ((stepIndex + 1) / TOUR_STEPS.length) * 100;
+  const progress = ((stepIndex + 1) / steps.length) * 100;
 
   return (
     <>
       {/* Overlay — target element is elevated above this via z-index:9985 */}
       <div className="fixed inset-0 z-[9980] bg-black/60" onClick={handleDismiss} />
+
+      {/* Heading-to-next-page indicator */}
+      {loading && !tooltipReady && (
+        <div className="fixed z-[9990] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-3 bg-[#18181f] border border-white/15 rounded-2xl px-6 py-4 shadow-2xl ring-1 ring-white/5">
+          <Loader2 size={24} className="text-[var(--accent-primary)] animate-spin" />
+          <p className="text-sm text-gray-300">Heading to {routeLabel(currentStep?.route)}…</p>
+          <p className="text-[10px] text-[var(--text-muted)] font-mono">Loading that module</p>
+        </div>
+      )}
 
       {/* Tooltip Card */}
       {tooltipReady && (
@@ -475,7 +648,7 @@ export function OnboardingTour() {
             <div className="flex items-center justify-between">
               {/* Progress Dots */}
               <div className="flex items-center gap-1.5">
-                {TOUR_STEPS.map((_, i) => (
+                {steps.map((_, i) => (
                   <div
                     key={i}
                     className={`h-1.5 rounded-full transition-all duration-300 ${
@@ -503,7 +676,7 @@ export function OnboardingTour() {
                   onClick={handleNext}
                   className="flex items-center gap-1.5 px-4 py-1.5 bg-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/80 text-white text-sm font-medium rounded-lg transition shadow-md shadow-[var(--accent-primary)]/20"
                 >
-                  {stepIndex === TOUR_STEPS.length - 1 ? "Finish" : "Next"}
+                  {stepIndex === steps.length - 1 ? "Finish" : "Next"}
                   <ChevronRight size={14} />
                 </button>
               </div>
@@ -523,11 +696,16 @@ export function OnboardingTour() {
   );
 }
 
-// ── Replay trigger (for sidebar button) ──────────────────────────
+// ── Launch trigger (sidebar Tours menu + welcome screen) ──────
 
-export function replayTour() {
+export function launchTour(id: string) {
   if (typeof window !== "undefined") {
-    localStorage.removeItem(STORAGE_KEY);
-    window.dispatchEvent(new CustomEvent("markopilot:replay-tour"));
+    localStorage.setItem(STORAGE_KEY, "true");
+    window.dispatchEvent(new CustomEvent("markopilot:tour", { detail: id }));
   }
+}
+
+// Backwards-compatible alias for the old single replay button
+export function replayTour() {
+  launchTour("full");
 }

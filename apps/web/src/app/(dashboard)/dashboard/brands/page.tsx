@@ -15,10 +15,10 @@ export default function BrandsPage() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div data-tour="page-brands-body" className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="font-serif text-3xl text-white">Your Brands</h1>
+          <h1 data-tour="page-brands-head" className="font-serif text-3xl text-white">Your Brands</h1>
           <p className="text-[var(--text-secondary)] mt-1">
             Manage your connected businesses and their automation status.
           </p>

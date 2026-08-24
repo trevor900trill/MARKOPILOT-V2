@@ -1,15 +1,16 @@
 "use client";
 
-import { LayoutDashboard, Send, Users, Activity, Settings, ChevronDown, ChevronsLeft, ChevronsRight, Mail, Briefcase, Calendar, HelpCircle } from "lucide-react";
+import { LayoutDashboard, Send, Users, Activity, Settings, ChevronDown, ChevronsLeft, ChevronsRight, Mail, Briefcase, Calendar, HelpCircle, Rocket } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useBrand } from "@/lib/brand-context";
-import { replayTour } from "@/components/dashboard/OnboardingTour";
+import { launchTour, PAGE_TOURS } from "@/components/dashboard/OnboardingTour";
 
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [switcherOpen, setSwitcherOpen] = useState(false);
+  const [toursOpen, setToursOpen] = useState(false);
   const pathname = usePathname();
   const { brands, activeBrand, setActiveBrandId, user, isLoading } = useBrand();
 
@@ -191,13 +192,50 @@ export function AppSidebar() {
         )}
 
         {!collapsed && (
-          <button
-            onClick={replayTour}
-            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-elevated)] rounded-xl transition"
-          >
-            <HelpCircle size={14} />
-            <span>Replay Tour</span>
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setToursOpen(!toursOpen)}
+              className="w-full flex items-center justify-between gap-2 px-3 py-2 text-xs text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-elevated)] rounded-xl transition"
+            >
+              <span className="flex items-center gap-2">
+                <HelpCircle size={16} />
+                <span>Tours</span>
+              </span>
+              <ChevronDown size={12} className={`transition-transform ${toursOpen ? "rotate-180" : ""}`} />
+            </button>
+
+            {toursOpen && (
+              <div className="absolute bottom-full left-0 mb-2 w-64 bg-[#141414] border border-white/10 rounded-2xl shadow-2xl ring-1 ring-white/10 z-20 max-h-80 overflow-y-auto">
+                <p className="px-3 pt-2 pb-1 text-[10px] font-mono uppercase tracking-wider text-[var(--text-muted)]">Guided Tours</p>
+
+                <button
+                  onClick={() => { launchTour("full"); setToursOpen(false); }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left hover:bg-white/10 transition mb-1"
+                >
+                  <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-[var(--accent-primary)] to-cyan-500 flex items-center justify-center text-white flex-shrink-0 shadow-lg shadow-[var(--accent-primary)]/20">
+                    <Rocket size={13} />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm text-white">Full App Tour</p>
+                    <p className="text-[10px] text-[var(--text-muted)] truncate">Walk through every module</p>
+                  </div>
+                </button>
+
+                <div className="my-1.5 border-t border-white/5" />
+
+                {PAGE_TOURS.map((tour) => (
+                  <button
+                    key={tour.id}
+                    onClick={() => { launchTour(tour.id); setToursOpen(false); }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-sm text-white/85 hover:text-white hover:bg-white/5 transition"
+                  >
+                    <tour.icon size={15} className="text-[var(--text-muted)] flex-shrink-0" />
+                    <span className="truncate">{tour.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
         <button

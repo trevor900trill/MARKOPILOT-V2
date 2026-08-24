@@ -52,9 +52,9 @@ export default function AccountPage() {
    const isEnginePaused = subscriptionData?.isEnginePaused ?? false;
 
    return (
-      <div className="space-y-8 animate-in fade-in max-w-4xl pb-12">
+      <div data-tour="page-account-body" className="space-y-8 animate-in fade-in max-w-4xl pb-12">
          <div>
-            <h1 className="text-3xl font-serif text-white flex items-center gap-3">
+            <h1 data-tour="page-account-head" className="text-3xl font-serif text-white flex items-center gap-3">
                Account &amp; Subscription
             </h1>
             <p className="text-[var(--text-secondary)] mt-2">
