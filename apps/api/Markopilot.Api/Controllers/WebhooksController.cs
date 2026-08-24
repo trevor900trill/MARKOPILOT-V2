@@ -209,6 +209,9 @@ public class WebhooksController : ControllerBase
 
                 await repo.ResetQuotaCountersAsync(tx.UserId);
 
+                // Reactivate automation engines on all brands now that subscription is active
+                await ResumeUserAutomationsAsync(tx.UserId);
+
                 // 1. Send transactional confirmation email
                 var user = await repo.GetUserByIdAsync(tx.UserId);
                 var emailService = HttpContext.RequestServices.GetService<IAlertEmailService>();

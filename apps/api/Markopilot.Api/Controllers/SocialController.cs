@@ -12,6 +12,7 @@ public class SocialController : ControllerBase
     private readonly OAuthService _oauthService;
     private readonly ITokenEncryptionService _encryptionService;
     private readonly IQuotaService _quotaService;
+    private readonly IUserRepository _userRepo;
     private readonly IConfiguration _config;
     private readonly ILogger<SocialController> _logger;
     private readonly ISocialRepository _socialRepo;
@@ -21,6 +22,7 @@ public class SocialController : ControllerBase
         OAuthService oauthService,
         ITokenEncryptionService encryptionService,
         IQuotaService quotaService,
+        IUserRepository userRepo,
         IConfiguration config,
         ILogger<SocialController> logger,
         ISocialRepository socialRepo,
@@ -29,6 +31,7 @@ public class SocialController : ControllerBase
         _oauthService = oauthService;
         _encryptionService = encryptionService;
         _quotaService = quotaService;
+        _userRepo = userRepo;
         _config = config;
         _logger = logger;
         _socialRepo = socialRepo;
@@ -48,6 +51,12 @@ public class SocialController : ControllerBase
     {
         var ownerId = HttpContext.GetUserId();
         if (ownerId == Guid.Empty) return Unauthorized();
+
+        var user = await _userRepo.GetUserByIdAsync(ownerId);
+        if (user == null || !user.IsSubscriptionActive)
+        {
+            return StatusCode(403, new { error = new { code = "ENGINE_PAUSED", message = "Your autonomous engine is paused due to expired trial or subscription. Please renew your subscription to resume operations." } });
+        }
 
         if (!await _quotaService.CanGeneratePostAsync(ownerId))
         {
@@ -76,6 +85,13 @@ public class SocialController : ControllerBase
     {
         var ownerId = HttpContext.GetUserId();
         if (ownerId == Guid.Empty) return Unauthorized();
+
+        var user = await _userRepo.GetUserByIdAsync(ownerId);
+        if (user == null || !user.IsSubscriptionActive)
+        {
+            return StatusCode(403, new { error = new { code = "ENGINE_PAUSED", message = "Your autonomous engine is paused due to expired trial or subscription. Please renew your subscription to resume operations." } });
+        }
+
         await _socialRepo.RetryPostAsync(postId, ownerId);
         return Ok(new { success = true, message = "Post re-queued for publishing." });
     }
@@ -85,6 +101,13 @@ public class SocialController : ControllerBase
     {
         var ownerId = HttpContext.GetUserId();
         if (ownerId == Guid.Empty) return Unauthorized();
+
+        var user = await _userRepo.GetUserByIdAsync(ownerId);
+        if (user == null || !user.IsSubscriptionActive)
+        {
+            return StatusCode(403, new { error = new { code = "ENGINE_PAUSED", message = "Your autonomous engine is paused due to expired trial or subscription. Please renew your subscription to resume operations." } });
+        }
+
         await _socialRepo.ApprovePostAsync(postId, ownerId);
         return Ok(new { success = true, message = "Post approved and queued for publishing." });
     }

@@ -12,6 +12,10 @@ export interface User {
   subscriptionStatus: 'trialing' | 'active' | 'past_due' | 'cancelled' | 'expired';
   planName: 'starter' | 'growth' | 'scale';
   currentPeriodEnd: string | null;
+  trialEndsAt?: string | null;
+  isTrialExpired?: boolean;
+  isSubscriptionExpired?: boolean;
+  isSubscriptionActive?: boolean;
   quotaLeadsPerMonth: number;
   quotaPostsPerMonth: number;
   quotaBrandsAllowed: number;

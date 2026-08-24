@@ -4,13 +4,14 @@ import {
   Users, Search, Play, Filter, Download, MailPlus, Trash2, ShieldBan, 
   ExternalLink, RefreshCw, Sparkles, ChevronDown, ChevronUp, Mail, 
   HelpCircle, CheckCircle2, AlertTriangle, XCircle, Clock, ShieldCheck, X, Ban,
-  ChevronLeft, ChevronRight, AlertCircle
+  ChevronLeft, ChevronRight, AlertCircle, Smartphone
 } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useEffect, useCallback } from "react";
 import { useBrand } from "@/lib/brand-context";
 import { apiGet, apiPost, apiDelete } from "@/lib/api-client";
 import { DiscoveryInsights, QueryPerformance } from "@/components/discovery-insights";
+import { MpesaCheckoutModal } from "@/components/dashboard/MpesaCheckoutModal";
 
 type Lead = {
   id: string;
@@ -35,11 +36,12 @@ type Lead = {
 type FilterType = "all" | "enriched" | "high_value" | "suppressed";
 
 export default function LeadsPage() {
-  const { activeBrand, user } = useBrand();
+  const { activeBrand, user, refreshUser, refreshBrands } = useBrand();
 
   // Gate actions on the real automation switches — not the subscription record.
   const leadsAutomationEnabled = activeBrand?.automationLeadsEnabled ?? false;
   const outreachAutomationEnabled = activeBrand?.automationOutreachEnabled ?? false;
+  const isSubscriptionActive = user?.isSubscriptionActive ?? true;
 
   const [leads, setLeads] = useState<Lead[]>([]);
   const [totalLeads, setTotalLeads] = useState(0);
@@ -48,6 +50,7 @@ export default function LeadsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDiscovering, setIsDiscovering] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showMpesaModal, setShowMpesaModal] = useState(false);
   const [filterMode, setFilterMode] = useState<FilterType>("all");
   const [showGuideModal, setShowGuideModal] = useState(false);
   const [performance, setPerformance] = useState<QueryPerformance[]>([]);
@@ -67,7 +70,7 @@ export default function LeadsPage() {
     setIsLoading(true);
     try {
       const res = await apiGet<{ data: Lead[]; total: number; totalPages: number }>(
-        `/leads/${activeBrand.id}?page=${page}&pageSize=20`
+        `/brands/${activeBrand.id}/leads?page=${page}&pageSize=20`
       );
       setLeads(res.data || []);
       setTotalLeads(res.total || 0);
@@ -101,6 +104,11 @@ export default function LeadsPage() {
 
   const handleRunDiscovery = async () => {
     if (!activeBrand) return;
+    if (!isSubscriptionActive) {
+      toast.error("Cannot run discovery: your trial or subscription has expired. Please pay via M-PESA.");
+      setShowMpesaModal(true);
+      return;
+    }
     if (!leadsAutomationEnabled) {
       toast.error("Lead discovery automation is disabled for this brand. Enable it in Settings to run it manually.");
       return;
@@ -109,9 +117,14 @@ export default function LeadsPage() {
     try {
       await apiPost(`/leads/${activeBrand.id}/run-now`);
       toast.success("Discovery job has been queued in the background! Results will populate shortly.");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to trigger discovery:", err);
-      toast.error("Failed to trigger discovery. Please try again.");
+      if (err?.code === "ENGINE_PAUSED") {
+        toast.error("Engine paused: trial or subscription is expired. Please pay via M-PESA.");
+        setShowMpesaModal(true);
+      } else {
+        toast.error(err?.message || "Failed to trigger discovery. Please try again.");
+      }
     } finally {
       setIsDiscovering(false);
     }
@@ -119,6 +132,11 @@ export default function LeadsPage() {
 
   const handleQueueOutreach = async (leadId: string) => {
     if (!activeBrand) return;
+    if (!isSubscriptionActive) {
+      toast.error("Cannot queue outreach: your trial or subscription has expired. Please pay via M-PESA.");
+      setShowMpesaModal(true);
+      return;
+    }
     if (!outreachAutomationEnabled) {
       toast.error("Email outreach automation is disabled for this brand. Enable it in Settings to queue leads.");
       return;
@@ -129,7 +147,12 @@ export default function LeadsPage() {
       toast.success("Lead queued for autonomous email outreach!");
     } catch (err: any) {
       console.error("Failed to queue outreach:", err);
-      toast.error(err?.message || "Could not queue outreach for this lead.");
+      if (err?.code === "ENGINE_PAUSED") {
+        toast.error("Engine paused: trial or subscription is expired. Please pay via M-PESA.");
+        setShowMpesaModal(true);
+      } else {
+        toast.error(err?.message || "Could not queue outreach for this lead.");
+      }
     }
   };
 
@@ -259,6 +282,27 @@ export default function LeadsPage() {
 
   return (
     <div data-tour="page-leads-body" className="space-y-8 animate-in fade-in max-w-7xl pb-16">
+      {/* EXPIRED SUBSCRIPTION BANNER */}
+      {!isSubscriptionActive && (
+        <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="text-amber-400 flex-shrink-0 mt-0.5" size={20} />
+            <div>
+              <h3 className="text-sm font-semibold text-white">Lead Discovery Engine Paused</h3>
+              <p className="text-xs text-amber-200/80 mt-0.5">
+                Your trial or subscription has ended. Automated lead mining and queuing outreach are paused. Pay via M-PESA to resume.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowMpesaModal(true)}
+            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-semibold rounded-xl text-xs flex items-center gap-1.5 transition whitespace-nowrap shadow-lg shadow-emerald-500/20"
+          >
+            <Smartphone size={14} /> Pay via M-PESA
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -700,6 +744,18 @@ export default function LeadsPage() {
           </div>
         </div>
       )}
+
+      {/* M-PESA CHECKOUT MODAL */}
+      <MpesaCheckoutModal
+        isOpen={showMpesaModal}
+        onClose={() => setShowMpesaModal(false)}
+        initialPlanId={user?.planName || "starter"}
+        onSuccess={async () => {
+          await refreshUser();
+          await refreshBrands();
+          fetchLeads();
+        }}
+      />
     </div>
   );
 }

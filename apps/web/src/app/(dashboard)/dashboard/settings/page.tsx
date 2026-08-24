@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Save } from "lucide-react";
+import { Save, AlertTriangle, Smartphone } from "lucide-react";
 import { useBrand, type BrandSummary } from "@/lib/brand-context";
 import { apiGet, apiPut } from "@/lib/api-client";
+import { MpesaCheckoutModal } from "@/components/dashboard/MpesaCheckoutModal";
+import { toast } from "sonner";
 
 type BrandDetails = {
   id: string;
@@ -28,9 +30,12 @@ type BrandDetails = {
 };
 
 export default function BrandSettingsPage() {
-  const { activeBrand, refreshBrands } = useBrand();
+  const { activeBrand, user, refreshUser, refreshBrands } = useBrand();
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [showMpesaModal, setShowMpesaModal] = useState(false);
+
+  const isSubscriptionActive = user?.isSubscriptionActive ?? true;
 
   const [formData, setFormData] = useState({
     name: "",
@@ -92,14 +97,27 @@ export default function BrandSettingsPage() {
 
   const handleSave = async () => {
     if (!activeBrand) return;
+    const wantsAutomations = formData.automationPostsEnabled || formData.automationLeadsEnabled || formData.automationOutreachEnabled;
+    if (wantsAutomations && !isSubscriptionActive) {
+      toast.error("Cannot enable autonomous engines: your trial or subscription has expired. Please pay via M-PESA.");
+      setShowMpesaModal(true);
+      return;
+    }
     setLoading(true);
     try {
       await apiPut(`/brands/${activeBrand.id}`, { ...activeBrand, ...formData });
       await refreshBrands();
       setSaved(true);
+      toast.success("Brand settings saved successfully.");
       setTimeout(() => setSaved(false), 2000);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to save brand:", err);
+      if (err?.code === "ENGINE_PAUSED") {
+        toast.error("Engines cannot be started: trial/subscription is expired. Please pay via M-PESA.");
+        setShowMpesaModal(true);
+      } else {
+        toast.error(err?.message || "Failed to save brand settings.");
+      }
     } finally {
       setLoading(false);
     }
@@ -156,6 +174,27 @@ export default function BrandSettingsPage() {
 
   return (
     <div data-tour="page-settings-body" className="space-y-8 animate-in fade-in max-w-4xl pb-12">
+      {/* EXPIRED SUBSCRIPTION BANNER */}
+      {!isSubscriptionActive && (
+        <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="text-amber-400 flex-shrink-0 mt-0.5" size={20} />
+            <div>
+              <h3 className="text-sm font-semibold text-white">Autonomous Engines Paused</h3>
+              <p className="text-xs text-amber-200/80 mt-0.5">
+                Your trial or subscription has ended. Autonomous engine switches cannot be enabled until renewed via M-PESA.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowMpesaModal(true)}
+            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-semibold rounded-xl text-xs flex items-center gap-1.5 transition whitespace-nowrap shadow-lg shadow-emerald-500/20"
+          >
+            <Smartphone size={14} /> Pay via M-PESA
+          </button>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <h1 data-tour="page-settings-head" className="text-3xl font-serif text-white">Brand Settings</h1>
         <button onClick={handleSave} disabled={loading} className="px-5 py-2 rounded-full bg-[var(--accent-primary)] text-white font-medium hover:opacity-90 transition flex gap-2 items-center disabled:opacity-50 shadow-lg shadow-[var(--accent-primary)]/20">
@@ -264,6 +303,17 @@ export default function BrandSettingsPage() {
           </section>
         </div>
       </div>
+
+      {/* M-PESA CHECKOUT MODAL */}
+      <MpesaCheckoutModal
+        isOpen={showMpesaModal}
+        onClose={() => setShowMpesaModal(false)}
+        initialPlanId={user?.planName || "starter"}
+        onSuccess={async () => {
+          await refreshUser();
+          await refreshBrands();
+        }}
+      />
     </div>
   );
 }

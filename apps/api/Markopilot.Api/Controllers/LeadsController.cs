@@ -63,7 +63,7 @@ public class LeadsController : ControllerBase
         
         // Check if engine is paused due to expired trial/subscription
         var user = await _userRepo.GetUserByIdAsync(ownerId);
-        if (user?.Status == "paused")
+        if (user == null || !user.IsSubscriptionActive)
         {
             return StatusCode(403, new { error = new { code = "ENGINE_PAUSED", message = "Your autonomous engine is paused due to expired trial or subscription. Please renew your subscription to resume operations." } });
         }
@@ -117,7 +117,7 @@ public class LeadsController : ControllerBase
         
         // Check if engine is paused due to expired trial/subscription
         var user = await _userRepo.GetUserByIdAsync(ownerId);
-        if (user?.Status == "paused")
+        if (user == null || !user.IsSubscriptionActive)
         {
             return StatusCode(403, new { error = new { code = "ENGINE_PAUSED", message = "Your autonomous engine is paused due to expired trial or subscription. Please renew your subscription to resume operations." } });
         }

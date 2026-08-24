@@ -22,4 +22,8 @@ public class User
     public string Status { get; set; } = "active";
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    public bool IsTrialExpired => SubscriptionStatus == "trialing" && DateTimeOffset.UtcNow > (TrialEndsAt ?? CreatedAt.AddDays(7));
+    public bool IsSubscriptionExpired => SubscriptionStatus == "active" && CurrentPeriodEnd.HasValue && DateTimeOffset.UtcNow > CurrentPeriodEnd.Value;
+    public bool IsSubscriptionActive => Status != "paused" && Status != "deleting" && ((SubscriptionStatus == "trialing" && !IsTrialExpired) || (SubscriptionStatus == "active" && !IsSubscriptionExpired));
 }

@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Mail, CheckCircle2, AlertCircle, Settings, Send, Clock, Eye, Play, Pause, RefreshCw, Edit2, FileCheck, XCircle, CheckCheck } from "lucide-react";
+import { Mail, CheckCircle2, AlertCircle, Settings, Send, Clock, Eye, Play, Pause, RefreshCw, Edit2, FileCheck, XCircle, CheckCheck, AlertTriangle, Smartphone } from "lucide-react";
 import { useBrand } from "@/lib/brand-context";
 import { apiGet, apiPut, apiDelete } from "@/lib/api-client";
+import { MpesaCheckoutModal } from "@/components/dashboard/MpesaCheckoutModal";
+import { toast } from "sonner";
 
 type OutreachEmail = {
   id: string;
@@ -17,11 +19,14 @@ type OutreachEmail = {
 };
 
 export default function OutreachPage() {
-  const { activeBrand, refreshBrands } = useBrand();
+  const { activeBrand, user, refreshUser, refreshBrands } = useBrand();
   const [activeTab, setActiveTab] = useState<"overview" | "review" | "logs" | "settings">("overview");
   
   const isGmailConnected = activeBrand?.gmailConnected ?? false;
   const [isConnecting, setIsConnecting] = useState(false);
+  const [showMpesaModal, setShowMpesaModal] = useState(false);
+
+  const isSubscriptionActive = user?.isSubscriptionActive ?? true;
   
   const [dailyLimit, setDailyLimit] = useState(50);
   const [delayHours, setDelayHours] = useState(4);
@@ -180,6 +185,11 @@ export default function OutreachPage() {
 
   const handleSaveSettings = async () => {
     if (!activeBrand) return;
+    if (isAutomationEnabled && !isSubscriptionActive) {
+      toast.error("Cannot enable outreach: your free trial or subscription has expired. Please renew via M-PESA.");
+      setShowMpesaModal(true);
+      return;
+    }
     setIsSaving(true);
     try {
       await apiPut(`/brands/${activeBrand.id}`, {
@@ -190,8 +200,15 @@ export default function OutreachPage() {
         requireEmailApproval: requireApproval,
       });
       await refreshBrands();
-    } catch (err) {
+      toast.success("Outreach settings saved.");
+    } catch (err: any) {
       console.error("Failed to save settings:", err);
+      if (err?.code === "ENGINE_PAUSED") {
+        toast.error("Your engine is paused due to expired subscription. Please pay via M-PESA.");
+        setShowMpesaModal(true);
+      } else {
+        toast.error(err?.message || "Failed to save settings.");
+      }
     } finally {
       setIsSaving(false);
     }
@@ -214,6 +231,27 @@ export default function OutreachPage() {
 
   return (
     <div data-tour="page-outreach-body" className="space-y-8 animate-in fade-in max-w-6xl">
+       {/* EXPIRED SUBSCRIPTION / ENGINE PAUSED BANNER */}
+       {!isSubscriptionActive && (
+         <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in">
+           <div className="flex items-start gap-3">
+             <AlertTriangle className="text-amber-400 flex-shrink-0 mt-0.5" size={20} />
+             <div>
+               <h3 className="text-sm font-semibold text-white">Outreach Engine Paused</h3>
+               <p className="text-xs text-amber-200/80 mt-0.5">
+                 Your free trial or subscription has ended. Automated email outreach is paused. Pay via M-PESA to resume sending.
+               </p>
+             </div>
+           </div>
+           <button
+             onClick={() => setShowMpesaModal(true)}
+             className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-semibold rounded-xl text-xs flex items-center gap-1.5 transition whitespace-nowrap shadow-lg shadow-emerald-500/20"
+           >
+             <Smartphone size={14} /> Pay via M-PESA
+           </button>
+         </div>
+       )}
+
        <div className="flex items-center justify-between">
            <h1 data-tour="page-outreach-head" className="text-3xl font-serif text-white flex items-center gap-3">
               <Mail className="text-[var(--accent-primary)]" size={32} />
@@ -223,10 +261,27 @@ export default function OutreachPage() {
              <button 
                 onClick={async () => {
                   const newState = !isAutomationEnabled;
+                  if (newState && !isSubscriptionActive) {
+                    toast.error("Cannot resume outreach engine: your trial or subscription has expired. Please pay via M-PESA.");
+                    setShowMpesaModal(true);
+                    return;
+                  }
                   setIsAutomationEnabled(newState);
                   if (activeBrand) {
-                    await apiPut(`/brands/${activeBrand.id}`, { ...activeBrand, automationOutreachEnabled: newState });
-                    await refreshBrands();
+                    try {
+                      await apiPut(`/brands/${activeBrand.id}`, { ...activeBrand, automationOutreachEnabled: newState });
+                      await refreshBrands();
+                      toast.success(newState ? "Outreach engine resumed." : "Outreach engine paused.");
+                    } catch (err: any) {
+                      console.error("Failed to toggle outreach:", err);
+                      setIsAutomationEnabled(!newState);
+                      if (err?.code === "ENGINE_PAUSED") {
+                        toast.error("Your engine is paused due to expired subscription. Please pay via M-PESA.");
+                        setShowMpesaModal(true);
+                      } else {
+                        toast.error(err?.message || "Failed to toggle outreach engine.");
+                      }
+                    }
                   }
                 }}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl transition font-medium border ${isAutomationEnabled ? 'bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20' : 'bg-green-500/10 text-green-400 border-green-500/20 hover:bg-green-500/20'}`}>
@@ -549,6 +604,17 @@ export default function OutreachPage() {
            </div>
          </div>
        )}
+
+       {/* M-PESA CHECKOUT MODAL */}
+       <MpesaCheckoutModal
+         isOpen={showMpesaModal}
+         onClose={() => setShowMpesaModal(false)}
+         initialPlanId={user?.planName || "starter"}
+         onSuccess={async () => {
+           await refreshUser();
+           await refreshBrands();
+         }}
+       />
     </div>
   );
 }

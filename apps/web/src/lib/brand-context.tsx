@@ -33,6 +33,11 @@ export type UserProfile = {
   planName: string;
   subscriptionStatus: string;
   onboardingCompleted: boolean;
+  trialEndsAt?: string | null;
+  currentPeriodEnd?: string | null;
+  isTrialExpired?: boolean;
+  isSubscriptionExpired?: boolean;
+  isSubscriptionActive?: boolean;
   quotaLeadsPerMonth: number;
   quotaPostsPerMonth: number;
   quotaLeadsUsed: number;

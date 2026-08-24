@@ -14,17 +14,20 @@ public class BrandsController : ControllerBase
     private readonly IBrandRepository _repo;
     private readonly ISocialRepository _socialRepo;
     private readonly IQuotaService _quotaService;
+    private readonly IUserRepository _userRepo;
     private readonly ILogger<BrandsController> _logger;
 
     public BrandsController(
         IBrandRepository repo,
         ISocialRepository socialRepo,
         IQuotaService quotaService,
+        IUserRepository userRepo,
         ILogger<BrandsController> logger)
     {
         _repo = repo;
         _socialRepo = socialRepo;
         _quotaService = quotaService;
+        _userRepo = userRepo;
         _logger = logger;
     }
 
@@ -56,6 +59,15 @@ public class BrandsController : ControllerBase
             return StatusCode(403, new { error = new { code = "QUOTA_EXCEEDED", message = "You have reached the maximum number of brands allowed on your plan. Please upgrade to add more." } });
         }
 
+        var user = await _userRepo.GetUserByIdAsync(userId);
+        if (user == null || !user.IsSubscriptionActive)
+        {
+            // If subscription/trial is not active, automations must stay disabled
+            brand.AutomationPostsEnabled = false;
+            brand.AutomationLeadsEnabled = false;
+            brand.AutomationOutreachEnabled = false;
+        }
+
         brand.OwnerId = userId;
         
         var created = await _repo.CreateBrandAsync(brand);
@@ -74,6 +86,24 @@ public class BrandsController : ControllerBase
         var userId = HttpContext.GetUserId();
         var existing = await _repo.GetBrandByIdAsync(brandId, userId);
         if (existing == null) return NotFound(new { error = new { code = "NOT_FOUND", message = "Brand not found" } });
+
+        var wantsAutomationEnabled = brand.AutomationPostsEnabled || brand.AutomationLeadsEnabled || brand.AutomationOutreachEnabled;
+        if (wantsAutomationEnabled)
+        {
+            var user = await _userRepo.GetUserByIdAsync(userId);
+            if (user == null || !user.IsSubscriptionActive)
+            {
+                _logger.LogWarning("User {UserId} attempted to enable engine automations on brand {BrandId} while subscription is inactive/expired.", userId, brandId);
+                return StatusCode(403, new
+                {
+                    error = new
+                    {
+                        code = "ENGINE_PAUSED",
+                        message = "Your autonomous engine is paused due to expired trial or subscription. Please renew your subscription to resume operations."
+                    }
+                });
+            }
+        }
         
         brand.Id = brandId;
         brand.OwnerId = userId;

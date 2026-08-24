@@ -1,11 +1,13 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { Zap, Play, Pause, TrendingUp, Users, Send, Calendar, Activity, ChevronRight, RefreshCw } from "lucide-react";
+import { Zap, Play, Pause, TrendingUp, Users, Send, Calendar, Activity, ChevronRight, RefreshCw, AlertTriangle, Smartphone } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { useBrand } from "@/lib/brand-context";
 import { apiGet, apiPut } from "@/lib/api-client";
+import { MpesaCheckoutModal } from "@/components/dashboard/MpesaCheckoutModal";
+import { toast } from "sonner";
 
 type OverviewData = {
   postsPublished: number;
@@ -18,11 +20,14 @@ type OverviewData = {
 
 export default function DashboardOverviewPage() {
   const { data: session } = useSession();
-  const { activeBrand, refreshBrands } = useBrand();
+  const { activeBrand, user, refreshUser, refreshBrands } = useBrand();
   const [engineState, setEngineState] = useState<"RUNNING" | "PAUSED">("RUNNING");
   const [isTogglingEngine, setIsTogglingEngine] = useState(false);
   const [overview, setOverview] = useState<OverviewData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showMpesaModal, setShowMpesaModal] = useState(false);
+
+  const isSubscriptionActive = user?.isSubscriptionActive ?? true;
 
   useEffect(() => {
     if (activeBrand) {
@@ -51,6 +56,13 @@ export default function DashboardOverviewPage() {
   const handleToggleEngine = async () => {
     if (!activeBrand) return;
 
+    // Check if user is attempting to resume while subscription/trial is expired
+    if (engineState === "PAUSED" && !isSubscriptionActive) {
+      toast.error("Your free trial or subscription has expired. Please renew via M-PESA to resume autonomous engines.");
+      setShowMpesaModal(true);
+      return;
+    }
+
     const newState = engineState === "RUNNING" ? "PAUSED" : "RUNNING";
     setEngineState(newState);
     setIsTogglingEngine(true);
@@ -62,9 +74,16 @@ export default function DashboardOverviewPage() {
         automationOutreachEnabled: newState === "RUNNING",
       });
       await refreshBrands();
-    } catch (err) {
+      toast.success(newState === "RUNNING" ? "Autonomous engine started." : "Autonomous engine paused.");
+    } catch (err: any) {
       console.error("Failed to toggle engine:", err);
       setEngineState(engineState); // revert
+      if (err?.code === "ENGINE_PAUSED") {
+        toast.error("Cannot start engine: subscription or trial is expired. Please pay via M-PESA.");
+        setShowMpesaModal(true);
+      } else {
+        toast.error(err?.message || "Failed to update engine status.");
+      }
     } finally {
       setIsTogglingEngine(false);
     }
@@ -92,6 +111,27 @@ export default function DashboardOverviewPage() {
 
   return (
      <div className="space-y-8 animate-in fade-in max-w-6xl pb-12">
+       {/* ENGINE PAUSED / TRIAL EXPIRED BANNER */}
+       {!isSubscriptionActive && (
+         <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in">
+           <div className="flex items-start gap-3">
+             <AlertTriangle className="text-amber-400 flex-shrink-0 mt-0.5" size={20} />
+             <div>
+               <h3 className="text-sm font-semibold text-white">Autonomous Engines Paused</h3>
+               <p className="text-xs text-amber-200/80 mt-0.5">
+                 Your free trial or subscription has ended. All autonomous engines are paused. Pay via M-PESA to immediately resume autonomous posting, lead discovery, and outreach.
+               </p>
+             </div>
+           </div>
+           <button
+             onClick={() => setShowMpesaModal(true)}
+             className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-semibold rounded-xl text-xs flex items-center gap-1.5 transition whitespace-nowrap shadow-lg shadow-emerald-500/20"
+           >
+             <Smartphone size={14} /> Pay via M-PESA
+           </button>
+         </div>
+       )}
+
        {/* HEADER & GLOBAL ENGINE STATUS */}
        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
            <div>
@@ -209,6 +249,18 @@ export default function DashboardOverviewPage() {
            </div>
 
        </div>
+
+       {/* M-PESA CHECKOUT MODAL */}
+       <MpesaCheckoutModal
+         isOpen={showMpesaModal}
+         onClose={() => setShowMpesaModal(false)}
+         initialPlanId={user?.planName || "starter"}
+         onSuccess={async () => {
+           await refreshUser();
+           await refreshBrands();
+           fetchOverview();
+         }}
+       />
      </div>
   );
 }

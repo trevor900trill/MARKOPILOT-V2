@@ -10,11 +10,13 @@ namespace Markopilot.Api.Controllers;
 public class OutreachController : ControllerBase
 {
     private readonly IOutreachRepository _outreachRepo;
+    private readonly IUserRepository _userRepo;
     private readonly ILogger<OutreachController> _logger;
 
-    public OutreachController(IOutreachRepository outreachRepo, ILogger<OutreachController> logger)
+    public OutreachController(IOutreachRepository outreachRepo, IUserRepository userRepo, ILogger<OutreachController> logger)
     {
         _outreachRepo = outreachRepo;
+        _userRepo = userRepo;
         _logger = logger;
     }
 
@@ -66,6 +68,12 @@ public class OutreachController : ControllerBase
     public async Task<IActionResult> ApproveEmail(Guid brandId, Guid emailId, [FromBody] ApproveEmailRequest? request = null)
     {
         var ownerId = HttpContext.GetUserId();
+        var user = await _userRepo.GetUserByIdAsync(ownerId);
+        if (user == null || !user.IsSubscriptionActive)
+        {
+            return StatusCode(403, new { error = new { code = "ENGINE_PAUSED", message = "Your autonomous engine is paused due to expired trial or subscription. Please renew your subscription to resume operations." } });
+        }
+
         await _outreachRepo.ApproveOutreachEmailAsync(emailId, ownerId, request?.Subject, request?.BodyText, request?.BodyHtml);
         return Ok(new { message = "Email approved and queued for sending." });
     }
@@ -74,6 +82,12 @@ public class OutreachController : ControllerBase
     public async Task<IActionResult> BulkApprove(Guid brandId, [FromBody] BulkApproveRequest request)
     {
         var ownerId = HttpContext.GetUserId();
+        var user = await _userRepo.GetUserByIdAsync(ownerId);
+        if (user == null || !user.IsSubscriptionActive)
+        {
+            return StatusCode(403, new { error = new { code = "ENGINE_PAUSED", message = "Your autonomous engine is paused due to expired trial or subscription. Please renew your subscription to resume operations." } });
+        }
+
         await _outreachRepo.BulkApproveOutreachEmailsAsync(request.EmailIds, ownerId);
         return Ok(new { message = $"{request.EmailIds.Count} emails approved and queued for sending." });
     }
