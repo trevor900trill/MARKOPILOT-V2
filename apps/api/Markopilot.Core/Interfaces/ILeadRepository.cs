@@ -15,9 +15,9 @@ public interface ILeadRepository
     Task BulkInsertLeadsAsync(List<Lead> leads);
 
     // ── Read ─────────────────────────────────────
-    /// <summary>Get paginated leads for a brand with optional status/score filtering.</summary>
+    /// <summary>Get paginated leads for a brand with optional status/score/mode filtering and search.</summary>
     /// <remarks>Used by: API</remarks>
-    Task<(List<Lead> Items, int Total)> GetLeadsByBrandAsync(Guid brandId, Guid ownerId, int page, int pageSize, string? status, int? minScore, int? maxScore);
+    Task<(List<Lead> Items, int Total)> GetLeadsByBrandAsync(Guid brandId, Guid ownerId, int page = 1, int pageSize = 20, string? status = null, int? minScore = null, int? maxScore = null, string? filterMode = null, string? search = null);
 
     /// <summary>Get a single lead by ID with ownership check.</summary>
     /// <remarks>Used by: API, Workers (OutreachWorker — to fetch lead data for email generation)</remarks>

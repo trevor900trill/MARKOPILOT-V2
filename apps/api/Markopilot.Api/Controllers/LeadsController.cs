@@ -33,15 +33,18 @@ public class LeadsController : ControllerBase
     }
 
     [HttpGet("{brandId:guid}")]
+    [HttpGet("/api/brands/{brandId:guid}/leads")]
     public async Task<IActionResult> GetLeads(Guid brandId,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         [FromQuery] string? status = null,
         [FromQuery] int? minScore = null,
-        [FromQuery] int? maxScore = null)
+        [FromQuery] int? maxScore = null,
+        [FromQuery] string? filterMode = null,
+        [FromQuery] string? search = null)
     {
         var ownerId = HttpContext.GetUserId();
-        var result = await _leadRepo.GetLeadsByBrandAsync(brandId, ownerId, page, pageSize, status, minScore, maxScore);
+        var result = await _leadRepo.GetLeadsByBrandAsync(brandId, ownerId, page, pageSize, status, minScore, maxScore, filterMode, search);
         
         return Ok(new { data = result.Items, total = result.Total, page, pageSize, totalPages = (int)Math.Ceiling(result.Total / (double)pageSize) });
     }

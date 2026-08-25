@@ -1112,7 +1112,7 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
     // ── LEADS (Extended) ──────────────────────────────
 
     public async Task<(List<Lead> Items, int Total)> GetLeadsByBrandAsync(Guid brandId, Guid ownerId,
-        int page = 1, int pageSize = 20, string? status = null, int? minScore = null, int? maxScore = null)
+        int page = 1, int pageSize = 20, string? status = null, int? minScore = null, int? maxScore = null, string? filterMode = null, string? search = null)
     {
         await using var conn = CreateConnection();
         await conn.OpenAsync();
@@ -1122,6 +1122,24 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         if (minScore.HasValue) where += " AND l.lead_score >= @minScore";
         if (maxScore.HasValue) where += " AND l.lead_score <= @maxScore";
 
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            where += " AND (l.name ILIKE @search OR l.company ILIKE @search OR l.job_title ILIKE @search OR l.email ILIKE @search)";
+        }
+
+        if (string.Equals(filterMode, "enriched", StringComparison.OrdinalIgnoreCase))
+        {
+            where += " AND l.email IS NOT NULL AND l.email != ''";
+        }
+        else if (string.Equals(filterMode, "high_value", StringComparison.OrdinalIgnoreCase))
+        {
+            where += " AND l.lead_score >= 80";
+        }
+        else if (string.Equals(filterMode, "suppressed", StringComparison.OrdinalIgnoreCase))
+        {
+            where += " AND EXISTS (SELECT 1 FROM suppression_list sl WHERE sl.brand_id = l.brand_id AND LOWER(sl.email) = LOWER(l.email))";
+        }
+
         // Count total
         await using var countCmd = new NpgsqlCommand(
             $"SELECT COUNT(*) FROM leads l JOIN brands b ON b.id = l.brand_id WHERE {where}", conn);
@@ -1130,6 +1148,7 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         if (!string.IsNullOrEmpty(status)) countCmd.Parameters.AddWithValue("status", status);
         if (minScore.HasValue) countCmd.Parameters.AddWithValue("minScore", minScore.Value);
         if (maxScore.HasValue) countCmd.Parameters.AddWithValue("maxScore", maxScore.Value);
+        if (!string.IsNullOrWhiteSpace(search)) countCmd.Parameters.AddWithValue("search", $"%{search.Trim()}%");
         var total = Convert.ToInt32(await countCmd.ExecuteScalarAsync());
 
         // Fetch page with brand suppression join
@@ -1148,6 +1167,7 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         if (!string.IsNullOrEmpty(status)) cmd.Parameters.AddWithValue("status", status);
         if (minScore.HasValue) cmd.Parameters.AddWithValue("minScore", minScore.Value);
         if (maxScore.HasValue) cmd.Parameters.AddWithValue("maxScore", maxScore.Value);
+        if (!string.IsNullOrWhiteSpace(search)) cmd.Parameters.AddWithValue("search", $"%{search.Trim()}%");
 
         var leads = new List<Lead>();
         await using var reader = await cmd.ExecuteReaderAsync();

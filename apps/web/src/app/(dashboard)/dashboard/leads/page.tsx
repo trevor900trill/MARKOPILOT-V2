@@ -69,8 +69,18 @@ export default function LeadsPage() {
     if (!activeBrand) return;
     setIsLoading(true);
     try {
+      const params = new URLSearchParams({
+        page: String(page),
+        pageSize: "20",
+      });
+      if (filterMode && filterMode !== "all") {
+        params.set("filterMode", filterMode);
+      }
+      if (searchQuery.trim()) {
+        params.set("search", searchQuery.trim());
+      }
       const res = await apiGet<{ data: Lead[]; total: number; totalPages: number }>(
-        `/brands/${activeBrand.id}/leads?page=${page}&pageSize=20`
+        `/leads/${activeBrand.id}?${params.toString()}`
       );
       setLeads(res.data || []);
       setTotalLeads(res.total || 0);
@@ -81,7 +91,7 @@ export default function LeadsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [activeBrand, page]);
+  }, [activeBrand, page, filterMode, searchQuery]);
 
   const fetchPerformance = useCallback(async () => {
     if (!activeBrand) return;
@@ -206,7 +216,7 @@ export default function LeadsPage() {
     if (lead.isSuppressed) {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
-          <Ban size={10} /> Suppressed (Opt-Out)
+          <Ban size={10} /> Opted-Out
         </span>
       );
     }
@@ -256,25 +266,6 @@ export default function LeadsPage() {
       </span>
     );
   };
-
-  // Multi-vector filtering
-  const filteredLeads = leads.filter(l => {
-    // 1. Search filter
-    const matchesSearch = 
-      (l.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (l.company || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (l.jobTitle || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (l.email || '').toLowerCase().includes(searchQuery.toLowerCase());
-    
-    if (!matchesSearch) return false;
-
-    // 2. Mode filter
-    if (filterMode === "enriched") return !!l.email;
-    if (filterMode === "high_value") return l.leadScore >= 80;
-    if (filterMode === "suppressed") return !!l.isSuppressed;
-
-    return true;
-  });
 
   const highQualityCount = leads.filter(l => l.leadScore >= 80).length;
   const enrichedCount = leads.filter(l => !!l.email).length;
@@ -461,15 +452,15 @@ export default function LeadsPage() {
                     <RefreshCw className="animate-spin inline-block mx-auto" />
                   </td>
                 </tr>
-              ) : filteredLeads.length === 0 ? (
+              ) : leads.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center text-[var(--text-secondary)]">
-                    {leads.length === 0 
-                      ? "No leads discovered yet. Click \"Run Discovery Now\" to start mining prospects." 
-                      : "No prospects match your active filter."}
+                    {searchQuery || filterMode !== "all"
+                      ? "No prospects match your active filter."
+                      : "No leads discovered yet. Click \"Run Discovery Now\" to start mining prospects."}
                   </td>
                 </tr>
-              ) : filteredLeads.map(lead => (
+              ) : leads.map(lead => (
                 <tr key={lead.id} className={`hover:bg-white/5 transition group ${lead.status === 'disqualified' || lead.isSuppressed ? 'opacity-60' : ''}`}>
                   <td className="px-6 py-4 min-w-[200px]">
                     <div className="flex items-center gap-3">
