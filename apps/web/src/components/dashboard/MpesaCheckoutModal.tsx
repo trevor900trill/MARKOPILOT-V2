@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Smartphone, CheckCircle2, AlertCircle, Loader2, ShieldCheck, ArrowRight, RefreshCw, Copy, Check } from "lucide-react";
-import { PLANS, PlanDefinition } from "@/lib/plans";
+import { X, Smartphone, CheckCircle2, AlertCircle, Loader2, ShieldCheck, ArrowRight, RefreshCw } from "lucide-react";
+import { PLANS } from "@/lib/plans";
 import { apiPost, apiGet } from "@/lib/api-client";
 import { toast } from "sonner";
 
@@ -21,12 +21,11 @@ export function MpesaCheckoutModal({
 }: MpesaCheckoutModalProps) {
   const [selectedPlanId, setSelectedPlanId] = useState(initialPlanId);
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [step, setStep] = useState<"input" | "processing" | "success" | "manual">("input");
+  const [step, setStep] = useState<"input" | "processing" | "failed" | "success">("input");
   const [checkoutRequestId, setCheckoutRequestId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [receiptCode, setReceiptCode] = useState("");
-  const [copied, setCopied] = useState(false);
 
   const selectedPlan = PLANS.find(p => p.id === selectedPlanId) || PLANS[0];
 
@@ -36,15 +35,16 @@ export function MpesaCheckoutModal({
       setStep("input");
       setCheckoutRequestId(null);
       setStatusMessage("");
+      setErrorMessage("");
     }
   }, [isOpen, initialPlanId]);
 
-  // Polling STK Push status
+  // Polling STK Push status via Daraja Webhook updates
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (step === "processing" && checkoutRequestId) {
       let attempts = 0;
-      const maxAttempts = 30; // 60 seconds (every 2s)
+      const maxAttempts = 45; // 90 seconds (every 2s)
 
       interval = setInterval(async () => {
         attempts++;
@@ -56,11 +56,12 @@ export function MpesaCheckoutModal({
           if (res.status === "completed") {
             clearInterval(interval);
             setStep("success");
-            toast.success("Payment received! Your subscription has been activated.");
+            toast.success("Payment confirmed! Your subscription is active.");
             if (onSuccess) onSuccess();
           } else if (res.status === "failed") {
             clearInterval(interval);
-            setStatusMessage(res.message || "Payment request was cancelled or timed out.");
+            setErrorMessage(res.message || "Payment request was cancelled or declined.");
+            setStep("failed");
             toast.error(res.message || "Payment was not completed.");
           } else {
             setStatusMessage(res.message || "Waiting for you to enter your M-PESA PIN...");
@@ -71,8 +72,8 @@ export function MpesaCheckoutModal({
 
         if (attempts >= maxAttempts) {
           clearInterval(interval);
-          setStatusMessage("We didn't detect your payment confirmation yet. You can submit your M-PESA confirmation code below.");
-          setStep("manual");
+          setErrorMessage("The payment request timed out. Please verify your phone has network reception and try again.");
+          setStep("failed");
         }
       }, 2000);
     }
@@ -84,8 +85,8 @@ export function MpesaCheckoutModal({
 
   if (!isOpen) return null;
 
-  const handleInitiateStk = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleInitiateStk = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!phoneNumber || phoneNumber.trim().length < 9) {
       toast.error("Please enter a valid phone number (e.g. 0712345678 or 254712345678).");
       return;
@@ -93,6 +94,7 @@ export function MpesaCheckoutModal({
 
     setIsSubmitting(true);
     setStatusMessage("Sending STK Push prompt to your phone...");
+    setErrorMessage("");
 
     try {
       const res = await apiPost<{
@@ -112,7 +114,7 @@ export function MpesaCheckoutModal({
         setStatusMessage(res.customerMessage || "Please check your phone and enter your M-PESA PIN to complete.");
         toast.info("M-PESA prompt sent to your phone!");
       } else {
-        toast.error("Failed to initiate STK Push. Please try manual Till payment.");
+        toast.error("Failed to initiate STK Push. Please check your number.");
       }
     } catch (err: any) {
       console.error("STK Push error:", err);
@@ -120,39 +122,6 @@ export function MpesaCheckoutModal({
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleManualVerify = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!receiptCode || receiptCode.trim().length < 8) {
-      toast.error("Please enter a valid M-PESA confirmation code (e.g., SLK89X721B).");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await apiPost("/subscriptions/manual-verify", {
-        planId: selectedPlan.id,
-        receiptCode: receiptCode.trim().toUpperCase(),
-        phoneNumber: phoneNumber.trim() || undefined
-      });
-
-      setStep("success");
-      toast.success("M-PESA confirmation verified! Your subscription is active.");
-      if (onSuccess) onSuccess();
-    } catch (err: any) {
-      console.error("Manual verify error:", err);
-      toast.error(err?.message || "Could not verify transaction. Please check the code.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const copyTill = () => {
-    navigator.clipboard.writeText("1635990");
-    setCopied(true);
-    toast.success("Till number copied to clipboard: 1635990");
-    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -176,8 +145,8 @@ export function MpesaCheckoutModal({
             <Smartphone size={20} />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-white">M-PESA Checkout</h2>
-            <p className="text-xs text-gray-400">Instant activation via Safaricom STK Push &amp; Till</p>
+            <h2 className="text-xl font-semibold text-white">M-PESA Express Checkout</h2>
+            <p className="text-xs text-gray-400">Instant activation via Safaricom STK Push</p>
           </div>
         </div>
 
@@ -220,12 +189,12 @@ export function MpesaCheckoutModal({
                   placeholder="e.g. 0712 345 678 or 2547..."
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="w-full pl-4 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-emerald-500 text-sm text-white placeholder:text-gray-600 transition"
+                  className="w-full pl-4 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-emerald-500 text-sm text-white placeholder:text-gray-600 transition font-mono"
                   required
                 />
               </div>
               <p className="text-[11px] text-gray-400">
-                You will receive a popup prompt on this phone to enter your PIN.
+                You will receive a secure Safaricom PIN prompt on this phone.
               </p>
             </div>
 
@@ -236,7 +205,7 @@ export function MpesaCheckoutModal({
                 <span className="text-lg font-bold text-white">{selectedPlan.price}</span>
               </div>
               <span className="text-[11px] px-2.5 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-medium">
-                Autonomous Engine Enabled
+                Autonomous Engines Resume Immediately
               </span>
             </div>
 
@@ -252,21 +221,10 @@ export function MpesaCheckoutModal({
                 </>
               ) : (
                 <>
-                  Pay {selectedPlan.price} via STK Push <ArrowRight size={16} />
+                  Pay {selectedPlan.price} via M-PESA <ArrowRight size={16} />
                 </>
               )}
             </button>
-
-            {/* Switch to Manual Till Option */}
-            <div className="text-center">
-              <button
-                type="button"
-                onClick={() => setStep("manual")}
-                className="text-xs text-gray-400 hover:text-white underline transition"
-              >
-                Prefer to pay directly via Buy Goods Till Number?
-              </button>
-            </div>
           </form>
         )}
 
@@ -280,7 +238,7 @@ export function MpesaCheckoutModal({
             <div className="space-y-2">
               <h3 className="text-lg font-semibold text-white">Check Your Phone</h3>
               <p className="text-sm text-gray-300 max-w-sm mx-auto">
-                An M-PESA STK prompt has been sent to <span className="font-mono text-emerald-400">{phoneNumber}</span>.
+                An M-PESA prompt has been sent to <span className="font-mono text-emerald-400 font-bold">{phoneNumber}</span>.
               </p>
               <p className="text-xs text-gray-400">
                 Please unlock your device and enter your M-PESA PIN to approve payment of <strong className="text-white">{selectedPlan.price}</strong>.
@@ -294,16 +252,8 @@ export function MpesaCheckoutModal({
             <div className="flex items-center justify-center gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => setStep("manual")}
-                className="text-xs text-emerald-400 hover:underline"
-              >
-                Enter M-PESA Confirmation Code Manually
-              </button>
-              <span className="text-gray-600">•</span>
-              <button
-                type="button"
                 onClick={() => setStep("input")}
-                className="text-xs text-gray-400 hover:text-white"
+                className="text-xs text-gray-400 hover:text-white underline transition"
               >
                 Change Phone Number
               </button>
@@ -311,75 +261,47 @@ export function MpesaCheckoutModal({
           </div>
         )}
 
-        {/* STEP 3: Manual Till Payment & Verification */}
-        {step === "manual" && (
-          <form onSubmit={handleManualVerify} className="space-y-5">
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Buy Goods Till Details</span>
-                <button
-                  type="button"
-                  onClick={copyTill}
-                  className="flex items-center gap-1 text-[11px] text-emerald-400 hover:text-emerald-300 font-medium"
-                >
-                  {copied ? <Check size={12} /> : <Copy size={12} />} {copied ? "Copied" : "Copy Till"}
-                </button>
-              </div>
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="p-2.5 rounded-lg bg-black/40 border border-white/5">
-                  <span className="text-gray-400 block text-[10px]">Till Number</span>
-                  <span className="text-base font-mono font-bold text-white">1635990</span>
-                </div>
-                <div className="p-2.5 rounded-lg bg-black/40 border border-white/5">
-                  <span className="text-gray-400 block text-[10px]">Store Number</span>
-                  <span className="text-base font-mono font-bold text-white">1162771</span>
-                </div>
-              </div>
-              <p className="text-[11px] text-gray-400">
-                Go to M-PESA &rarr; Lipa na M-PESA &rarr; Buy Goods and Services &rarr; Enter Till <strong>1635990</strong> &rarr; Amount <strong>{selectedPlan.price}</strong>.
-              </p>
+        {/* STEP 3: Failed / Timeout */}
+        {step === "failed" && (
+          <div className="text-center py-6 space-y-6">
+            <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400 mx-auto">
+              <AlertCircle size={32} />
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                M-PESA Confirmation Code (from SMS)
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. SLK89X721B"
-                value={receiptCode}
-                onChange={(e) => setReceiptCode(e.target.value.toUpperCase())}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-emerald-500 font-mono text-sm text-white uppercase placeholder:normal-case placeholder:text-gray-600 transition"
-                required
-              />
+              <h3 className="text-lg font-semibold text-white">Payment Incomplete</h3>
+              <p className="text-xs text-red-200/80 max-w-sm mx-auto">
+                {errorMessage || "The M-PESA request was cancelled or timed out before PIN was entered."}
+              </p>
             </div>
 
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full py-3.5 px-6 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 disabled:opacity-50"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" /> Verifying Confirmation...
-                </>
-              ) : (
-                <>
-                  Verify Code &amp; Activate Plan <ArrowRight size={16} />
-                </>
-              )}
-            </button>
+            <div className="space-y-3 pt-2">
+              <button
+                type="button"
+                onClick={() => handleInitiateStk()}
+                disabled={isSubmitting}
+                className="w-full py-3.5 px-6 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" /> Sending New Prompt...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw size={16} /> Resend Prompt to {phoneNumber}
+                  </>
+                )}
+              </button>
 
-            <div className="text-center">
               <button
                 type="button"
                 onClick={() => setStep("input")}
-                className="text-xs text-gray-400 hover:text-white underline transition"
+                className="w-full py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-xs transition"
               >
-                &larr; Back to STK Push
+                Use Different Phone Number
               </button>
             </div>
-          </form>
+          </div>
         )}
 
         {/* STEP 4: Success Screen */}
@@ -395,7 +317,7 @@ export function MpesaCheckoutModal({
                 Your <strong className="text-emerald-400">{selectedPlan.name}</strong> plan is now active for the next 30 days.
               </p>
               <p className="text-xs text-gray-400">
-                Your autonomous marketing and lead extraction engine has been started.
+                Your autonomous marketing, social broadcasting, and lead mining engines have resumed.
               </p>
             </div>
 
@@ -411,11 +333,12 @@ export function MpesaCheckoutModal({
         {/* Compliance Footer */}
         <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500 font-sans">
           <span className="flex items-center gap-1.5">
-            <ShieldCheck size={12} className="text-emerald-500" /> End-to-end encrypted M-PESA Daraja integration
+            <ShieldCheck size={12} className="text-emerald-500" /> End-to-end encrypted Safaricom Daraja STK Push
           </span>
-          <span>Safaricom Business Till: 1635990</span>
+          <span>Verified Webhook Callback</span>
         </div>
       </div>
     </div>
   );
 }
+

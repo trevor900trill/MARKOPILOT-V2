@@ -197,59 +197,6 @@ public class SubscriptionsController : ControllerBase
         return Ok(new { status = "pending", message = "Awaiting PIN entry on phone..." });
     }
 
-    [HttpPost("manual-verify")]
-    public async Task<IActionResult> ManualVerify([FromBody] ManualMpesaVerifyRequest request)
-    {
-        var userId = HttpContext.GetUserId();
-        if (userId == Guid.Empty) return Unauthorized();
-
-        if (string.IsNullOrWhiteSpace(request.ReceiptCode) || string.IsNullOrWhiteSpace(request.PlanId))
-        {
-            return BadRequest(new { error = "Receipt code and plan are required." });
-        }
-
-        var plan = PlanCatalog.GetByName(request.PlanId);
-        var periodEnd = DateTimeOffset.UtcNow.AddDays(30);
-
-        // Record transaction
-        var tx = new MpesaTransaction
-        {
-            Id = Guid.NewGuid(),
-            UserId = userId,
-            PlanName = plan.Name,
-            Amount = plan.PriceKes,
-            PhoneNumber = request.PhoneNumber ?? "Manual Till",
-            CheckoutRequestId = "manual_" + request.ReceiptCode.Trim().ToUpperInvariant(),
-            MpesaReceiptNumber = request.ReceiptCode.Trim().ToUpperInvariant(),
-            Status = "completed",
-            ResultCode = 0,
-            ResultDesc = "Manual Till Confirmation",
-            CreatedAt = DateTimeOffset.UtcNow,
-            CompletedAt = DateTimeOffset.UtcNow
-        };
-
-        await _userRepo.RecordMpesaTransactionAsync(tx);
-
-        await _userRepo.UpdateUserSubscriptionAsync(
-            userId,
-            tx.CheckoutRequestId,
-            "active",
-            plan.Name,
-            periodEnd,
-            plan.LeadsPerMonth,
-            plan.PostsPerMonth,
-            plan.BrandsAllowed);
-
-        // Reactivate automation on all brands if it was paused
-        await ResumeUserAutomationsAsync(userId);
-
-        await _userRepo.ResetQuotaCountersAsync(userId);
-
-        await NotifyPaymentSuccessAsync(userId, plan, tx.Amount, tx.MpesaReceiptNumber, periodEnd);
-
-        return Ok(new { success = true, message = $"Subscription activated for {plan.Name} plan (30 days)." });
-    }
-
     private async Task ResumeUserAutomationsAsync(Guid userId)
     {
         try
@@ -315,4 +262,3 @@ public class SubscriptionsController : ControllerBase
 }
 
 public record MpesaStkPushRequest(string PlanId, string PhoneNumber);
-public record ManualMpesaVerifyRequest(string PlanId, string ReceiptCode, string? PhoneNumber = null);

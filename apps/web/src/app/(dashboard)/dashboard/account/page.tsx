@@ -140,7 +140,7 @@ export default function AccountPage() {
                   <p className="text-xs text-[var(--text-secondary)] mb-6 leading-relaxed">
                      {isTrialing 
                         ? "You are currently exploring on the 7-day free trial. Upgrade anytime to ensure uninterrupted autonomous runs."
-                        : "Billed monthly via Safaricom M-PESA STK Push & Business Till 1635990."}
+                        : "Billed monthly via Safaricom M-PESA Express STK Push."}
                   </p>
 
                   <ul className="space-y-2.5 mb-8 text-xs text-[var(--text-secondary)]">
@@ -158,24 +158,16 @@ export default function AccountPage() {
 
                <button 
                   onClick={() => setShowMpesaModal(true)} 
-                  className="w-full py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-xs flex justify-center items-center gap-2 transition shadow-lg shadow-emerald-500/20"
+                  className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
                >
-                  <Smartphone size={16} /> Upgrade / Pay via M-PESA <ArrowUpRight size={14} />
+                  <Smartphone size={16} /> Renew via M-PESA Express
                </button>
             </div>
 
             {/* Quota Usage */}
             <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6 flex flex-col justify-between">
                <div>
-                  <div className="flex items-center gap-3 mb-8">
-                     <div className="w-12 h-12 bg-blue-500/10 text-blue-400 rounded-xl flex items-center justify-center shadow-lg border border-blue-500/20">
-                        <BatteryCharging size={24} />
-                     </div>
-                     <div>
-                        <h3 className="font-serif text-white text-lg">Monthly Capacity</h3>
-                        <p className="text-[11px] text-[var(--text-muted)] mt-0.5">Autonomous usage this cycle</p>
-                     </div>
-                  </div>
+                  <h3 className="text-base font-medium text-white mb-6">Current Cycle Quota</h3>
 
                   {/* Discovery Quota */}
                   <div className="mb-6">
@@ -201,9 +193,9 @@ export default function AccountPage() {
                </div>
 
                <div className="p-4 rounded-xl bg-white/5 border border-white/5 text-[11px] text-gray-400">
-                  <span>M-PESA Business Till: </span>
-                  <span className="font-mono text-white font-semibold">1635990</span>
-                  <span className="block text-[10px] text-gray-500 mt-1">Direct Safaricom Buy Goods integration</span>
+                  <span>Payment Method: </span>
+                  <span className="font-mono text-emerald-400 font-semibold">M-PESA Express</span>
+                  <span className="block text-[10px] text-gray-500 mt-1">Instant activation via Safaricom STK Push</span>
                </div>
             </div>
          </div>
