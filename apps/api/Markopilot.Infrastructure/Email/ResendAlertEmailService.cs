@@ -182,7 +182,11 @@ public class ResendAlertEmailService : IAlertEmailService
   <table align=""center"" border=""0"" cellpadding=""0"" cellspacing=""0"" width=""100%"" style=""max-width: 560px; background-color: #111116; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5);"">
     <tr>
       <td style=""padding: 32px 32px 24px 32px; background: linear-gradient(180deg, rgba(16, 185, 129, 0.15) 0%, transparent 100%); text-align: center;"">
-        <div style=""width: 48px; height: 48px; background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #10b981; font-size: 24px; line-height: 48px; text-align: center;"">✓</div>
+        <table align=""center"" border=""0"" cellpadding=""0"" cellspacing=""0"" width=""48"" height=""48"" style=""width: 48px; height: 48px; margin: 0 auto; background-color: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 50%;"">
+          <tr>
+            <td align=""center"" valign=""middle"" style=""text-align: center; vertical-align: middle; padding: 0; color: #10b981; font-size: 20px; font-weight: bold; line-height: 48px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;"">&#10003;</td>
+          </tr>
+        </table>
         <h1 style=""margin: 16px 0 4px 0; font-size: 22px; font-weight: 700; color: #ffffff;"">Payment Confirmed!</h1>
         <p style=""margin: 0; font-size: 13px; color: #9ca3af;"">Your subscription has been successfully activated.</p>
       </td>
@@ -297,7 +301,11 @@ public class ResendAlertEmailService : IAlertEmailService
   <table align=""center"" border=""0"" cellpadding=""0"" cellspacing=""0"" width=""100%"" style=""max-width: 560px; background-color: #111116; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5);"">
     <tr>
       <td style=""padding: 32px 32px 24px 32px; background: linear-gradient(180deg, rgba(245, 158, 11, 0.15) 0%, transparent 100%); text-align: center;"">
-        <div style=""width: 48px; height: 48px; background: rgba(245, 158, 11, 0.2); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #f59e0b; font-size: 24px; line-height: 48px; text-align: center;"">⏰</div>
+        <table align=""center"" border=""0"" cellpadding=""0"" cellspacing=""0"" width=""48"" height=""48"" style=""width: 48px; height: 48px; margin: 0 auto; background-color: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 50%;"">
+          <tr>
+            <td align=""center"" valign=""middle"" style=""text-align: center; vertical-align: middle; padding: 0; color: #f59e0b; font-size: 20px; line-height: 48px;"">&#9200;</td>
+          </tr>
+        </table>
         <h1 style=""margin: 16px 0 4px 0; font-size: 22px; font-weight: 700; color: #ffffff;"">Your Trial Ends Tomorrow</h1>
         <p style=""margin: 0; font-size: 13px; color: #9ca3af;"">Keep your autonomous marketing engine running</p>
       </td>
@@ -399,7 +407,19 @@ public class ResendAlertEmailService : IAlertEmailService
   <table align=""center"" border=""0"" cellpadding=""0"" cellspacing=""0"" width=""100%"" style=""max-width: 560px; background-color: #111116; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5);"">
     <tr>
       <td style=""padding: 32px 32px 24px 32px; background: linear-gradient(180deg, rgba(239, 68, 68, 0.15) 0%, transparent 100%); text-align: center;"">
-        <div style=""width: 48px; height: 48px; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #ef4444; font-size: 24px; line-height: 48px; text-align: center;"">⏸️</div>
+        <table align=""center"" border=""0"" cellpadding=""0"" cellspacing=""0"" width=""48"" height=""48"" style=""width: 48px; height: 48px; margin: 0 auto; background-color: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: 50%;"">
+          <tr>
+            <td align=""center"" valign=""middle"" style=""text-align: center; vertical-align: middle; padding: 0;"">
+              <table align=""center"" border=""0"" cellpadding=""0"" cellspacing=""0"" style=""margin: 0 auto;"">
+                <tr>
+                  <td width=""4"" height=""14"" style=""width: 4px; height: 14px; background-color: #ef4444; border-radius: 2px; font-size: 1px; line-height: 1px;"">&nbsp;</td>
+                  <td width=""4"" style=""width: 4px; font-size: 1px; line-height: 1px;"">&nbsp;</td>
+                  <td width=""4"" height=""14"" style=""width: 4px; height: 14px; background-color: #ef4444; border-radius: 2px; font-size: 1px; line-height: 1px;"">&nbsp;</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
         <h1 style=""margin: 16px 0 4px 0; font-size: 22px; font-weight: 700; color: #ffffff;"">Your Trial Has Ended</h1>
         <p style=""margin: 0; font-size: 13px; color: #9ca3af;"">Your autonomous engine has been paused</p>
       </td>
@@ -503,7 +523,11 @@ public class ResendAlertEmailService : IAlertEmailService
   <table align=""center"" border=""0"" cellpadding=""0"" cellspacing=""0"" width=""100%"" style=""max-width: 560px; background-color: #111116; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5);"">
     <tr>
       <td style=""padding: 32px 32px 24px 32px; background: linear-gradient(180deg, rgba(59, 130, 246, 0.15) 0%, transparent 100%); text-align: center;"">
-        <div style=""width: 48px; height: 48px; background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #3b82f6; font-size: 24px; line-height: 48px; text-align: center;"">🔄</div>
+        <table align=""center"" border=""0"" cellpadding=""0"" cellspacing=""0"" width=""48"" height=""48"" style=""width: 48px; height: 48px; margin: 0 auto; background-color: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.35); border-radius: 50%;"">
+          <tr>
+            <td align=""center"" valign=""middle"" style=""text-align: center; vertical-align: middle; padding: 0; color: #3b82f6; font-size: 20px; line-height: 48px;"">&#128260;</td>
+          </tr>
+        </table>
         <h1 style=""margin: 16px 0 4px 0; font-size: 22px; font-weight: 700; color: #ffffff;"">Subscription Renews in 3 Days</h1>
         <p style=""margin: 0; font-size: 13px; color: #9ca3af;"">Keep your autonomous marketing running uninterrupted</p>
       </td>
@@ -610,7 +634,19 @@ public class ResendAlertEmailService : IAlertEmailService
   <table align=""center"" border=""0"" cellpadding=""0"" cellspacing=""0"" width=""100%"" style=""max-width: 560px; background-color: #111116; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5);"">
     <tr>
       <td style=""padding: 32px 32px 24px 32px; background: linear-gradient(180deg, rgba(239, 68, 68, 0.15) 0%, transparent 100%); text-align: center;"">
-        <div style=""width: 48px; height: 48px; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #ef4444; font-size: 24px; line-height: 48px; text-align: center;"">⏸️</div>
+        <table align=""center"" border=""0"" cellpadding=""0"" cellspacing=""0"" width=""48"" height=""48"" style=""width: 48px; height: 48px; margin: 0 auto; background-color: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: 50%;"">
+          <tr>
+            <td align=""center"" valign=""middle"" style=""text-align: center; vertical-align: middle; padding: 0;"">
+              <table align=""center"" border=""0"" cellpadding=""0"" cellspacing=""0"" style=""margin: 0 auto;"">
+                <tr>
+                  <td width=""4"" height=""14"" style=""width: 4px; height: 14px; background-color: #ef4444; border-radius: 2px; font-size: 1px; line-height: 1px;"">&nbsp;</td>
+                  <td width=""4"" style=""width: 4px; font-size: 1px; line-height: 1px;"">&nbsp;</td>
+                  <td width=""4"" height=""14"" style=""width: 4px; height: 14px; background-color: #ef4444; border-radius: 2px; font-size: 1px; line-height: 1px;"">&nbsp;</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
         <h1 style=""margin: 16px 0 4px 0; font-size: 22px; font-weight: 700; color: #ffffff;"">Subscription Expired</h1>
         <p style=""margin: 0; font-size: 13px; color: #9ca3af;"">Your autonomous engine has been paused</p>
       </td>
