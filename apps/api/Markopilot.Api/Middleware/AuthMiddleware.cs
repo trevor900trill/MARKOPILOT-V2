@@ -85,6 +85,7 @@ public class AuthMiddleware
             }
 
             context.Items["UserId"] = Guid.Parse(userId);
+            context.User = principal;
         }
         catch (Exception ex)
         {

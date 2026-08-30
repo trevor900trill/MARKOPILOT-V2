@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Radar, AlertTriangle, ShieldCheck, Zap, ExternalLink, RefreshCw, Sparkles, CheckCircle2, XCircle, ArrowRight, Clock, ShieldAlert } from "lucide-react";
+import { Radar, AlertTriangle, ShieldCheck, Zap, ExternalLink, RefreshCw, Sparkles, CheckCircle2, XCircle, ArrowRight, Clock, ShieldAlert, Lock, Smartphone } from "lucide-react";
+import { toast } from "sonner";
 import { useBrand } from "@/lib/brand-context";
 import { apiGet, apiPost } from "@/lib/api-client";
 import { useRouter } from "next/navigation";
+import { MpesaCheckoutModal } from "@/components/dashboard/MpesaCheckoutModal";
 
 type BrandImpactEvent = {
   id: string;
@@ -33,15 +35,16 @@ type BrandImpactSummary = {
 };
 
 export default function BrandImpactPage() {
-  const { activeBrand } = useBrand();
+  const { activeBrand, user } = useBrand();
+  const isSubscriptionActive = user?.isSubscriptionActive ?? true;
   const router = useRouter();
   const [filterLevel, setFilterLevel] = useState<string>("all");
   const [events, setEvents] = useState<BrandImpactEvent[]>([]);
   const [summary, setSummary] = useState<BrandImpactSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isScanning, setIsScanning] = useState(false);
+  const [showMpesaModal, setShowMpesaModal] = useState(false);
   const [actioningId, setActioningId] = useState<string | null>(null);
-  const [notificationMessage, setNotificationMessage] = useState<string | null>(null);
 
   const fetchImpactData = useCallback(async () => {
     if (!activeBrand) return;
@@ -67,33 +70,54 @@ export default function BrandImpactPage() {
 
   const handleTriggerScan = async () => {
     if (!activeBrand || isScanning) return;
+    if (!isSubscriptionActive) {
+      toast.error("Cannot run scan: your trial or subscription has expired. Please pay via M-PESA.");
+      setShowMpesaModal(true);
+      return;
+    }
     setIsScanning(true);
     try {
       const res = await apiPost<{ message: string; summary: BrandImpactSummary }>(
         `/brands/${activeBrand.id}/impact/scan`,
         {}
       );
-      setNotificationMessage("Scan completed! Latest market intelligence fetched.");
+      toast.success("Scan completed! Latest market intelligence fetched.");
       await fetchImpactData();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to trigger scan:", err);
+      if (err?.code === "ENGINE_PAUSED" || err?.status === 402 || err?.status === 403) {
+        toast.error("Engine paused: trial or subscription is expired. Please pay via M-PESA.");
+        setShowMpesaModal(true);
+      } else {
+        toast.error(err?.message || "Failed to trigger scan. Please try again.");
+      }
     } finally {
       setIsScanning(false);
-      setTimeout(() => setNotificationMessage(null), 4000);
     }
   };
 
   const handleConvertPost = async (eventId: string) => {
     if (!activeBrand || actioningId) return;
+    if (!isSubscriptionActive) {
+      toast.error("Cannot draft post: your trial or subscription has expired. Please pay via M-PESA.");
+      setShowMpesaModal(true);
+      return;
+    }
     setActioningId(eventId);
     try {
       await apiPost(`/brands/${activeBrand.id}/impact/${eventId}/convert-post`, {});
-      setNotificationMessage("Post drafted successfully! Redirecting to Social Posts...");
+      toast.success("Post drafted successfully! Redirecting to Social Posts...");
       setTimeout(() => {
         router.push("/dashboard/social");
       }, 1200);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to convert impact to post:", err);
+      if (err?.code === "ENGINE_PAUSED" || err?.status === 402 || err?.status === 403) {
+        toast.error("Engine paused: trial or subscription is expired. Please pay via M-PESA.");
+        setShowMpesaModal(true);
+      } else {
+        toast.error(err?.message || "Failed to draft reactive post. Please try again.");
+      }
       setActioningId(null);
     }
   };
@@ -130,11 +154,24 @@ export default function BrandImpactPage() {
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8">
-      {/* Toast Notification */}
-      {notificationMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-emerald-500/90 text-white px-5 py-3 rounded-xl shadow-2xl backdrop-blur-md flex items-center gap-3 border border-emerald-400/30 animate-in fade-in slide-in-from-bottom-5">
-          <CheckCircle2 size={18} />
-          <span className="text-sm font-medium">{notificationMessage}</span>
+      {/* Expired Subscription Banner */}
+      {!isSubscriptionActive && (
+        <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center shrink-0">
+              <ShieldAlert size={20} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-white">Brand Impact Intelligence Paused</p>
+              <p className="text-xs text-red-200/80">Your autonomous engine is paused due to an expired trial or subscription. Upgrade your plan to resume market sweeps.</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowMpesaModal(true)}
+            className="px-4 py-2 bg-gradient-to-r from-red-600 to-rose-600 hover:opacity-90 text-white text-xs font-semibold rounded-xl transition shrink-0 flex items-center gap-2"
+          >
+            <Smartphone size={14} /> Pay via M-PESA
+          </button>
         </div>
       )}
 
@@ -164,10 +201,17 @@ export default function BrandImpactPage() {
             data-tour="impact-scan-btn"
             onClick={handleTriggerScan}
             disabled={isScanning || !activeBrand}
+            title={!isSubscriptionActive ? "Brand Impact scans are paused because your trial or subscription has expired" : "Scan market sources now"}
             className="flex items-center gap-2 px-4 py-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/90 text-white text-sm font-semibold rounded-xl transition shadow-lg shadow-[var(--accent-primary)]/20 disabled:opacity-50"
           >
-            <RefreshCw size={14} className={isScanning ? "animate-spin" : ""} />
-            {isScanning ? "Scanning Sources..." : "Scan Now"}
+            {isScanning ? (
+              <RefreshCw size={14} className="animate-spin" />
+            ) : !isSubscriptionActive ? (
+              <Lock size={14} />
+            ) : (
+              <RefreshCw size={14} />
+            )}
+            {isScanning ? "Scanning Sources..." : !isSubscriptionActive ? "Scan Paused" : "Scan Now"}
           </button>
         </div>
       </div>
@@ -238,9 +282,11 @@ export default function BrandImpactPage() {
           <button
             onClick={handleTriggerScan}
             disabled={isScanning}
+            title={!isSubscriptionActive ? "Brand Impact scans are paused because your trial or subscription has expired" : "Run on-demand check"}
             className="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--bg-elevated)] hover:bg-[var(--bg-primary)] border border-[var(--border)] text-xs text-white transition"
           >
-            <RefreshCw size={13} className={isScanning ? "animate-spin" : ""} /> Run On-Demand Check
+            {isScanning ? <RefreshCw size={13} className="animate-spin" /> : !isSubscriptionActive ? <Lock size={13} /> : <RefreshCw size={13} />}
+            {!isSubscriptionActive ? "Check Paused" : "Run On-Demand Check"}
           </button>
         </div>
       ) : (
@@ -342,6 +388,11 @@ export default function BrandImpactPage() {
         </div>
       )}
       </div>
+
+      <MpesaCheckoutModal
+        isOpen={showMpesaModal}
+        onClose={() => setShowMpesaModal(false)}
+      />
     </div>
   );
 }

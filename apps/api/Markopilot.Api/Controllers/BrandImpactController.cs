@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Markopilot.Api.Middleware;
 using Markopilot.Core.Interfaces;
 using Markopilot.Core.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -33,8 +34,7 @@ public class BrandImpactController : ControllerBase
 
     private Guid GetUserId()
     {
-        var sub = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        return Guid.TryParse(sub, out var id) ? id : Guid.Empty;
+        return HttpContext.GetUserId();
     }
 
     private async Task<bool> ValidateBrandOwnershipAsync(Guid brandId)
@@ -80,7 +80,7 @@ public class BrandImpactController : ControllerBase
         var user = await _userRepo.GetUserByIdAsync(userId);
         if (user == null || !user.IsSubscriptionActive)
         {
-            return StatusCode(402, new { error = "Subscription inactive. Please renew your plan in Account to generate reactive social posts." });
+            return StatusCode(403, new { error = new { code = "ENGINE_PAUSED", message = "Brand Impact intelligence is paused because your trial or subscription has expired. Please renew your plan in Account to generate reactive social posts." } });
         }
 
         if (!await ValidateBrandOwnershipAsync(brandId))
@@ -123,7 +123,7 @@ public class BrandImpactController : ControllerBase
         var user = await _userRepo.GetUserByIdAsync(userId);
         if (user == null || !user.IsSubscriptionActive)
         {
-            return StatusCode(402, new { error = "Subscription inactive. Please renew your plan in Account to run Brand Impact scans." });
+            return StatusCode(403, new { error = new { code = "ENGINE_PAUSED", message = "Brand Impact scans are paused because your trial or subscription has expired. Please renew your plan in Account to run Brand Impact scans." } });
         }
 
         if (!await ValidateBrandOwnershipAsync(brandId))
