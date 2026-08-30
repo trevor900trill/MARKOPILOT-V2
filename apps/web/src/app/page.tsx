@@ -12,8 +12,6 @@ import {
   Sparkles,
   Zap,
   ShieldCheck,
-  MessageSquare,
-  Briefcase,
   Camera,
   Video,
   Mail,
@@ -29,10 +27,7 @@ import {
   XCircle,
   BarChart3,
   Clock,
-  ExternalLink,
-  Layers,
-  Flame,
-  Target
+  Flame
 } from "lucide-react";
 import { PLANS } from "@/lib/plans";
 import { XIcon, LinkedInIcon, InstagramIcon, TikTokIcon } from "@/components/icons/SocialIcons";
@@ -44,7 +39,7 @@ export default function LandingPage() {
   const [typedText, setTypedText] = useState("");
   const fullText = "Running Itself.";
 
-  // Interactive state for FAQ Accordion
+  // State for FAQ Accordion
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   useEffect(() => {
@@ -54,7 +49,7 @@ export default function LandingPage() {
     };
     window.addEventListener("mousemove", handleMouseMove);
 
-    // Typewriter effect logic
+    // Typewriter effect
     let typeInterval: NodeJS.Timeout;
     const startDelay = setTimeout(() => {
       let i = 0;
@@ -120,39 +115,39 @@ export default function LandingPage() {
 
   const faqs = [
     {
-      q: "Do I have to approve every post, or can it run 100% on autopilot?",
-      a: "You have complete control. Markopilot features a built-in 'Review Mode'. If enabled, every AI-drafted post, image, video, and cold email lands in your morning approval queue where you can approve, tweak, or reject it in seconds. Once you're confident in your brand voice settings, you can flip the switch to 100% Autonomous Mode."
+      q: "Do I have to approve every post, or can it post automatically?",
+      a: "You are in complete control. With 'Review Mode' turned on, every post, image, video, and email waits in a morning queue for your 1-click approval. Whenever you feel ready, you can switch on 'Autopilot' and let Markopilot post and send on its own."
     },
     {
-      q: "How does active social posting help my AI Search (GEO) ranking?",
-      a: "Modern AI search engines like ChatGPT Search, Perplexity, Claude, and Google AI Overviews don't rely solely on static websites. They continuously scrape and cross-reference real-time social conversations on X, LinkedIn, and TikTok. An active omni-channel footprint provides the entity verification and citations required for AI engines to recommend your brand."
+      q: "How does posting on social media help my brand get recommended by ChatGPT?",
+      a: "When potential customers ask AI tools like ChatGPT, Perplexity, or Google for recommendations, the AI checks live internet conversations to see which products are real, active, and trusted. Regular social activity gives AI engines the fresh proof they need to recommend your brand."
     },
     {
-      q: "How are the images and videos generated?",
-      a: "For Instagram and social visuals, Markopilot connects directly to Replicate to generate photorealistic and aesthetic imagery using Flux 1.1 Pro. For TikTok and short-form video, Markopilot uses Creatomate to assemble high-retention video footage, animated typography, and dynamic pacing aligned with current social trends."
+      q: "How are images and videos made?",
+      a: "Markopilot creates clean 4K visuals and short videos with captions automatically using your product notes. You don't need any design skills or video editing software."
     },
     {
-      q: "I'm a solo indie developer. How much time will this really save me?",
-      a: "Solo founders typically spend 15 to 20 hours a week brainstorming content, editing images, writing threads, and cold emailing. With Markopilot, you simply input your product URL or drop your release notes once. Markopilot handles generation, scheduling, and lead qualification, reducing your weekly marketing workload to less than 15 minutes of review time."
+      q: "I'm a solo founder. How much time will this save me?",
+      a: "Most solo founders spend 15 to 20 hours a week on social posts, editing graphics, and cold emails. With Markopilot, you simply add your website link once, and your weekly marketing time drops to under 15 minutes of quick reviews."
     },
     {
-      q: "Can I connect my own custom email accounts for cold outreach?",
-      a: "Yes! You can connect custom Gmail or custom SMTP accounts. Markopilot includes smart deliverability governors, automated rate limits, and deduplication heuristics to safeguard your sender reputation while reaching qualified leads."
+      q: "Can I use my own email address for outreach?",
+      a: "Yes! You can connect your existing Gmail or company work email. Markopilot spaces out emails safely and follows anti-spam limits so your inbox reputation stays healthy."
     },
     {
-      q: "Is the lead discovery and email outreach process compliant?",
-      a: "Markopilot is designed specifically for B2B outreach to public professional contacts. It uses public business sources, verifies and deduplicates contacts, respects suppression lists, includes clear sender identity and one-click unsubscribe handling, and gives you Review Mode before outreach is sent."
+      q: "Is the customer search and email process safe and legal?",
+      a: "Yes. Markopilot searches public business websites for verified work contacts. It removes duplicate emails, checks for real company matches, includes a one-click unsubscribe button in every email, and lets you review every message before it sends."
     },
     {
-      q: "How does the autonomous cadence work without a complicated calendar?",
-      a: "Markopilot automatically optimizes dispatch times for your audience's global peak engagement windows. Instead of requiring you to configure calendar slots and alarms manually, background workers handle the pacing seamlessly while keeping your social feeds active and your outbound queue moving."
+      q: "How does the automatic schedule work without a messy calendar?",
+      a: "Markopilot automatically picks the best times when your target audience is awake and active. It spaces out your posts and outreach steadily throughout the week so you never have to organize calendar slots by hand."
     }
   ];
 
   return (
     <div className="min-h-screen bg-[#07070a] text-white selection:bg-[var(--accent-primary)] selection:text-white relative pb-12 overflow-hidden">
 
-      {/* Inline Styles for Keyframe Animations */}
+      {/* Inline Keyframe Animations */}
       <style dangerouslySetInnerHTML={{
         __html: `
         @keyframes scroll {
@@ -172,7 +167,7 @@ export default function LandingPage() {
         }
       `}} />
 
-      {/* Interactive Cursor Glow */}
+      {/* Mouse Glow Background */}
       {mounted && mousePos.x !== 0 && (
         <div
           className="fixed z-0 pointer-events-none rounded-full blur-[120px] opacity-25 transition-opacity duration-300"
@@ -185,7 +180,7 @@ export default function LandingPage() {
         />
       )}
 
-      {/* Dynamic Background Elements */}
+      {/* Background Gradients */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         <div className="absolute top-0 inset-x-0 h-[600px] bg-[radial-gradient(ellipse_at_top,rgba(124,110,255,0.12),transparent_70%)]" />
         <div className="absolute top-[1000px] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-[radial-gradient(ellipse_at_center,rgba(59,130,246,0.07),transparent_70%)]" />
@@ -204,7 +199,7 @@ export default function LandingPage() {
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">
             <Link href="#features" className="hover:text-white hover:-translate-y-0.5 transition-all">Features</Link>
             <Link href="#how-it-works" className="hover:text-white hover:-translate-y-0.5 transition-all">How It Works</Link>
-            <Link href="#compliance" className="hover:text-white hover:-translate-y-0.5 transition-all">Compliance</Link>
+            <Link href="#compliance" className="hover:text-white hover:-translate-y-0.5 transition-all">Safe Outreach</Link>
             <Link href="#pricing" className="hover:text-white hover:-translate-y-0.5 transition-all">Pricing</Link>
             <Link href="#faq" className="hover:text-white hover:-translate-y-0.5 transition-all">FAQ</Link>
           </div>
@@ -220,16 +215,13 @@ export default function LandingPage() {
       <header className="relative z-10 min-h-[85vh] flex flex-col items-center justify-center pt-28 pb-16 overflow-visible">
         <div className="max-w-4xl mx-auto px-6 text-center space-y-7 relative z-20">
 
-          {/* Headline with Typewriter */}
+          {/* Headline */}
           <h1 className="font-serif text-[clamp(42px,6.5vw,88px)] leading-[1.08] tracking-tight text-white font-normal">
             Your Entire Growth Engine, <br />
             <span className="relative inline-block mt-1">
-              {/* Ghost text to maintain stable layout */}
               <span className="opacity-0 tracking-tight select-none pointer-events-none pb-2 inline-block">
                 {fullText}
               </span>
-
-              {/* Typed Text Overlay */}
               <span className="absolute inset-0 text-left whitespace-nowrap text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-white to-purple-200 pb-2 inline-block">
                 {typedText}
                 <span
@@ -241,12 +233,12 @@ export default function LandingPage() {
             </span>
           </h1>
 
-          {/* Clear Subtitle */}
+          {/* Plain English Subtitle */}
           <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto font-sans font-light leading-relaxed">
-            Markopilot writes and publishes high-converting posts across <strong className="text-white font-medium">X, LinkedIn, Instagram, and TikTok</strong>, extracts verified B2B leads, and makes AI search engines recommend your brand 24/7.
+            Markopilot automatically writes and posts for you on <strong className="text-white font-medium">X, LinkedIn, Instagram, and TikTok</strong>, finds verified business leads, and gets your brand recommended by ChatGPT and Google 24/7.
           </p>
 
-          {/* Primary CTAs */}
+          {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-3">
             <NavLink href="#" isAuth={true} isPrimary className="group relative w-full sm:w-auto px-7 py-3.5 rounded-full bg-white text-black font-semibold text-sm hover:bg-gray-100 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 overflow-hidden shadow-[0_0_30px_rgba(255,255,255,0.2)]">
               Start 7-Day Free Trial <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
@@ -258,15 +250,15 @@ export default function LandingPage() {
 
           {/* Trust Guarantees */}
           <div className="pt-2 text-xs text-gray-400 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
-            <span className="flex items-center gap-1.5 text-gray-300"><CheckCircle2 size={13} className="text-emerald-400 flex-shrink-0" /> No credit card required</span>
+            <span className="flex items-center gap-1.5 text-gray-300"><CheckCircle2 size={13} className="text-emerald-400 flex-shrink-0" /> No credit card needed</span>
             <span className="hidden sm:inline text-white/20">•</span>
             <span className="flex items-center gap-1.5 text-gray-300"><CheckCircle2 size={13} className="text-emerald-400 flex-shrink-0" /> 2-minute setup</span>
             <span className="hidden sm:inline text-white/20">•</span>
-            <span className="flex items-center gap-1.5 text-gray-300"><CheckCircle2 size={13} className="text-emerald-400 flex-shrink-0" /> Review Mode or Autopilot</span>
+            <span className="flex items-center gap-1.5 text-gray-300"><CheckCircle2 size={13} className="text-emerald-400 flex-shrink-0" /> Review first or run on autopilot</span>
           </div>
         </div>
 
-        {/* 3 High-Impact Pillars */}
+        {/* 3 Simple Overview Cards */}
         <div className="mt-16 w-full max-w-6xl mx-auto px-6 relative z-10 opacity-0 animate-[fadeUpIn_1.5s_cubic-bezier(0.16,1,0.3,1)_700ms_forwards]">
           <div className="grid lg:grid-cols-3 gap-5">
             <div className="rounded-2xl bg-red-500/[0.06] border border-red-400/20 p-6 text-left space-y-4">
@@ -275,10 +267,10 @@ export default function LandingPage() {
               </div>
               <div>
                 <p className="text-xs font-mono uppercase tracking-wider text-red-300 mb-2">The Problem</p>
-                <h2 className="text-xl font-serif text-white">Founders stop marketing when product building gets intense.</h2>
+                <h2 className="text-xl font-serif text-white">Marketing stops when you're busy building.</h2>
               </div>
               <p className="text-sm text-gray-400 leading-relaxed">
-                Writing threads, rendering videos, and sending outreach takes 20 hours a week. When code takes over, your distribution dies.
+                Writing posts, creating visuals, and finding leads takes 20 hours a week. When product work picks up, marketing goes quiet.
               </p>
             </div>
 
@@ -287,11 +279,11 @@ export default function LandingPage() {
                 <Bot size={20} />
               </div>
               <div>
-                <p className="text-xs font-mono uppercase tracking-wider text-purple-300 mb-2">What Markopilot Does</p>
-                <h2 className="text-xl font-serif text-white">Turns your product updates into daily autonomous growth.</h2>
+                <p className="text-xs font-mono uppercase tracking-wider text-purple-300 mb-2">How Markopilot Helps</p>
+                <h2 className="text-xl font-serif text-white">Turn product updates into daily marketing.</h2>
               </div>
               <p className="text-sm text-gray-400 leading-relaxed">
-                Connect your URL once. Markopilot automatically writes cross-channel posts, produces visuals, discovers B2B leads, and runs outreach.
+                Enter your website URL once. Markopilot automatically writes posts, makes images and videos, finds new customers, and sends emails.
               </p>
             </div>
 
@@ -300,21 +292,21 @@ export default function LandingPage() {
                 <TrendingUp size={20} />
               </div>
               <div>
-                <p className="text-xs font-mono uppercase tracking-wider text-emerald-300 mb-2">The Outcome</p>
-                <h2 className="text-xl font-serif text-white">Stay visible, cited by AI search, and consistently inbound.</h2>
+                <p className="text-xs font-mono uppercase tracking-wider text-emerald-300 mb-2">The Result</p>
+                <h2 className="text-xl font-serif text-white">Get new buyers and stay recommended by AI.</h2>
               </div>
               <p className="text-sm text-gray-400 leading-relaxed">
-                Your brand builds compounding authority across Google, ChatGPT, and Perplexity while you stay 100% focused on your product.
+                Your brand stays active every day, gets cited when buyers ask ChatGPT for recommendations, and brings in qualified leads consistently.
               </p>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Integrations Bar */}
+      {/* Social Platforms Bar */}
       <section className="py-10 border-y border-white/5 bg-black/40 backdrop-blur-md relative z-10 my-10 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 mb-6 text-center text-xs uppercase tracking-widest text-gray-400 font-bold">
-          Autonomous multi-modal pipelines powered by best-in-class engines
+          Works seamlessly with the platforms and tools you use
         </div>
         <div className="flex max-w-full relative opacity-60 hover:opacity-100 transition-opacity duration-500 overflow-hidden" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 15%, black 85%, transparent)', maskImage: 'linear-gradient(to right, transparent, black 15%, black 85%, transparent)' }}>
           <div className="flex w-max animate-scroll pointer-events-none">
@@ -323,57 +315,57 @@ export default function LandingPage() {
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><LinkedInIcon size={24} /> LinkedIn</div>
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><InstagramIcon size={24} /> Instagram</div>
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><TikTokIcon size={24} /> TikTok</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Mail size={26} /> Gmail & SMTP</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Sparkles size={26} /> Flux 1.1 Pro 4K</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Video size={26} /> Creatomate Video API</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Bot size={26} /> OpenRouter Multi-LLM</div>
+              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Mail size={26} /> Gmail &amp; Work Email</div>
+              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Sparkles size={26} /> 4K AI Images</div>
+              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Video size={26} /> Short-Form Videos</div>
+              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Bot size={26} /> Multi-LLM Brain</div>
             </div>
-            {/* Duplicated for infinite loop */}
+            {/* Duplicated for loop */}
             <div className="flex gap-20 items-center px-10 text-xl font-medium tracking-wide whitespace-nowrap">
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><XIcon size={24} /> Twitter (X)</div>
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><LinkedInIcon size={24} /> LinkedIn</div>
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><InstagramIcon size={24} /> Instagram</div>
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><TikTokIcon size={24} /> TikTok</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Mail size={26} /> Gmail & SMTP</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Sparkles size={26} /> Flux 1.1 Pro 4K</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Video size={26} /> Creatomate Video API</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Bot size={26} /> OpenRouter Multi-LLM</div>
+              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Mail size={26} /> Gmail &amp; Work Email</div>
+              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Sparkles size={26} /> 4K AI Images</div>
+              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Video size={26} /> Short-Form Videos</div>
+              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Bot size={26} /> Multi-LLM Brain</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* ========================================================================= */}
-      {/* ALTERNATING FEATURE FLOW SECTION (Clean, Simple, Readable, Visual Flow)  */}
+      {/* ALTERNATING FEATURE FLOW SECTION (Clean, Simple, Readable, Zigzag)        */}
       {/* ========================================================================= */}
       <section id="features" className="py-20 max-w-7xl mx-auto px-6 relative z-10 scroll-mt-20 space-y-28">
 
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-mono uppercase tracking-wider">
-            <Zap size={14} /> Core Capabilities
+            <Zap size={14} /> What It Does
           </div>
           <h2 className="font-serif text-4xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">
-            How Markopilot Powers Your Brand
+            How Markopilot Works For You
           </h2>
           <p className="text-gray-400 text-base md:text-lg">
-            Everything your product needs to stay visible, attract customers, and rank on modern AI engines—simplified into an autonomous system.
+            Everything you need to find customers, grow your social accounts, and get noticed—made simple and automatic.
           </p>
         </div>
 
         {/* ------------------------------------------------------------- */}
-        {/* ITEM 1: Multi-Channel Social (Text Left, Image/Visual Right)  */}
+        {/* ITEM 1: Social Media (Text Left, Visual Right)                */}
         {/* ------------------------------------------------------------- */}
         <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           <div className="lg:col-span-6 space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-mono">
-              <Share2 size={13} /> 01 • Multi-Channel Social Publishing
+              <Share2 size={13} /> 01 • Social Media Posting
             </div>
             <h3 className="font-serif text-3xl md:text-4xl text-white leading-tight">
-              Publish native, high-converting posts across 4 major networks.
+              Automatically creates and shares posts on 4 social networks.
             </h3>
             <p className="text-gray-300 text-base leading-relaxed font-light">
-              Stop spending hours rewriting the same update for different apps. Markopilot takes your product announcements, devlogs, or website content and creates custom formats for each platform.
+              You don't need to write 4 different posts every time you have an update. Markopilot turns your website notes and feature releases into natural posts tailored for each platform.
             </p>
             <div className="space-y-3.5 pt-2">
               <div className="flex items-start gap-3">
@@ -381,8 +373,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">Algorithm-Optimized Formats</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Viral threads on X, insightful B2B essays on LinkedIn, 4K visual carousels on Instagram, and vertical videos on TikTok.</p>
+                  <strong className="text-white text-sm block">Written for Each Platform</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Threads for Twitter/X, professional essays for LinkedIn, picture posts for Instagram, and short video clips for TikTok.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -390,8 +382,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">Flux 1.1 Pro Images &amp; Creatomate Videos</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Generates high-resolution 4K imagery and short-form video clips automatically with zero design skill required.</p>
+                  <strong className="text-white text-sm block">Makes Images &amp; Short Videos</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Automatically creates crisp 4K pictures and short video clips so you don't have to hire a designer.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -399,8 +391,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">Peak Engagement Dispatch</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Dispatches content during peak algorithmic traffic windows to ensure maximum organic reach.</p>
+                  <strong className="text-white text-sm block">Posts at the Best Times</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Publishes when your target audience is online and reading, giving your product the best organic reach.</p>
                 </div>
               </div>
             </div>
@@ -411,14 +403,14 @@ export default function LandingPage() {
               <div className="flex items-center justify-between border-b border-white/5 pb-4">
                 <span className="text-xs font-mono text-gray-400 flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  Multi-Channel Pipeline
+                  Automated Social Feed
                 </span>
                 <span className="text-[11px] font-mono bg-purple-500/20 text-purple-300 px-2.5 py-0.5 rounded-full">
-                  4 Channels Active
+                  4 Channels Ready
                 </span>
               </div>
 
-              {/* 4 Channel Rows */}
+              {/* 4 Clean Rows */}
               <div className="space-y-2.5">
                 <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between hover:bg-white/[0.06] transition">
                   <div className="flex items-center gap-3">
@@ -427,10 +419,10 @@ export default function LandingPage() {
                     </div>
                     <div>
                       <div className="text-xs font-semibold text-white">Twitter / X</div>
-                      <div className="text-[11px] text-gray-400">Viral launch threads &amp; devlog insights</div>
+                      <div className="text-[11px] text-gray-400">Launch threads &amp; product highlights</div>
                     </div>
                   </div>
-                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Auto-Formatted</span>
+                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Ready to Post</span>
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between hover:bg-white/[0.06] transition">
@@ -439,11 +431,11 @@ export default function LandingPage() {
                       <LinkedInIcon size={16} />
                     </div>
                     <div>
-                      <div className="text-xs font-semibold text-white">LinkedIn B2B</div>
-                      <div className="text-[11px] text-gray-400">Case studies, metrics &amp; thought leadership</div>
+                      <div className="text-xs font-semibold text-white">LinkedIn</div>
+                      <div className="text-[11px] text-gray-400">Case studies &amp; business insights</div>
                     </div>
                   </div>
-                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Executive Tone</span>
+                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Professional Tone</span>
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between hover:bg-white/[0.06] transition">
@@ -453,10 +445,10 @@ export default function LandingPage() {
                     </div>
                     <div>
                       <div className="text-xs font-semibold text-white">Instagram</div>
-                      <div className="text-[11px] text-gray-400">Flux 1.1 Pro 4K infographics &amp; carousels</div>
+                      <div className="text-[11px] text-gray-400">4K image carousels &amp; infographics</div>
                     </div>
                   </div>
-                  <span className="text-[10px] font-mono text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded">4K Generated</span>
+                  <span className="text-[10px] font-mono text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded">4K Image Made</span>
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between hover:bg-white/[0.06] transition">
@@ -466,10 +458,10 @@ export default function LandingPage() {
                     </div>
                     <div>
                       <div className="text-xs font-semibold text-white">TikTok &amp; Shorts</div>
-                      <div className="text-[11px] text-gray-400">Creatomate dynamic video &amp; kinetic captions</div>
+                      <div className="text-[11px] text-gray-400">Short vertical video with dynamic subtitles</div>
                     </div>
                   </div>
-                  <span className="text-[10px] font-mono text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded">9:16 Video</span>
+                  <span className="text-[10px] font-mono text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded">Video Rendered</span>
                 </div>
               </div>
             </div>
@@ -477,7 +469,7 @@ export default function LandingPage() {
         </div>
 
         {/* ------------------------------------------------------------- */}
-        {/* ITEM 2: AI Search (GEO) (Image/Visual Left, Text Right)       */}
+        {/* ITEM 2: AI Search Recommendations (Visual Left, Text Right)   */}
         {/* ------------------------------------------------------------- */}
         <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           <div className="lg:col-span-6 order-2 lg:order-1">
@@ -485,28 +477,28 @@ export default function LandingPage() {
               <div className="flex items-center justify-between border-b border-white/5 pb-4">
                 <span className="text-xs font-mono text-emerald-400 flex items-center gap-2">
                   <Globe size={14} />
-                  AI Engine Ingestion Index
+                  ChatGPT &amp; Perplexity Search
                 </span>
                 <span className="text-[11px] font-mono bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full">
-                  Rank #1 Recommended
+                  Top Recommended
                 </span>
               </div>
 
               <div className="p-4 bg-white/[0.03] rounded-2xl border border-white/5 space-y-2">
-                <div className="text-[11px] font-mono text-gray-400">Buyer Asks ChatGPT / Perplexity:</div>
-                <div className="text-sm font-medium text-white">"What's the best tool to run growth marketing for a B2B startup in 2026?"</div>
+                <div className="text-[11px] font-mono text-gray-400">User Query to AI:</div>
+                <div className="text-sm font-medium text-white">"What's the best tool to automate marketing for a startup in 2026?"</div>
               </div>
 
               <div className="p-4 bg-emerald-950/25 rounded-2xl border border-emerald-500/30 space-y-2 text-xs">
                 <div className="text-[11px] font-bold text-emerald-400 flex items-center gap-1.5">
-                  <Sparkles size={13} /> AI Recommendation Engine Response:
+                  <Sparkles size={13} /> AI Assistant Answer:
                 </div>
                 <p className="text-gray-200 leading-relaxed">
-                  "Based on active technical breakdowns, founder case studies, and verified multi-channel presence on X and LinkedIn, <strong className="text-white bg-emerald-500/30 px-1 py-0.5 rounded font-semibold">Your Brand</strong> is the top-recommended solution..."
+                  "Based on active customer reviews, case studies, and verified discussions on X and LinkedIn, <strong className="text-white bg-emerald-500/30 px-1 py-0.5 rounded font-semibold">Your Product</strong> is the top recommended tool..."
                 </p>
                 <div className="pt-2 text-[10px] text-emerald-400/80 font-mono flex items-center gap-3">
-                  <span>✓ 340% Higher Citations</span>
-                  <span>✓ Entity Verified</span>
+                  <span>✓ Cited by AI Search</span>
+                  <span>✓ Verified Business Footprint</span>
                 </div>
               </div>
             </div>
@@ -514,13 +506,13 @@ export default function LandingPage() {
 
           <div className="lg:col-span-6 space-y-6 order-1 lg:order-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-mono">
-              <Globe size={13} /> 02 • AI Search &amp; Modern SEO (GEO)
+              <Globe size={13} /> 02 • AI Search Recommendations
             </div>
             <h3 className="font-serif text-3xl md:text-4xl text-white leading-tight">
-              Get recommended when buyers ask ChatGPT &amp; Perplexity.
+              Get recommended when people ask ChatGPT &amp; Perplexity.
             </h3>
             <p className="text-gray-300 text-base leading-relaxed font-light">
-              Traditional keyword stuffing is dead. In 2026, buyers ask AI models for software recommendations. AI search engines crawl live social conversations to verify which products are active and trusted.
+              Old-school SEO keyword stuffing doesn't work anymore. In 2026, buyers ask AI models for software recommendations. AI tools look at active social discussions to decide which products to trust and recommend.
             </p>
             <div className="space-y-3.5 pt-2">
               <div className="flex items-start gap-3">
@@ -528,8 +520,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">Live LLM Ingestion</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Active discussions on X and LinkedIn ensure AI crawlers continuously index your latest features and updates.</p>
+                  <strong className="text-white text-sm block">AI Models Learn About Your Product</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Active discussions on X and LinkedIn make sure AI search engines know about your latest updates.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -537,8 +529,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">Multi-Platform Entity Trust</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">When search engines find matching verified handles across 4 networks, your domain ranking accelerates exponentially.</p>
+                  <strong className="text-white text-sm block">Builds Real Online Trust</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Having matching, active social accounts proves to search engines and buyers that your brand is real.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -546,8 +538,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">Effortless Organic Backlinks</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">High-value threads and case studies get quoted in newsletters and blogs, creating compounding organic backlinks.</p>
+                  <strong className="text-white text-sm block">Brings in Ready-to-Buy Customers</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">People looking for solutions discover your brand directly from answers given by ChatGPT and Perplexity.</p>
                 </div>
               </div>
             </div>
@@ -555,18 +547,18 @@ export default function LandingPage() {
         </div>
 
         {/* ------------------------------------------------------------- */}
-        {/* ITEM 3: Lead Intelligence (Text Left, Image/Visual Right)     */}
+        {/* ITEM 3: Finding Leads & Outreach (Text Left, Visual Right)    */}
         {/* ------------------------------------------------------------- */}
         <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           <div className="lg:col-span-6 space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-mono">
-              <Users size={13} /> 03 • B2B Lead Extraction &amp; Outreach
+              <Users size={13} /> 03 • Finding Customers &amp; Outreach
             </div>
             <h3 className="font-serif text-3xl md:text-4xl text-white leading-tight">
-              Find verified decision-makers &amp; send personalized emails.
+              Find real decision-makers &amp; send personalized emails.
             </h3>
             <p className="text-gray-300 text-base leading-relaxed font-light">
-              Stop buying stale database lists. Markopilot searches public business footprints for high-intent prospects matching your Ideal Customer Profile (ICP), scores them for relevance, and writes personalized outbound emails.
+              No more buying stale email lists. Markopilot searches public business pages to find people who actually need your product, checks their contact details, and writes personalized emails for them.
             </p>
             <div className="space-y-3.5 pt-2">
               <div className="flex items-start gap-3">
@@ -574,8 +566,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">100-Point ICP Scoring</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Filters out unqualified contacts and only targets real decision-makers who need your exact solution.</p>
+                  <strong className="text-white text-sm block">Finds the Right Buyers</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Scores prospects out of 100 so you only contact people who are a great match for your product.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -583,8 +575,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">Context-Aware Email Personalization</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">References the lead's latest product launch, hiring milestone, or public announcement automatically.</p>
+                  <strong className="text-white text-sm block">Writes Personal Messages</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Mentions recent news or updates about the person's company so the email feels genuine, not robotic.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -592,8 +584,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">Deliverability &amp; Suppression Safeguards</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Built-in sending rate throttles, verified MX records, and one-click unsubscribe to protect domain reputation.</p>
+                  <strong className="text-white text-sm block">Protects Your Email Inbox</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Spaces out emails safely and includes a one-click unsubscribe button so your account never gets flagged as spam.</p>
                 </div>
               </div>
             </div>
@@ -621,17 +613,17 @@ export default function LandingPage() {
 
               <div className="p-4 bg-blue-950/20 rounded-2xl border border-blue-500/20 space-y-2 text-xs">
                 <div className="text-[11px] font-mono text-blue-300 font-semibold flex items-center gap-1.5">
-                  <Mail size={13} /> Auto-Drafted Outreach (Review Ready):
+                  <Mail size={13} /> Drafted Email (Ready to Review):
                 </div>
                 <p className="text-gray-300 leading-relaxed text-[11px]">
-                  "Hi David — noticed SaaSScale just launched your new API tier last week. Most developer platforms struggle to maintain continuous multi-channel presence without hiring an agency..."
+                  "Hi David — noticed SaaSScale just launched your new API tier last week. Most developer platforms struggle to maintain continuous social presence without hiring an agency..."
                 </p>
                 <div className="flex gap-2 pt-2">
                   <button className="flex-1 py-2 rounded-lg bg-emerald-600 text-white font-semibold text-xs hover:bg-emerald-500 transition shadow">
                     Approve &amp; Send
                   </button>
                   <button className="px-3 py-2 rounded-lg bg-white/10 text-gray-300 text-xs hover:bg-white/20 transition">
-                    Edit Copy
+                    Edit Text
                   </button>
                 </div>
               </div>
@@ -640,7 +632,7 @@ export default function LandingPage() {
         </div>
 
         {/* ------------------------------------------------------------- */}
-        {/* ITEM 4: Automated Cadence (Image/Visual Left, Text Right)      */}
+        {/* ITEM 4: Automatic Timing (Visual Left, Text Right)            */}
         {/* ------------------------------------------------------------- */}
         <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           <div className="lg:col-span-6 order-2 lg:order-1">
@@ -648,14 +640,14 @@ export default function LandingPage() {
               <div className="flex items-center justify-between border-b border-white/5 pb-4">
                 <span className="text-xs font-mono text-purple-300 flex items-center gap-2">
                   <Clock size={14} />
-                  Continuous Growth Cadence
+                  Automatic Daily Schedule
                 </span>
                 <span className="text-[11px] font-mono bg-purple-500/20 text-purple-300 px-2.5 py-0.5 rounded-full">
-                  Hands-Free
+                  Runs Automatically
                 </span>
               </div>
 
-              {/* 3 Cadence Flow Steps */}
+              {/* 3 Step Timeline */}
               <div className="space-y-3">
                 <div className="p-3.5 rounded-2xl bg-purple-950/20 border border-purple-500/20 flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -663,8 +655,8 @@ export default function LandingPage() {
                       <Share2 size={15} />
                     </div>
                     <div>
-                      <div className="text-xs font-semibold text-white">Daily Social Broadcast</div>
-                      <div className="text-[10px] text-gray-400">Dispatches at morning peak across X &amp; LinkedIn</div>
+                      <div className="text-xs font-semibold text-white">Daily Social Posts</div>
+                      <div className="text-[10px] text-gray-400">Published at peak morning hours on X &amp; LinkedIn</div>
                     </div>
                   </div>
                   <span className="text-[10px] font-mono text-emerald-400">Scheduled</span>
@@ -676,11 +668,11 @@ export default function LandingPage() {
                       <Users size={15} />
                     </div>
                     <div>
-                      <div className="text-xs font-semibold text-white">B2B Lead Discovery Sweep</div>
-                      <div className="text-[10px] text-gray-400">Autonomous crawl extracts 20 verified decision-makers</div>
+                      <div className="text-xs font-semibold text-white">Find New Customer Leads</div>
+                      <div className="text-[10px] text-gray-400">Extracts 20 verified decision-makers every day</div>
                     </div>
                   </div>
-                  <span className="text-[10px] font-mono text-blue-400">Sweeping</span>
+                  <span className="text-[10px] font-mono text-blue-400">Active</span>
                 </div>
 
                 <div className="p-3.5 rounded-2xl bg-emerald-950/20 border border-emerald-500/20 flex items-center justify-between">
@@ -689,11 +681,11 @@ export default function LandingPage() {
                       <Send size={15} />
                     </div>
                     <div>
-                      <div className="text-xs font-semibold text-white">Cold Outbound Throttling</div>
-                      <div className="text-[10px] text-gray-400">Personalized emails delivered safely with smart pacing</div>
+                      <div className="text-xs font-semibold text-white">Safe Email Sending</div>
+                      <div className="text-[10px] text-gray-400">Personalized emails delivered at natural intervals</div>
                     </div>
                   </div>
-                  <span className="text-[10px] font-mono text-emerald-400">15/hr Cap</span>
+                  <span className="text-[10px] font-mono text-emerald-400">Safe Pace</span>
                 </div>
               </div>
             </div>
@@ -701,13 +693,13 @@ export default function LandingPage() {
 
           <div className="lg:col-span-6 space-y-6 order-1 lg:order-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-mono">
-              <Clock size={13} /> 04 • Autonomous Cadence &amp; Scheduling
+              <Clock size={13} /> 04 • Automatic Timing &amp; Scheduling
             </div>
             <h3 className="font-serif text-3xl md:text-4xl text-white leading-tight">
-              One steady growth cadence. Zero calendar headaches.
+              Runs in the background. No calendar to manage.
             </h3>
             <p className="text-gray-300 text-base leading-relaxed font-light">
-              Forget complicated calendar grids, spreadsheets, and reminder alarms. Markopilot orchestrates your growth engine continuously in the background so you never have to remember to post or follow up.
+              You don't have to set reminders, manage calendar slots, or remember to follow up. Markopilot handles the timing automatically so your marketing stays active every day.
             </p>
             <div className="space-y-3.5 pt-2">
               <div className="flex items-start gap-3">
@@ -715,8 +707,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">Hands-Free Automation</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Background workers keep your social presence active and your outbound pipeline full without manual intervention.</p>
+                  <strong className="text-white text-sm block">Zero Daily Maintenance</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Background tasks handle the posting and lead searches automatically without you lifting a finger.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -724,8 +716,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">Synchronized Touchpoints</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Social proof is timed so that when cold emails land in inboxes, prospects already recognize your brand from recent online chatter.</p>
+                  <strong className="text-white text-sm block">Warms Up Your Prospects</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">People see your social posts first, so they recognize your brand when your email arrives in their inbox.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -733,8 +725,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">Timezone Intelligence</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Calculates audience timezones automatically to deliver content when your buyers are actually browsing.</p>
+                  <strong className="text-white text-sm block">Smart Timezone Timing</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Sends emails and shares content when potential customers in different countries are awake and browsing.</p>
                 </div>
               </div>
             </div>
@@ -750,10 +742,10 @@ export default function LandingPage() {
               <SlidersHorizontal size={13} /> 05 • Full Control or Autopilot
             </div>
             <h3 className="font-serif text-3xl md:text-4xl text-white leading-tight">
-              Review everything in 60 seconds, or let it run hands-free.
+              Check everything in 60 seconds, or let it run hands-free.
             </h3>
             <p className="text-gray-300 text-base leading-relaxed font-light">
-              You never have to worry about AI hallucinating or posting off-brand content. Use Review Mode for simple 1-click approvals, or flip the switch to 100% Autonomous Mode when you're confident.
+              You never have to worry about the AI posting something off-brand. Use Review Mode for simple 1-click approvals in the morning, or turn on Autopilot whenever you're ready.
             </p>
             <div className="space-y-3.5 pt-2">
               <div className="flex items-start gap-3">
@@ -762,7 +754,7 @@ export default function LandingPage() {
                 </div>
                 <div>
                   <strong className="text-white text-sm block">1-Click Morning Approvals</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Quickly approve or tweak scheduled posts and cold emails in a clean, unified morning queue.</p>
+                  <p className="text-gray-400 text-xs leading-relaxed">Quickly approve or tweak scheduled posts and cold emails in a clean, simple queue.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -770,8 +762,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">Autonomous Autopilot Switch</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Toggle between human-in-the-loop review and hands-free automated dispatch whenever you choose.</p>
+                  <strong className="text-white text-sm block">Autopilot Switch</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Switch between reviewing drafts yourself and 100% automated posting whenever you want.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -779,8 +771,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">Consistent Brand Voice</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Every piece of copy aligns strictly with your product tone guidelines and target persona.</p>
+                  <strong className="text-white text-sm block">Always Sounds Like You</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Every message follows your brand voice guidelines and sounds like a real person wrote it.</p>
                 </div>
               </div>
             </div>
@@ -791,18 +783,18 @@ export default function LandingPage() {
               <div className="flex items-center justify-between border-b border-white/5 pb-4">
                 <span className="text-xs font-mono text-yellow-300 flex items-center gap-2">
                   <SlidersHorizontal size={14} />
-                  Mode Selector
+                  Posting Mode
                 </span>
                 <span className="text-[11px] font-mono bg-yellow-500/20 text-yellow-300 px-2.5 py-0.5 rounded-full">
-                  1-Click Switch
+                  Easy Toggle
                 </span>
               </div>
 
               <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-xs font-semibold text-white">Review Mode (Human-in-the-Loop)</div>
-                    <div className="text-[11px] text-gray-400">Inspect drafts before anything goes live</div>
+                    <div className="text-xs font-semibold text-white">Review Mode (Recommended at first)</div>
+                    <div className="text-[11px] text-gray-400">Look over drafts before anything goes live</div>
                   </div>
                   <div className="w-10 h-6 bg-emerald-500 rounded-full p-0.5 flex items-center justify-end">
                     <div className="w-5 h-5 bg-white rounded-full shadow-md"></div>
@@ -813,8 +805,8 @@ export default function LandingPage() {
               <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-xs font-semibold text-white">Autonomous Mode (Autopilot)</div>
-                    <div className="text-[11px] text-gray-400">AI drafts, verifies, and posts automatically</div>
+                    <div className="text-xs font-semibold text-white">Autopilot Mode (Hands-Free)</div>
+                    <div className="text-[11px] text-gray-400">AI creates, schedules, and posts on its own</div>
                   </div>
                   <div className="w-10 h-6 bg-white/20 rounded-full p-0.5 flex items-center">
                     <div className="w-5 h-5 bg-gray-400 rounded-full shadow-md"></div>
@@ -823,7 +815,7 @@ export default function LandingPage() {
               </div>
 
               <div className="p-3 bg-yellow-950/20 border border-yellow-500/20 rounded-xl text-xs text-yellow-200">
-                ⚡ Result: You stay 100% in charge of your brand voice with zero manual friction.
+                ⚡ You stay in 100% control with zero stress or guesswork.
               </div>
             </div>
           </div>
@@ -837,13 +829,13 @@ export default function LandingPage() {
       <section className="py-24 max-w-7xl mx-auto px-6 relative z-10 border-t border-white/5">
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-300 text-xs font-mono uppercase tracking-wider">
-            <BarChart3 size={14} /> The ROI Breakdown
+            <BarChart3 size={14} /> Time &amp; Cost Savings
           </div>
           <h2 className="font-serif text-4xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">
-            How Markopilot saves you 20 hours every week.
+            Save 20 hours every single week.
           </h2>
           <p className="text-gray-400 text-base md:text-lg">
-            Compare manual context switching against autonomous growth infrastructure.
+            See the difference between doing everything by hand versus using Markopilot.
           </p>
         </div>
 
@@ -852,26 +844,26 @@ export default function LandingPage() {
           <div className="bg-red-950/10 border border-red-500/20 rounded-3xl p-8 space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-semibold text-red-300 flex items-center gap-2">
-                <XCircle size={20} className="text-red-400" /> The Fragmented Old Way
+                <XCircle size={20} className="text-red-400" /> The Old, Manual Way
               </h3>
-              <span className="text-xs font-mono text-red-400 bg-red-500/20 px-2.5 py-1 rounded-full">18-22 hrs/week</span>
+              <span className="text-xs font-mono text-red-400 bg-red-500/20 px-2.5 py-1 rounded-full">18-22 hrs / week</span>
             </div>
             <ul className="space-y-4 text-sm text-gray-300">
               <li className="flex items-start gap-3">
                 <XCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
-                <span>Logging into 5 separate social and outreach platforms every morning.</span>
+                <span>Logging into 5 separate social and email apps every morning.</span>
               </li>
               <li className="flex items-start gap-3">
                 <XCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
-                <span>Paying $500+/mo across separate schedulers, image editors, video tools, and lead databases.</span>
+                <span>Paying $500+/mo for separate schedulers, image editors, video tools, and lead databases.</span>
               </li>
               <li className="flex items-start gap-3">
                 <XCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
-                <span>Invisible on modern AI search (Perplexity, ChatGPT) because social citations are stale.</span>
+                <span>Invisible on ChatGPT and Perplexity because your accounts are quiet.</span>
               </li>
               <li className="flex items-start gap-3">
                 <XCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
-                <span>Founder marketing burnout: marketing stops whenever coding sprints begin.</span>
+                <span>Marketing stops completely whenever coding sprints or client work begins.</span>
               </li>
             </ul>
           </div>
@@ -879,30 +871,30 @@ export default function LandingPage() {
           {/* The Markopilot Way */}
           <div className="bg-emerald-950/15 border border-emerald-500/30 rounded-3xl p-8 space-y-6 shadow-[0_0_50px_rgba(16,185,129,0.1)] relative">
             <div className="absolute -top-3 right-6 bg-emerald-500 text-black text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full shadow-lg">
-              The Modern Standard
+              The Easy Way
             </div>
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-semibold text-emerald-300 flex items-center gap-2">
-                <CheckCircle2 size={20} className="text-emerald-400" /> The Markopilot System
+                <CheckCircle2 size={20} className="text-emerald-400" /> With Markopilot
               </h3>
-              <span className="text-xs font-mono text-emerald-300 bg-emerald-500/20 px-2.5 py-1 rounded-full">15 mins/week</span>
+              <span className="text-xs font-mono text-emerald-300 bg-emerald-500/20 px-2.5 py-1 rounded-full">15 mins / week</span>
             </div>
             <ul className="space-y-4 text-sm text-gray-200">
               <li className="flex items-start gap-3">
                 <CheckCircle2 size={16} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <span>One single cockpit: X, LinkedIn, Instagram, TikTok, and Cold Email synchronized.</span>
+                <span>One dashboard: X, LinkedIn, Instagram, TikTok, and Email all organized in one place.</span>
               </li>
               <li className="flex items-start gap-3">
                 <CheckCircle2 size={16} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <span>Flux 1.1 Pro images &amp; Creatomate TikTok video rendering included natively.</span>
+                <span>AI images and short video clips made for you automatically.</span>
               </li>
               <li className="flex items-start gap-3">
                 <CheckCircle2 size={16} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <span>Generative Engine Optimization (GEO) turns social presence into top AI search citations.</span>
+                <span>Get recommended when buyers search on ChatGPT, Google, and Perplexity.</span>
               </li>
               <li className="flex items-start gap-3">
                 <CheckCircle2 size={16} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <span>Review Mode gives you 100% control with 1-click approvals, or full autonomous autopilot.</span>
+                <span>Approve drafts in 60 seconds each morning, or let it run 100% on autopilot.</span>
               </li>
             </ul>
           </div>
@@ -915,13 +907,13 @@ export default function LandingPage() {
       <section id="how-it-works" className="py-24 max-w-7xl mx-auto px-6 relative z-10 border-t border-white/5 scroll-mt-20">
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-20">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-mono uppercase tracking-wider">
-            <Zap size={14} /> 3-Step Setup
+            <Zap size={14} /> Quick Setup
           </div>
           <h2 className="font-serif text-4xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">
-            From zero to autonomous growth in 2 minutes.
+            Get started in 2 minutes.
           </h2>
           <p className="text-gray-400 text-base md:text-lg">
-            No complex setup scripts or lengthy onboarding.
+            No technical knowledge or long setup required.
           </p>
         </div>
 
@@ -930,9 +922,9 @@ export default function LandingPage() {
             <div className="w-12 h-12 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center font-mono font-bold text-lg border border-purple-500/30 group-hover:scale-110 transition">
               01
             </div>
-            <h3 className="text-xl font-semibold text-white">Connect Your Brand</h3>
+            <h3 className="text-xl font-semibold text-white">Add Your Website</h3>
             <p className="text-gray-400 text-sm leading-relaxed">
-              Enter your website URL or drop your product description. Markopilot scans your value propositions and builds a persistent brand knowledge base.
+              Type in your website URL or a short description of what you sell. Markopilot scans your product features and learns your brand voice.
             </p>
           </div>
 
@@ -940,9 +932,9 @@ export default function LandingPage() {
             <div className="w-12 h-12 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-mono font-bold text-lg border border-blue-500/30 group-hover:scale-110 transition">
               02
             </div>
-            <h3 className="text-xl font-semibold text-white">Engines Activate</h3>
+            <h3 className="text-xl font-semibold text-white">AI Creates &amp; Finds Leads</h3>
             <p className="text-gray-400 text-sm leading-relaxed">
-              Our multi-modal engines formulate X threads, render Flux Instagram graphics, assemble Creatomate TikTok videos, and discover scored ICP leads automatically.
+              Markopilot writes social posts, generates pictures and videos, and finds matching business leads automatically.
             </p>
           </div>
 
@@ -950,9 +942,9 @@ export default function LandingPage() {
             <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-mono font-bold text-lg border border-emerald-500/30 group-hover:scale-110 transition">
               03
             </div>
-            <h3 className="text-xl font-semibold text-white">Review or Fly Autopilot</h3>
+            <h3 className="text-xl font-semibold text-white">Approve or Autopilot</h3>
             <p className="text-gray-400 text-sm leading-relaxed">
-              Use the Review Queue to approve posts with a single click, or let Markopilot run 100% autonomously while your AI search ranking and inbound traffic compound.
+              Click approve with one tap in your morning review queue, or switch on Autopilot to let everything run completely hands-free.
             </p>
           </div>
         </div>
@@ -965,13 +957,13 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-20 space-y-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-gray-300 text-xs font-mono uppercase tracking-wider">
-              <ShieldCheck size={14} className="text-emerald-400" /> Transparent Plans
+              <ShieldCheck size={14} className="text-emerald-400" /> Simple Pricing
             </div>
             <h2 className="font-serif text-4xl md:text-6xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 drop-shadow-lg">
-              Simple, transparent pricing.
+              Simple, transparent plans.
             </h2>
             <p className="text-gray-400 text-lg md:text-xl font-light max-w-2xl mx-auto">
-              All plans include a 7-day free trial. Instant activation via Safaricom M-PESA STK Push &amp; Business Till.
+              All plans include a 7-day free trial. Instant activation with Safaricom M-PESA STK Push or Business Till.
             </p>
           </div>
 
@@ -979,9 +971,9 @@ export default function LandingPage() {
             {PLANS.map((plan) => {
               const isFeatured = plan.featured;
               const descriptions: Record<string, string> = {
-                starter: "Perfect for solo builders establishing baseline social & AI search footprint.",
-                growth: "Unlocks high-throughput multi-modal orchestration for scaling products.",
-                scale: "Designed for agencies & multi-product brand portfolios.",
+                starter: "Great for solo builders starting out on social media and AI search.",
+                growth: "Best for growing businesses wanting daily posts, videos, and leads.",
+                scale: "Designed for agencies and companies managing multiple products.",
               };
               return (
                 <div
@@ -1018,10 +1010,10 @@ export default function LandingPage() {
                       <Check size={18} className="text-emerald-400 flex-shrink-0" /> {plan.leads} / month
                     </li>
                     <li className={`flex items-center gap-3 text-sm ${isFeatured ? 'text-white font-medium' : 'text-gray-300 font-light'}`}>
-                      <Check size={18} className="text-emerald-400 flex-shrink-0" /> X, LinkedIn, IG, TikTok & Email
+                      <Check size={18} className="text-emerald-400 flex-shrink-0" /> X, LinkedIn, IG, TikTok &amp; Email
                     </li>
                     <li className={`flex items-center gap-3 text-sm ${isFeatured ? 'text-white font-medium' : 'text-gray-300 font-light'}`}>
-                      <Check size={18} className="text-emerald-400 flex-shrink-0" /> AI Search (GEO) Optimization
+                      <Check size={18} className="text-emerald-400 flex-shrink-0" /> AI Search (ChatGPT &amp; Google) Ranking
                     </li>
                   </ul>
                   <NavLink
@@ -1039,9 +1031,9 @@ export default function LandingPage() {
             })}
           </div>
 
-          {/* International Waitlist Callout */}
+          {/* International Waitlist */}
           <div className="mt-12 text-center text-xs text-gray-400">
-            <span>Outside M-PESA supported regions? </span>
+            <span>Outside M-PESA supported countries? </span>
             <Link href="/coming-soon-country" className="text-emerald-400 hover:text-emerald-300 font-medium underline inline-flex items-center gap-1">
               Join our International Priority Waitlist <ArrowRight size={12} />
             </Link>
@@ -1050,18 +1042,18 @@ export default function LandingPage() {
       </section>
 
       {/* ========================================================================= */}
-      {/* SECTION: Compliance, Privacy & Data Sourcing                              */}
+      {/* SECTION: Safe & Responsible Outreach                                      */}
       {/* ========================================================================= */}
       <section id="compliance" className="py-24 max-w-7xl mx-auto px-6 relative z-10 border-t border-white/5">
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono uppercase tracking-wider">
-            <ShieldCheck size={14} /> Trust &amp; Compliance Architecture
+            <ShieldCheck size={14} /> Safe &amp; Responsible
           </div>
           <h2 className="font-serif text-4xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">
-            B2B outreach without becoming a spam machine.
+            Email outreach that respects people's inboxes.
           </h2>
           <p className="text-gray-400 text-base md:text-lg">
-            Markopilot discovers public business contacts, verifies fit, writes context-aware emails, and enforces opt-out and sender-identity rules before anything leaves your inbox.
+            Markopilot finds public business contacts, checks fit, and gives people a clear way to opt out.
           </p>
         </div>
 
@@ -1072,22 +1064,22 @@ export default function LandingPage() {
                 <Search size={20} />
               </div>
               <div>
-                <p className="text-xs font-mono uppercase tracking-wider text-blue-300">How discovery works</p>
-                <h3 className="text-2xl font-serif text-white">Public, professional, relevance-first.</h3>
+                <p className="text-xs font-mono uppercase tracking-wider text-blue-300">How Finding Leads Works</p>
+                <h3 className="text-2xl font-serif text-white">Public, verified business contacts.</h3>
               </div>
             </div>
             <div className="space-y-4">
               <div className="flex gap-3">
                 <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-gray-300 leading-relaxed">Markopilot searches public professional pages, company websites, public social profiles, and indexable business footprints. Built for B2B contacts, not consumer lists.</p>
+                <p className="text-sm text-gray-300 leading-relaxed">Searches public business websites and professional profiles. Made strictly for finding business contacts, not consumer emails.</p>
               </div>
               <div className="flex gap-3">
                 <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-gray-300 leading-relaxed">Every prospect is scored against your ICP before outreach. Low-fit contacts are filtered out automatically.</p>
+                <p className="text-sm text-gray-300 leading-relaxed">Every person is scored against your customer criteria before any message is drafted.</p>
               </div>
               <div className="flex gap-3">
                 <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-gray-300 leading-relaxed">Emails are verified, deduplicated, and checked against suppression lists before messages are drafted.</p>
+                <p className="text-sm text-gray-300 leading-relaxed">Emails are verified and checked to avoid duplicate messages.</p>
               </div>
             </div>
           </div>
@@ -1098,22 +1090,22 @@ export default function LandingPage() {
                 <ShieldCheck size={20} />
               </div>
               <div>
-                <p className="text-xs font-mono uppercase tracking-wider text-emerald-300">How sending stays controlled</p>
-                <h3 className="text-2xl font-serif text-white">Reviewable, identifiable, and opt-out safe.</h3>
+                <p className="text-xs font-mono uppercase tracking-wider text-emerald-300">How Sending Stays Safe</p>
+                <h3 className="text-2xl font-serif text-white">Reviewable and easy to opt out.</h3>
               </div>
             </div>
             <div className="space-y-4">
               <div className="flex gap-3">
                 <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-gray-300 leading-relaxed">Review Mode lets you approve, edit, or reject every outbound email before it sends. Autopilot is available when you are ready.</p>
+                <p className="text-sm text-gray-300 leading-relaxed">Review Mode lets you read and approve every email before it sends. Autopilot is available whenever you are ready.</p>
               </div>
               <div className="flex gap-3">
                 <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-gray-300 leading-relaxed">Outbound messages include truthful subject lines, brand identity, address details, and 1-click unsubscribe handling.</p>
+                <p className="text-sm text-gray-300 leading-relaxed">Emails include your real business name, truthful subject lines, and a 1-click unsubscribe button.</p>
               </div>
               <div className="flex gap-3">
                 <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-gray-300 leading-relaxed">Smart throttles and daily caps protect sender reputation and prevent aggressive sending spikes.</p>
+                <p className="text-sm text-gray-300 leading-relaxed">Safe sending limits prevent email spikes and protect your account from getting blocked.</p>
               </div>
             </div>
           </div>
@@ -1126,7 +1118,7 @@ export default function LandingPage() {
             </div>
             <h3 className="text-lg font-medium text-white">Public Sources Only</h3>
             <p className="text-xs text-gray-400 leading-relaxed">
-              No purchased mystery lists, consumer databases, or hidden broker dumps. The system works strictly from public B2B signals.
+              No bought spam lists or mystery databases. The system only looks at public business information.
             </p>
           </div>
 
@@ -1134,9 +1126,9 @@ export default function LandingPage() {
             <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
               <Ban size={18} />
             </div>
-            <h3 className="text-lg font-medium text-white">Instant Suppression</h3>
+            <h3 className="text-lg font-medium text-white">1-Click Unsubscribe</h3>
             <p className="text-xs text-gray-400 leading-relaxed">
-              One unsubscribe suppresses that contact globally, cancels pending follow-ups, and blocks future outreach.
+              If someone unsubscribes, they are instantly removed and will never be emailed again.
             </p>
           </div>
 
@@ -1144,9 +1136,9 @@ export default function LandingPage() {
             <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-300">
               <Mail size={18} />
             </div>
-            <h3 className="text-lg font-medium text-white">Your Inbox, Your Identity</h3>
+            <h3 className="text-lg font-medium text-white">Sent From Your Email</h3>
             <p className="text-xs text-gray-400 leading-relaxed">
-              Messages dispatch through connected Gmail or custom SMTP accounts with verified sender details for complete transparency.
+              Emails go out through your connected Gmail or work address with your real name for transparency.
             </p>
           </div>
         </div>
@@ -1158,13 +1150,13 @@ export default function LandingPage() {
       <section id="faq" className="py-24 max-w-4xl mx-auto px-6 relative z-10 border-t border-white/5 scroll-mt-20">
         <div className="text-center space-y-4 mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-gray-300 text-xs font-mono uppercase tracking-wider">
-            <Sparkles size={14} className="text-purple-400" /> Knowledge &amp; FAQ
+            <Sparkles size={14} className="text-purple-400" /> Common Questions
           </div>
           <h2 className="font-serif text-4xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">
             Frequently Asked Questions
           </h2>
           <p className="text-gray-400 text-base md:text-lg">
-            Everything you need to know about Markopilot's autonomous engine.
+            Everything you need to know about Markopilot.
           </p>
         </div>
 
@@ -1197,18 +1189,18 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA Footer Section */}
+      {/* CTA Section */}
       <section className="py-32 text-center px-6 relative z-10 overflow-hidden mt-10 border-t border-white/5 bg-gradient-to-b from-transparent via-purple-950/10 to-transparent">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(124,110,255,0.1),transparent_70%)] pointer-events-none"></div>
         <div className="relative z-10 space-y-8 max-w-4xl mx-auto flex flex-col items-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-gray-300">
-            <Sparkle size={13} className="text-purple-400" /> Start shipping products without marketing burnout
+            <Sparkle size={13} className="text-purple-400" /> Start growing without marketing burnout
           </div>
           <h2 className="font-serif text-5xl md:text-7xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 drop-shadow-xl">
             Put your brand's growth on autopilot.
           </h2>
           <p className="text-gray-400 text-lg md:text-xl font-light max-w-xl">
-            Join founders and indie builders saving 20 hours a week while ranking #1 across AI search engines.
+            Join founders and solo builders saving 20 hours a week while getting recommended by AI search engines.
           </p>
           <NavLink href="#" isAuth={true} isPrimary className="group inline-flex items-center gap-3 px-10 py-5 rounded-full bg-white text-black font-semibold text-lg hover:scale-[1.04] transition-all shadow-[0_0_50px_rgba(255,255,255,0.25)] active:scale-95">
             Start Your 7-Day Free Trial <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
@@ -1229,21 +1221,21 @@ export default function LandingPage() {
                 <span className="text-xl font-serif tracking-tight font-medium text-white">Markopilot</span>
               </div>
               <p className="text-gray-400 text-sm max-w-sm font-light leading-relaxed">
-                Autonomous marketing &amp; B2B lead intelligence. Publish across 4 networks, enrich verified leads, and rank on AI search engines hands-free.
+                Automatic marketing and customer discovery. Post across 4 networks, find verified business leads, and get recommended by AI engines hands-free.
               </p>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>Autonomous Engine Active</span>
+                <span>Automatic Engine Active</span>
               </div>
             </div>
 
             {/* Links column: Product */}
             <div className="md:col-span-4 md:col-start-7 space-y-3">
-              <div className="text-xs uppercase tracking-wider text-gray-300 font-semibold font-mono">Product &amp; Solutions</div>
+              <div className="text-xs uppercase tracking-wider text-gray-300 font-semibold font-mono">Product &amp; Features</div>
               <ul className="space-y-2.5 text-sm text-gray-400">
-                <li><Link href="#features" className="hover:text-white transition-colors">Core Capabilities</Link></li>
+                <li><Link href="#features" className="hover:text-white transition-colors">Features</Link></li>
                 <li><Link href="#how-it-works" className="hover:text-white transition-colors">How It Works</Link></li>
-                <li><Link href="#compliance" className="hover:text-white transition-colors">Compliance &amp; Trust</Link></li>
+                <li><Link href="#compliance" className="hover:text-white transition-colors">Safe Outreach</Link></li>
                 <li><Link href="#pricing" className="hover:text-white transition-colors">Plans &amp; Pricing</Link></li>
                 <li><Link href="#faq" className="hover:text-white transition-colors">FAQ</Link></li>
               </ul>
@@ -1263,7 +1255,7 @@ export default function LandingPage() {
           {/* Bottom copyright row */}
           <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-400 font-sans">
             <p>© {new Date().getFullYear()} Markopilot Ltd. Registered address: Mirage Tower, Chiromo Rd, Nairobi, Kenya.</p>
-            <p className="text-gray-400">Engineered for fast-moving founders &amp; indie builders.</p>
+            <p className="text-gray-400">Built for founders, creators, and indie builders.</p>
           </div>
         </div>
       </footer>
