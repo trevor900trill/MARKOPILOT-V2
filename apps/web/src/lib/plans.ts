@@ -15,13 +15,14 @@ export interface PlanDefinition {
   posts: string;
   leads: string;
   brands: string;
+  impactAlerts: string;
   featured?: boolean;
 }
 
 export const PLANS: PlanDefinition[] = [
-  { id: "starter", name: "Starter", price: "KES 3,800", priceKes: 3800, currency: "KES", posts: "45 Posts", leads: "150 Leads", brands: "1 Brand" },
-  { id: "growth",  name: "Growth",  price: "KES 10,200", priceKes: 10200, currency: "KES", posts: "180 Posts", leads: "750 Leads", brands: "3 Brands", featured: true },
-  { id: "scale",   name: "Scale",   price: "KES 25,800", priceKes: 25800, currency: "KES", posts: "600 Posts", leads: "2,500 Leads", brands: "10 Brands" },
+  { id: "starter", name: "Starter", price: "KES 3,800", priceKes: 3800, currency: "KES", posts: "45 Posts", leads: "150 Leads", brands: "1 Brand", impactAlerts: "Weekly Impact Alerts" },
+  { id: "growth",  name: "Growth",  price: "KES 10,200", priceKes: 10200, currency: "KES", posts: "180 Posts", leads: "750 Leads", brands: "3 Brands", impactAlerts: "Daily Impact Alerts", featured: true },
+  { id: "scale",   name: "Scale",   price: "KES 25,800", priceKes: 25800, currency: "KES", posts: "600 Posts", leads: "2,500 Leads", brands: "10 Brands", impactAlerts: "Hourly & Critical Alerts" },
 ];
 
 export const DEFAULT_PLAN = "starter";

@@ -17,7 +17,9 @@ public static class PlanCatalog
         LeadsPerMonth = 150,
         PostsPerMonth = 45,
         BrandsAllowed = 1,
-        HangfireQueue = "starter"
+        HangfireQueue = "starter",
+        ImpactScanFrequencyHours = 72,
+        ImpactFrequencyLabel = "Weekly"
     };
 
     public static readonly PlanDefinition Growth = new()
@@ -28,7 +30,9 @@ public static class PlanCatalog
         LeadsPerMonth = 750,
         PostsPerMonth = 180,
         BrandsAllowed = 3,
-        HangfireQueue = "growth"
+        HangfireQueue = "growth",
+        ImpactScanFrequencyHours = 24,
+        ImpactFrequencyLabel = "Daily"
     };
 
     public static readonly PlanDefinition Scale = new()
@@ -39,7 +43,9 @@ public static class PlanCatalog
         LeadsPerMonth = 2500,
         PostsPerMonth = 600,
         BrandsAllowed = 10,
-        HangfireQueue = "scale"
+        HangfireQueue = "scale",
+        ImpactScanFrequencyHours = 1,
+        ImpactFrequencyLabel = "Hourly / Real-Time"
     };
 
     /// <summary>
@@ -68,4 +74,6 @@ public class PlanDefinition
     public required int PostsPerMonth { get; init; }
     public required int BrandsAllowed { get; init; }
     public required string HangfireQueue { get; init; }
+    public int ImpactScanFrequencyHours { get; init; } = 24;
+    public string ImpactFrequencyLabel { get; init; } = "Daily";
 }

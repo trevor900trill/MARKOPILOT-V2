@@ -718,4 +718,121 @@ public class ResendAlertEmailService : IAlertEmailService
             return false;
         }
     }
+
+    public async Task<bool> SendCriticalImpactAlertEmailAsync(
+        string recipientEmail,
+        string recipientName,
+        string brandName,
+        string impactTitle,
+        string impactSummary,
+        string whyItMatters,
+        string recommendedAction,
+        Guid brandId)
+    {
+        var apiKey = _config["Resend:ApiKey"];
+        var fromEmail = _config["Resend:FromEmail"] ?? "Markopilot Intelligence <intelligence@markopilot.com>";
+        var dashboardUrl = _config["Frontend:BaseUrl"] ?? "https://markopilot.com";
+
+        if (string.IsNullOrEmpty(apiKey))
+        {
+            _logger.LogWarning("Resend:ApiKey is not configured. Skipping critical impact email to {Email}", recipientEmail);
+            return false;
+        }
+
+        try
+        {
+            var subject = $"🚨 Critical Brand Alert: {impactTitle}";
+            var html = $@"
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset=""utf-8"">
+  <title>Critical Brand Impact Alert</title>
+</head>
+<body style=""margin: 0; padding: 40px 16px; background-color: #07070a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #f3f4f6;"">
+  <table align=""center"" border=""0"" cellpadding=""0"" cellspacing=""0"" width=""100%"" style=""max-width: 560px; background-color: #111116; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5);"">
+    <tr>
+      <td style=""padding: 32px 32px 24px 32px; background: linear-gradient(180deg, rgba(239, 68, 68, 0.2) 0%, transparent 100%); text-align: center;"">
+        <table align=""center"" border=""0"" cellpadding=""0"" cellspacing=""0"" width=""48"" height=""48"" style=""width: 48px; height: 48px; margin: 0 auto; background-color: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); border-radius: 50%;"">
+          <tr>
+            <td align=""center"" valign=""middle"" style=""text-align: center; vertical-align: middle; padding: 0; margin: 0; color: #ef4444; font-size: 22px; line-height: 1; height: 48px;""><span style=""display: inline-block; vertical-align: middle; line-height: 1;"">&#9888;</span></td>
+          </tr>
+        </table>
+        <h1 style=""margin: 16px 0 4px 0; font-size: 20px; font-weight: 700; color: #ffffff;"">Critical Impact Detected</h1>
+        <p style=""margin: 0; font-size: 13px; color: #f87171;"">Brand: {System.Net.WebUtility.HtmlEncode(brandName)}</p>
+      </td>
+    </tr>
+    <tr>
+      <td style=""padding: 0 32px 32px 32px;"">
+        <p style=""font-size: 14px; line-height: 1.6; color: #d1d5db;"">
+          Hi {System.Net.WebUtility.HtmlEncode(recipientName)},<br><br>
+          Markopilot's Brand Impact Intelligence worker has detected a <strong>high-priority market or policy update</strong> directly affecting your business:
+        </p>
+
+        <div style=""background-color: #18181f; border-left: 4px solid #ef4444; border-radius: 12px; padding: 18px; margin: 20px 0;"">
+          <h3 style=""margin: 0 0 8px 0; font-size: 15px; color: #ffffff;"">{System.Net.WebUtility.HtmlEncode(impactTitle)}</h3>
+          <p style=""margin: 0 0 12px 0; font-size: 13px; color: #d1d5db; line-height: 1.6;"">{System.Net.WebUtility.HtmlEncode(impactSummary)}</p>
+          
+          <div style=""background-color: rgba(239, 68, 68, 0.08); border-radius: 8px; padding: 12px; margin-bottom: 12px;"">
+            <strong style=""color: #f87171; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px;"">Why It Matters:</strong>
+            <span style=""font-size: 13px; color: #e5e7eb;"">{System.Net.WebUtility.HtmlEncode(whyItMatters)}</span>
+          </div>
+
+          <div style=""background-color: rgba(16, 185, 129, 0.08); border-radius: 8px; padding: 12px;"">
+            <strong style=""color: #34d399; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px;"">Recommended Action:</strong>
+            <span style=""font-size: 13px; color: #e5e7eb;"">{System.Net.WebUtility.HtmlEncode(recommendedAction)}</span>
+          </div>
+        </div>
+
+        <table align=""center"" border=""0"" cellpadding=""0"" cellspacing=""0"" style=""margin-top: 24px;"">
+          <tr>
+            <td align=""center"" style=""border-radius: 9999px; background-color: #ef4444;"">
+              <a href=""{dashboardUrl}/dashboard/impact"" target=""_blank"" style=""display: inline-block; padding: 14px 32px; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 9999px;"">
+                Review &amp; Take Action &rarr;
+              </a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style=""padding: 20px 32px; background-color: #0c0c10; border-top: 1px solid rgba(255, 255, 255, 0.06); text-align: center;"">
+        <p style=""margin: 0; font-size: 11px; color: #6b7280;"">
+          Markopilot Ltd • Mirage Tower, Chiromo Rd, Nairobi, Kenya
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>";
+
+            var payload = new
+            {
+                from = fromEmail,
+                to = new[] { recipientEmail },
+                subject = subject,
+                html = html
+            };
+
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://api.resend.com/emails");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+            request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("Sent critical impact alert email to {Email}", recipientEmail);
+                return true;
+            }
+
+            var err = await response.Content.ReadAsStringAsync();
+            _logger.LogWarning("Resend critical impact email error: {Error}", err);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send critical impact email to {Email}", recipientEmail);
+            return false;
+        }
+    }
 }

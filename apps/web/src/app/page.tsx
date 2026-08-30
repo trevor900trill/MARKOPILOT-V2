@@ -23,6 +23,7 @@ import {
   SlidersHorizontal,
   Ban,
   ChevronDown,
+  Radar,
   CheckCircle2,
   XCircle,
   BarChart3,
@@ -821,6 +822,92 @@ export default function LandingPage() {
           </div>
         </div>
 
+        {/* ------------------------------------------------------------- */}
+        {/* ITEM 6: Brand Impact Intelligence (Visual Left, Text Right)   */}
+        {/* ------------------------------------------------------------- */}
+        <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+          <div className="lg:col-span-6 order-2 lg:order-1">
+            <div className="bg-gradient-to-b from-[#181116] to-[#0d070b] border border-pink-500/20 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                <span className="text-xs font-mono text-pink-400 flex items-center gap-2">
+                  <Radar size={14} className="animate-pulse" />
+                  Live Market Intelligence
+                </span>
+                <span className="text-[11px] font-mono bg-red-500/20 text-red-300 px-2.5 py-0.5 rounded-full border border-red-500/30">
+                  Critical Impact Detected
+                </span>
+              </div>
+
+              <div className="p-4 bg-white/[0.03] rounded-2xl border border-white/5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-white">Meta Developers API Update</span>
+                  <span className="text-[10px] font-mono text-gray-400">24 mins ago</span>
+                </div>
+                <p className="text-xs text-gray-300 leading-relaxed">
+                  Meta announces migration to BSUID identifiers across Instagram Graph APIs, deprecating legacy profile tokens.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <div className="p-3 rounded-xl bg-red-950/20 border border-red-500/20 space-y-1">
+                  <span className="text-[10px] font-bold uppercase text-red-400 tracking-wider">Why It Matters</span>
+                  <p className="text-gray-300 text-[11px]">Directly impacts connected Instagram automation and OAuth token refresh workflows.</p>
+                </div>
+                <div className="p-3 rounded-xl bg-emerald-950/20 border border-emerald-500/20 space-y-1">
+                  <span className="text-[10px] font-bold uppercase text-emerald-400 tracking-wider">Action Taken</span>
+                  <p className="text-gray-300 text-[11px]">Instant founder email sent &amp; advisory post drafted for your followers.</p>
+                </div>
+              </div>
+
+              <div className="p-3 bg-pink-950/20 border border-pink-500/20 rounded-xl flex items-center justify-between text-xs text-pink-200">
+                <span>✨ 1-Click Draft Reactive Post Hook</span>
+                <span className="font-semibold text-white bg-pink-500/30 px-2.5 py-1 rounded-lg">Ready in Queue</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-6 space-y-6 order-1 lg:order-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/20 text-pink-300 text-xs font-mono">
+              <Radar size={13} /> 06 • Brand Impact Intelligence
+            </div>
+            <h3 className="font-serif text-3xl md:text-4xl text-white leading-tight">
+              Monitors news, AI shifts &amp; platform updates for your brand.
+            </h3>
+            <p className="text-gray-300 text-base leading-relaxed font-light">
+              When tech platforms change rules (like Meta, Google, or OpenAI) or new government regulations drop, Markopilot alerts you immediately, explains why it matters to your business, and gives you a 1-click button to draft a reactive post.
+            </p>
+            <div className="space-y-3.5 pt-2">
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-400 flex-shrink-0 mt-1">
+                  <Check size={14} />
+                </div>
+                <div>
+                  <strong className="text-white text-sm block">Autonomous Market Sweeps</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Scans tech blogs, regulatory feeds, and industry news without you having to browse all day.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-400 flex-shrink-0 mt-1">
+                  <Check size={14} />
+                </div>
+                <div>
+                  <strong className="text-white text-sm block">Critical Founder Alerts</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Breaking API changes or policy shifts trigger an immediate alert email so you are never caught off guard.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-400 flex-shrink-0 mt-1">
+                  <Check size={14} />
+                </div>
+                <div>
+                  <strong className="text-white text-sm block">1-Click Reactive Content</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Turns breaking industry news into authoritative social media posts with one tap to keep you ahead of competitors.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </section>
 
       {/* ========================================================================= */}
@@ -1014,6 +1101,9 @@ export default function LandingPage() {
                     </li>
                     <li className={`flex items-center gap-3 text-sm ${isFeatured ? 'text-white font-medium' : 'text-gray-300 font-light'}`}>
                       <Check size={18} className="text-emerald-400 flex-shrink-0" /> AI Search (ChatGPT &amp; Google) Ranking
+                    </li>
+                    <li className={`flex items-center gap-3 text-sm ${isFeatured ? 'text-white font-medium' : 'text-gray-300 font-light'}`}>
+                      <Check size={18} className="text-emerald-400 flex-shrink-0" /> {plan.impactAlerts}
                     </li>
                   </ul>
                   <NavLink

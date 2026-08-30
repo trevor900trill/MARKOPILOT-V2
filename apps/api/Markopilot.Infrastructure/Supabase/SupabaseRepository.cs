@@ -12,7 +12,7 @@ namespace Markopilot.Infrastructure.Supabase;
 /// Uses Npgsql directly for maximum control over queries.
 /// Also implements IUserRepository for Core service access.
 /// </summary>
-public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepository, ILeadRepository, IOutreachRepository, INotificationRepository, IEmailPatternRepository
+public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepository, ILeadRepository, IOutreachRepository, INotificationRepository, IEmailPatternRepository, IBrandImpactRepository
 {
     private readonly string _connectionString;
     private readonly ILogger<SupabaseRepository> _logger;
@@ -2096,5 +2096,343 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         cmd.Parameters.AddWithValue("updatedAt", DateTimeOffset.UtcNow);
 
         await cmd.ExecuteNonQueryAsync();
+    }
+
+    // ── BRAND IMPACT INTELLIGENCE ─────────────────────
+
+    public async Task<List<IntelligenceSource>> GetActiveSourcesAsync(int limit = 50)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            SELECT id, name, url, feed_url, source_type, category, target_industries, trust_score, is_active, last_scraped_at, created_at
+            FROM intelligence_sources
+            WHERE is_active = true
+            ORDER BY last_scraped_at ASC NULLS FIRST
+            LIMIT @limit", conn);
+
+        cmd.Parameters.AddWithValue("limit", limit);
+
+        await using var reader = await cmd.ExecuteReaderAsync();
+        var sources = new List<IntelligenceSource>();
+        while (await reader.ReadAsync())
+        {
+            var rawIndustries = reader.IsDBNull(6) ? null : reader.GetString(6);
+            List<string> industries = [];
+            if (!string.IsNullOrEmpty(rawIndustries))
+            {
+                try { industries = JsonSerializer.Deserialize<List<string>>(rawIndustries) ?? []; } catch { }
+            }
+
+            sources.Add(new IntelligenceSource
+            {
+                Id = reader.GetGuid(0),
+                Name = reader.GetString(1),
+                Url = reader.GetString(2),
+                FeedUrl = reader.IsDBNull(3) ? null : reader.GetString(3),
+                SourceType = reader.GetString(4),
+                Category = reader.GetString(5),
+                TargetIndustries = industries,
+                TrustScore = reader.GetInt32(7),
+                IsActive = reader.GetBoolean(8),
+                LastScrapedAt = reader.IsDBNull(9) ? null : reader.GetDateTime(9),
+                CreatedAt = reader.GetDateTime(10)
+            });
+        }
+        return sources;
+    }
+
+    public async Task UpdateSourceLastScrapedAsync(Guid sourceId, DateTimeOffset lastScrapedAt)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            UPDATE intelligence_sources
+            SET last_scraped_at = @lastScrapedAt
+            WHERE id = @sourceId", conn);
+
+        cmd.Parameters.AddWithValue("sourceId", sourceId);
+        cmd.Parameters.AddWithValue("lastScrapedAt", lastScrapedAt);
+
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task<Guid?> InsertArticleIfNotExistsAsync(IntelligenceArticle article)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            INSERT INTO intelligence_articles (source_id, title, url, content_snippet, full_content, published_at, tags, industry_categories, key_entities, created_at)
+            VALUES (@sourceId, @title, @url, @snippet, @fullContent, @publishedAt, @tags::jsonb, @industries::jsonb, @entities::jsonb, @createdAt)
+            ON CONFLICT (url) DO NOTHING
+            RETURNING id", conn);
+
+        cmd.Parameters.AddWithValue("sourceId", (object?)article.SourceId ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("title", article.Title);
+        cmd.Parameters.AddWithValue("url", article.Url);
+        cmd.Parameters.AddWithValue("snippet", (object?)article.ContentSnippet ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("fullContent", (object?)article.FullContent ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("publishedAt", (object?)article.PublishedAt ?? DateTimeOffset.UtcNow);
+        cmd.Parameters.AddWithValue("tags", JsonSerializer.Serialize(article.Tags));
+        cmd.Parameters.AddWithValue("industries", JsonSerializer.Serialize(article.IndustryCategories));
+        cmd.Parameters.AddWithValue("entities", JsonSerializer.Serialize(article.KeyEntities));
+        cmd.Parameters.AddWithValue("createdAt", article.CreatedAt);
+
+        var result = await cmd.ExecuteScalarAsync();
+        return result is Guid g ? g : null;
+    }
+
+    public async Task<List<IntelligenceArticle>> GetUnprocessedArticlesAsync(DateTimeOffset since, int limit = 100)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            SELECT id, source_id, title, url, content_snippet, full_content, published_at, tags, industry_categories, key_entities, created_at
+            FROM intelligence_articles
+            WHERE created_at >= @since
+            ORDER BY created_at DESC
+            LIMIT @limit", conn);
+
+        cmd.Parameters.AddWithValue("since", since);
+        cmd.Parameters.AddWithValue("limit", limit);
+
+        await using var reader = await cmd.ExecuteReaderAsync();
+        var articles = new List<IntelligenceArticle>();
+        while (await reader.ReadAsync())
+        {
+            var rawTags = reader.IsDBNull(7) ? null : reader.GetString(7);
+            var rawIndustries = reader.IsDBNull(8) ? null : reader.GetString(8);
+            var rawEntities = reader.IsDBNull(9) ? null : reader.GetString(9);
+
+            List<string> tags = [];
+            List<string> industries = [];
+            List<string> entities = [];
+
+            if (!string.IsNullOrEmpty(rawTags)) try { tags = JsonSerializer.Deserialize<List<string>>(rawTags) ?? []; } catch { }
+            if (!string.IsNullOrEmpty(rawIndustries)) try { industries = JsonSerializer.Deserialize<List<string>>(rawIndustries) ?? []; } catch { }
+            if (!string.IsNullOrEmpty(rawEntities)) try { entities = JsonSerializer.Deserialize<List<string>>(rawEntities) ?? []; } catch { }
+
+            articles.Add(new IntelligenceArticle
+            {
+                Id = reader.GetGuid(0),
+                SourceId = reader.IsDBNull(1) ? null : reader.GetGuid(1),
+                Title = reader.GetString(2),
+                Url = reader.GetString(3),
+                ContentSnippet = reader.IsDBNull(4) ? null : reader.GetString(4),
+                FullContent = reader.IsDBNull(5) ? null : reader.GetString(5),
+                PublishedAt = reader.IsDBNull(6) ? null : reader.GetDateTime(6),
+                Tags = tags,
+                IndustryCategories = industries,
+                KeyEntities = entities,
+                CreatedAt = reader.GetDateTime(10)
+            });
+        }
+        return articles;
+    }
+
+    public async Task<List<BrandImpactEvent>> GetBrandImpactEventsAsync(Guid brandId, string? status = null, string? impactLevel = null, int limit = 50)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        var sql = @"
+            SELECT id, brand_id, article_id, impact_level, title, summary, why_it_matters, recommended_action, auto_draft_hook, source_url, source_name, status, actioned_post_id, email_alert_sent, created_at, updated_at
+            FROM brand_impact_events
+            WHERE brand_id = @brandId";
+
+        if (!string.IsNullOrEmpty(status))
+            sql += " AND status = @status";
+        if (!string.IsNullOrEmpty(impactLevel))
+            sql += " AND impact_level = @impactLevel";
+
+        sql += " ORDER BY created_at DESC LIMIT @limit";
+
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("brandId", brandId);
+        cmd.Parameters.AddWithValue("limit", limit);
+        if (!string.IsNullOrEmpty(status))
+            cmd.Parameters.AddWithValue("status", status);
+        if (!string.IsNullOrEmpty(impactLevel))
+            cmd.Parameters.AddWithValue("impactLevel", impactLevel);
+
+        await using var reader = await cmd.ExecuteReaderAsync();
+        var list = new List<BrandImpactEvent>();
+        while (await reader.ReadAsync())
+        {
+            list.Add(MapBrandImpactEvent(reader));
+        }
+        return list;
+    }
+
+    public async Task<BrandImpactEvent?> GetBrandImpactEventByIdAsync(Guid id)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            SELECT id, brand_id, article_id, impact_level, title, summary, why_it_matters, recommended_action, auto_draft_hook, source_url, source_name, status, actioned_post_id, email_alert_sent, created_at, updated_at
+            FROM brand_impact_events
+            WHERE id = @id", conn);
+
+        cmd.Parameters.AddWithValue("id", id);
+
+        await using var reader = await cmd.ExecuteReaderAsync();
+        return await reader.ReadAsync() ? MapBrandImpactEvent(reader) : null;
+    }
+
+    public async Task<Guid> InsertBrandImpactEventAsync(BrandImpactEvent impactEvent)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            INSERT INTO brand_impact_events (
+                brand_id, article_id, impact_level, title, summary, why_it_matters, recommended_action, auto_draft_hook, source_url, source_name, status, email_alert_sent, created_at, updated_at
+            )
+            VALUES (
+                @brandId, @articleId, @impactLevel, @title, @summary, @whyItMatters, @recommendedAction, @autoDraftHook, @sourceUrl, @sourceName, @status, @emailSent, @createdAt, @updatedAt
+            )
+            ON CONFLICT (brand_id, article_id) DO UPDATE
+            SET updated_at = EXCLUDED.updated_at
+            RETURNING id", conn);
+
+        cmd.Parameters.AddWithValue("brandId", impactEvent.BrandId);
+        cmd.Parameters.AddWithValue("articleId", (object?)impactEvent.ArticleId ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("impactLevel", impactEvent.ImpactLevel);
+        cmd.Parameters.AddWithValue("title", impactEvent.Title);
+        cmd.Parameters.AddWithValue("summary", impactEvent.Summary);
+        cmd.Parameters.AddWithValue("whyItMatters", impactEvent.WhyItMatters);
+        cmd.Parameters.AddWithValue("recommendedAction", impactEvent.RecommendedAction);
+        cmd.Parameters.AddWithValue("autoDraftHook", (object?)impactEvent.AutoDraftHook ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("sourceUrl", (object?)impactEvent.SourceUrl ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("sourceName", (object?)impactEvent.SourceName ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("status", impactEvent.Status);
+        cmd.Parameters.AddWithValue("emailSent", impactEvent.EmailAlertSent);
+        cmd.Parameters.AddWithValue("createdAt", impactEvent.CreatedAt);
+        cmd.Parameters.AddWithValue("updatedAt", impactEvent.UpdatedAt);
+
+        var result = await cmd.ExecuteScalarAsync();
+        return result is Guid g ? g : Guid.Empty;
+    }
+
+    public async Task UpdateBrandImpactEventStatusAsync(Guid id, string status, Guid? actionedPostId = null)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            UPDATE brand_impact_events
+            SET status = @status,
+                actioned_post_id = COALESCE(@actionedPostId, actioned_post_id),
+                updated_at = @updatedAt
+            WHERE id = @id", conn);
+
+        cmd.Parameters.AddWithValue("id", id);
+        cmd.Parameters.AddWithValue("status", status);
+        cmd.Parameters.AddWithValue("actionedPostId", (object?)actionedPostId ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("updatedAt", DateTimeOffset.UtcNow);
+
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task MarkImpactEmailSentAsync(Guid id)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            UPDATE brand_impact_events
+            SET email_alert_sent = true,
+                updated_at = @updatedAt
+            WHERE id = @id", conn);
+
+        cmd.Parameters.AddWithValue("id", id);
+        cmd.Parameters.AddWithValue("updatedAt", DateTimeOffset.UtcNow);
+
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task<BrandImpactSummaryDto> GetBrandImpactSummaryAsync(Guid brandId)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        // 1. Get counts
+        await using var cmd = new NpgsqlCommand(@"
+            SELECT 
+                COUNT(*),
+                COUNT(*) FILTER (WHERE impact_level = 'critical' AND status != 'dismissed'),
+                COUNT(*) FILTER (WHERE impact_level = 'high' AND status != 'dismissed'),
+                COUNT(*) FILTER (WHERE status = 'unread'),
+                MAX(created_at)
+            FROM brand_impact_events
+            WHERE brand_id = @brandId", conn);
+
+        cmd.Parameters.AddWithValue("brandId", brandId);
+
+        var summary = new BrandImpactSummaryDto();
+        await using var reader = await cmd.ExecuteReaderAsync();
+        if (await reader.ReadAsync())
+        {
+            summary.TotalEvents = reader.IsDBNull(0) ? 0 : Convert.ToInt32(reader.GetInt64(0));
+            summary.CriticalEvents = reader.IsDBNull(1) ? 0 : Convert.ToInt32(reader.GetInt64(1));
+            summary.HighEvents = reader.IsDBNull(2) ? 0 : Convert.ToInt32(reader.GetInt64(2));
+            summary.UnreadEvents = reader.IsDBNull(3) ? 0 : Convert.ToInt32(reader.GetInt64(3));
+            summary.LastScannedAt = reader.IsDBNull(4) ? null : reader.GetDateTime(4);
+        }
+        await reader.CloseAsync();
+
+        // 2. Get recent events
+        summary.RecentEvents = await GetBrandImpactEventsAsync(brandId, limit: 10);
+        return summary;
+    }
+
+    public async Task<List<Brand>> GetActiveBrandsForMatchingAsync(int limit = 1000)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            SELECT * FROM brands
+            WHERE status = 'active'
+            ORDER BY updated_at DESC
+            LIMIT @limit", conn);
+
+        cmd.Parameters.AddWithValue("limit", limit);
+
+        await using var reader = await cmd.ExecuteReaderAsync();
+        var list = new List<Brand>();
+        while (await reader.ReadAsync())
+        {
+            list.Add(MapBrand(reader));
+        }
+        return list;
+    }
+
+    private static BrandImpactEvent MapBrandImpactEvent(NpgsqlDataReader reader)
+    {
+        return new BrandImpactEvent
+        {
+            Id = reader.GetGuid(0),
+            BrandId = reader.GetGuid(1),
+            ArticleId = reader.IsDBNull(2) ? null : reader.GetGuid(2),
+            ImpactLevel = reader.GetString(3),
+            Title = reader.GetString(4),
+            Summary = reader.GetString(5),
+            WhyItMatters = reader.GetString(6),
+            RecommendedAction = reader.GetString(7),
+            AutoDraftHook = reader.IsDBNull(8) ? null : reader.GetString(8),
+            SourceUrl = reader.IsDBNull(9) ? null : reader.GetString(9),
+            SourceName = reader.IsDBNull(10) ? null : reader.GetString(10),
+            Status = reader.GetString(11),
+            ActionedPostId = reader.IsDBNull(12) ? null : reader.GetGuid(12),
+            EmailAlertSent = reader.GetBoolean(13),
+            CreatedAt = reader.GetDateTime(14),
+            UpdatedAt = reader.GetDateTime(15)
+        };
     }
 }

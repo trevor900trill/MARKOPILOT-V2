@@ -60,6 +60,8 @@ builder.Services.AddSingleton<ILeadRepository>(sp => sp.GetRequiredService<Supab
 builder.Services.AddSingleton<IOutreachRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
 builder.Services.AddSingleton<INotificationRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
 builder.Services.AddSingleton<IEmailPatternRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
+builder.Services.AddSingleton<IBrandImpactRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
+builder.Services.AddHttpClient<IBrandImpactService, Markopilot.Infrastructure.Services.BrandImpactService>();
 
 builder.Services.AddSingleton<ITokenEncryptionService>(sp =>
 {

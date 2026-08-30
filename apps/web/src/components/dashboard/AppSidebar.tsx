@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutDashboard, Send, Users, Activity, Settings, ChevronDown, ChevronsLeft, ChevronsRight, Mail, Briefcase, Calendar, HelpCircle, Rocket } from "lucide-react";
+import { LayoutDashboard, Send, Users, Activity, Settings, ChevronDown, ChevronsLeft, ChevronsRight, Mail, Briefcase, Calendar, HelpCircle, Rocket, Radar } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -27,6 +27,7 @@ export function AppSidebar() {
     { name: "Brands", href: "/dashboard/brands", icon: Briefcase },
     { name: "Calendar & Schedule", href: "/dashboard/calendar", icon: Calendar },
     { name: "Social Posting", href: "/dashboard/social", icon: Send },
+    { name: "Brand Impact", href: "/dashboard/impact", icon: Radar },
     { name: "Lead Generation", href: "/dashboard/leads", icon: Users },
     { name: "Email Outreach", href: "/dashboard/outreach", icon: Mail },
     { name: "Activity Log", href: "/dashboard/activity", icon: Activity },

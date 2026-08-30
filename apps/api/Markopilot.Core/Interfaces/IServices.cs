@@ -180,4 +180,5 @@ public interface IAlertEmailService
     Task<bool> SendTrialExpiredEmailAsync(string recipientEmail, string recipientName, string planName);
     Task<bool> SendSubscriptionExpiringSoonEmailAsync(string recipientEmail, string recipientName, string planName, DateTimeOffset currentPeriodEnd);
     Task<bool> SendSubscriptionExpiredEmailAsync(string recipientEmail, string recipientName, string planName);
+    Task<bool> SendCriticalImpactAlertEmailAsync(string recipientEmail, string recipientName, string brandName, string impactTitle, string impactSummary, string whyItMatters, string recommendedAction, Guid brandId);
 }

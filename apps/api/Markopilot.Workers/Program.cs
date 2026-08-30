@@ -53,6 +53,8 @@ builder.Services.AddSingleton<ILeadRepository>(sp => sp.GetRequiredService<Supab
 builder.Services.AddSingleton<IOutreachRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
 builder.Services.AddSingleton<INotificationRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
 builder.Services.AddSingleton<IEmailPatternRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
+builder.Services.AddSingleton<IBrandImpactRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
+builder.Services.AddHttpClient<IBrandImpactService, Markopilot.Infrastructure.Services.BrandImpactService>();
 
 builder.Services.AddSingleton<ITokenEncryptionService>(sp =>
 {
@@ -85,6 +87,7 @@ builder.Services.AddTransient<Markopilot.Core.Interfaces.IOutreachWorker, Markop
 builder.Services.AddHttpClient<Markopilot.Infrastructure.Email.HunterIoClient>();
 builder.Services.AddTransient<Markopilot.Core.Interfaces.IEmailEnrichmentWorker, Markopilot.Workers.Workers.EmailEnrichmentWorker>();
 builder.Services.AddTransient<Markopilot.Core.Interfaces.IBounceProcessorWorker, Markopilot.Workers.Workers.BounceProcessorWorker>();
+builder.Services.AddTransient<BrandImpactWorker>();
 
 // ── Social Publishers ────────────────────────────
 builder.Services.AddHttpClient<TwitterPublisher>();
@@ -142,6 +145,24 @@ using (var scope = host.Services.CreateScope())
         "SubscriptionMonitoringWorker",
         worker => worker.ExecuteAsync(),
         "0 0 * * *"); // Daily at midnight UTC
+
+    // Brand Impact Intelligence: Scale plan (Hourly)
+    jobManager.AddOrUpdate<BrandImpactWorker>(
+        "BrandImpactWorker_Scale",
+        worker => worker.ExecuteScalePlanAsync(),
+        "0 * * * *"); // Hourly
+
+    // Brand Impact Intelligence: Growth plan (Daily at 8am UTC)
+    jobManager.AddOrUpdate<BrandImpactWorker>(
+        "BrandImpactWorker_Growth",
+        worker => worker.ExecuteGrowthPlanAsync(),
+        "0 8 * * *"); // Daily at 8:00 UTC
+
+    // Brand Impact Intelligence: Starter plan (Every 3 days)
+    jobManager.AddOrUpdate<BrandImpactWorker>(
+        "BrandImpactWorker_Starter",
+        worker => worker.ExecuteStarterPlanAsync(),
+        "0 8 * * 1,4"); // Mon & Thu at 8:00 UTC
 }
 
 host.Run();
