@@ -184,7 +184,7 @@ public class ResendAlertEmailService : IAlertEmailService
       <td style=""padding: 32px 32px 24px 32px; background: linear-gradient(180deg, rgba(16, 185, 129, 0.15) 0%, transparent 100%); text-align: center;"">
         <table align=""center"" border=""0"" cellpadding=""0"" cellspacing=""0"" width=""48"" height=""48"" style=""width: 48px; height: 48px; margin: 0 auto; background-color: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 50%;"">
           <tr>
-            <td align=""center"" valign=""middle"" style=""text-align: center; vertical-align: middle; padding: 0; color: #10b981; font-size: 20px; font-weight: bold; line-height: 48px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;"">&#10003;</td>
+            <td align=""center"" valign=""middle"" style=""text-align: center; vertical-align: middle; padding: 0; margin: 0; color: #10b981; font-size: 20px; font-weight: bold; line-height: 1; height: 48px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;""><span style=""display: inline-block; vertical-align: middle; line-height: 1;"">&#10003;</span></td>
           </tr>
         </table>
         <h1 style=""margin: 16px 0 4px 0; font-size: 22px; font-weight: 700; color: #ffffff;"">Payment Confirmed!</h1>
@@ -303,7 +303,7 @@ public class ResendAlertEmailService : IAlertEmailService
       <td style=""padding: 32px 32px 24px 32px; background: linear-gradient(180deg, rgba(245, 158, 11, 0.15) 0%, transparent 100%); text-align: center;"">
         <table align=""center"" border=""0"" cellpadding=""0"" cellspacing=""0"" width=""48"" height=""48"" style=""width: 48px; height: 48px; margin: 0 auto; background-color: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 50%;"">
           <tr>
-            <td align=""center"" valign=""middle"" style=""text-align: center; vertical-align: middle; padding: 0; color: #f59e0b; font-size: 20px; line-height: 48px;"">&#9200;</td>
+            <td align=""center"" valign=""middle"" style=""text-align: center; vertical-align: middle; padding: 0; margin: 0; color: #f59e0b; font-size: 22px; line-height: 1; height: 48px;""><span style=""display: inline-block; vertical-align: middle; line-height: 1;"">&#9200;</span></td>
           </tr>
         </table>
         <h1 style=""margin: 16px 0 4px 0; font-size: 22px; font-weight: 700; color: #ffffff;"">Your Trial Ends Tomorrow</h1>
@@ -525,7 +525,7 @@ public class ResendAlertEmailService : IAlertEmailService
       <td style=""padding: 32px 32px 24px 32px; background: linear-gradient(180deg, rgba(59, 130, 246, 0.15) 0%, transparent 100%); text-align: center;"">
         <table align=""center"" border=""0"" cellpadding=""0"" cellspacing=""0"" width=""48"" height=""48"" style=""width: 48px; height: 48px; margin: 0 auto; background-color: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.35); border-radius: 50%;"">
           <tr>
-            <td align=""center"" valign=""middle"" style=""text-align: center; vertical-align: middle; padding: 0; color: #3b82f6; font-size: 20px; line-height: 48px;"">&#128260;</td>
+            <td align=""center"" valign=""middle"" style=""text-align: center; vertical-align: middle; padding: 0; margin: 0; color: #3b82f6; font-size: 20px; line-height: 1; height: 48px;""><span style=""display: inline-block; vertical-align: middle; line-height: 1;"">&#128260;</span></td>
           </tr>
         </table>
         <h1 style=""margin: 16px 0 4px 0; font-size: 22px; font-weight: 700; color: #ffffff;"">Subscription Renews in 3 Days</h1>

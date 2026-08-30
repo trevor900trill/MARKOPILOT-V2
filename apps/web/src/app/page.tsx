@@ -4,7 +4,6 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import {
   Check,
-  Menu,
   ArrowRight,
   Share2,
   Users,
@@ -19,33 +18,21 @@ import {
   Video,
   Mail,
   Bot,
-  Database,
-  Wand2,
-  Film,
-  Eye,
-  Code,
   Globe,
   Search,
   Sparkle,
   TrendingUp,
-  Cpu,
-  Layers,
-  HelpCircle,
+  SlidersHorizontal,
+  Ban,
   ChevronDown,
-  Clock,
-  Terminal,
-  ExternalLink,
-  Target,
-  Flame,
-  Lightbulb,
   CheckCircle2,
   XCircle,
-  RefreshCw,
   BarChart3,
-  Calendar,
-  CalendarDays,
-  SlidersHorizontal,
-  Ban
+  Clock,
+  ExternalLink,
+  Layers,
+  Flame,
+  Target
 } from "lucide-react";
 import { PLANS } from "@/lib/plans";
 import { XIcon, LinkedInIcon, InstagramIcon, TikTokIcon } from "@/components/icons/SocialIcons";
@@ -57,169 +44,8 @@ export default function LandingPage() {
   const [typedText, setTypedText] = useState("");
   const fullText = "Running Itself.";
 
-  // Interactive state for Persona Switcher
-  const [activePersona, setActivePersona] = useState<"dev" | "founder" | "brand">("dev");
-
-  // Interactive state for Platform Deep Dive
-  const [activePlatform, setActivePlatform] = useState<"twitter" | "linkedin" | "instagram" | "tiktok" | "outreach">("twitter");
-
   // Interactive state for FAQ Accordion
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-
-  // Interactive state for GEO AI Engine Demo
-  const [geoTab, setGeoTab] = useState<"with-marko" | "without-marko">("with-marko");
-
-  // Interactive state for Calendar Engine Demo
-  const [calendarFilter, setCalendarFilter] = useState<"all" | "social" | "leads" | "outreach">("all");
-  const [calendarView, setCalendarView] = useState<"week" | "timeline">("week");
-  const [selectedCalendarEvent, setSelectedCalendarEvent] = useState<string>("cal-3");
-
-  const calendarEvents = [
-    {
-      id: "cal-1",
-      dayName: "Mon",
-      dateStr: "Aug 18",
-      type: "social" as const,
-      platform: "twitter" as const,
-      time: "09:30 AM UTC",
-      title: "Why we rebuilt our backend pipeline from scratch in .NET 9",
-      snippet: "Architecture breakdown of our high-throughput worker queues handling 50k+ background events...",
-      status: "Published",
-      statusColor: "emerald",
-      badge: "Viral Thread",
-      mediaType: "Thread Graph",
-      aiHook: "High-retention technical devlog hook calibrated for indie hackers and engineering leaders.",
-      metrics: "4.2k views • 89 bookmarks"
-    },
-    {
-      id: "cal-2",
-      dayName: "Mon",
-      dateStr: "Aug 18",
-      type: "leads" as const,
-      platform: "lead" as const,
-      time: "02:00 PM UTC",
-      title: "AI Lead Discovery Sweep #14",
-      snippet: "Autonomous search across verified B2B directories & social signals. 18 qualified founders scored 90+.",
-      status: "Completed",
-      statusColor: "blue",
-      badge: "Autonomous Run",
-      mediaType: "Lead Intelligence",
-      aiHook: "Filtered for B2B founders with recent funding or public feature releases in the last 14 days.",
-      metrics: "18 Leads Verified"
-    },
-    {
-      id: "cal-3",
-      dayName: "Tue",
-      dateStr: "Aug 19",
-      type: "social" as const,
-      platform: "linkedin" as const,
-      time: "11:00 AM UTC",
-      title: "The secret to 99.4% AI Search authority in 2026",
-      snippet: "Why modern AI search engines cite active social conversation graphs over stale keyword landing pages...",
-      status: "Published",
-      statusColor: "emerald",
-      badge: "GEO Authority",
-      mediaType: "Infographic",
-      aiHook: "Data-backed breakdown of ChatGPT Search & Perplexity ranking signals.",
-      metrics: "1.8k impressions • 34 reposts"
-    },
-    {
-      id: "cal-4",
-      dayName: "Tue",
-      dateStr: "Aug 19",
-      type: "outreach" as const,
-      platform: "outreach" as const,
-      time: "03:15 PM UTC",
-      title: "Cold Sequence Wave: 'GEO & Omnichannel Scaling'",
-      snippet: "Personalized cold emails dispatched with smart throttle & 100-point reputation safeguard.",
-      status: "Dispatched",
-      statusColor: "emerald",
-      badge: "Smart Throttle",
-      mediaType: "Email Cadence",
-      aiHook: "Customized intro referencing prospect's latest product announcement automatically.",
-      metrics: "15 Sent • 64% Open Rate"
-    },
-    {
-      id: "cal-5",
-      dayName: "Wed (Today)",
-      dateStr: "Aug 20",
-      type: "social" as const,
-      platform: "instagram" as const,
-      time: "01:00 PM UTC",
-      title: "Architecting Autonomous Background Workers",
-      snippet: "Photorealistic Flux 1.1 Pro visual showing futuristic server room telemetry & growth analytics...",
-      status: "Scheduled",
-      statusColor: "purple",
-      badge: "Flux 1.1 Pro 4K",
-      mediaType: "Flux Pro 4K Visual",
-      aiHook: "Visual aesthetic optimized for Instagram carousel engagement and high-contrast dark theme.",
-      metrics: "Dispatches in 2h 15m"
-    },
-    {
-      id: "cal-6",
-      dayName: "Wed (Today)",
-      dateStr: "Aug 20",
-      type: "leads" as const,
-      platform: "lead" as const,
-      time: "04:30 PM UTC",
-      title: "Scheduled Lead Qualification Run #15",
-      snippet: "Autonomous worker scheduled to crawl seed queries and score 20 new high-intent SaaS leads.",
-      status: "Scheduled",
-      statusColor: "purple",
-      badge: "Lead Worker",
-      mediaType: "Enrichment Sweep",
-      aiHook: "Targeting seed keywords: 'growth engineering', 'founder in residence', 'indie SaaS'.",
-      metrics: "Dispatches in 5h 45m"
-    },
-    {
-      id: "cal-7",
-      dayName: "Thu",
-      dateStr: "Aug 21",
-      type: "social" as const,
-      platform: "tiktok" as const,
-      time: "10:15 AM UTC",
-      title: "3 mistakes killing your AI search ranking",
-      snippet: "Creatomate dynamic vertical video rendering with synchronized kinetic captions and upbeat audio...",
-      status: "Queued",
-      statusColor: "amber",
-      badge: "Creatomate MP4",
-      mediaType: "Creatomate 1080p MP4",
-      aiHook: "Hook within first 1.2s: 'If your brand is invisible on Perplexity, here is the exact fix.'",
-      metrics: "Review Queue Ready"
-    },
-    {
-      id: "cal-8",
-      dayName: "Thu",
-      dateStr: "Aug 21",
-      type: "outreach" as const,
-      platform: "outreach" as const,
-      time: "02:00 PM UTC",
-      title: "Follow-Up Sequence Step 2 (Contextual Touchpoint)",
-      snippet: "Automated objection handling sequence sent to leads who opened Wave #1 without replying.",
-      status: "Projected",
-      statusColor: "blue",
-      badge: "Auto Follow-up",
-      mediaType: "Smart Sequence",
-      aiHook: "Gentle non-intrusive value bump with 1-click live demo link.",
-      metrics: "Automated Cadence"
-    },
-    {
-      id: "cal-9",
-      dayName: "Fri",
-      dateStr: "Aug 22",
-      type: "social" as const,
-      platform: "twitter" as const,
-      time: "04:00 PM UTC",
-      title: "Weekend Build Challenge: Shipping with Zero Marketing Headaches",
-      snippet: "Inspirational founder story on automating all marketing pipelines while keeping heads down in code.",
-      status: "Approved",
-      statusColor: "emerald",
-      badge: "Friday Peak Window",
-      mediaType: "Thread & Poll",
-      aiHook: "Interactive poll formatted to boost weekend algorithmic reach.",
-      metrics: "Queued for Dispatch"
-    }
-  ];
 
   useEffect(() => {
     setMounted(true);
@@ -239,8 +65,8 @@ export default function LandingPage() {
         } else {
           clearInterval(typeInterval);
         }
-      }, 80); // 80ms per character
-    }, 1200); // 1.2s delay to wait for hero fade-in
+      }, 80);
+    }, 1000);
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
@@ -249,7 +75,6 @@ export default function LandingPage() {
     };
   }, []);
 
-  // Use signIn() helper instead of direct links to avoid CSRF issues in production
   const handleSignIn = () => {
     signIn("google", { callbackUrl: "/dashboard" });
   };
@@ -296,11 +121,11 @@ export default function LandingPage() {
   const faqs = [
     {
       q: "Do I have to approve every post, or can it run 100% on autopilot?",
-      a: "You have complete control. Markopilot features a built-in 'Review Mode'. If enabled, every AI-drafted post, image, video, and cold email lands in your approval queue where you can approve, tweak, or reject it in seconds. Once you're confident in your brand voice settings, you can flip the switch to 100% Autonomous Mode."
+      a: "You have complete control. Markopilot features a built-in 'Review Mode'. If enabled, every AI-drafted post, image, video, and cold email lands in your morning approval queue where you can approve, tweak, or reject it in seconds. Once you're confident in your brand voice settings, you can flip the switch to 100% Autonomous Mode."
     },
     {
-      q: "How does active social posting help my AI Search (GEO) and modern SEO ranking?",
-      a: "AI search engines like ChatGPT Search, Perplexity, Claude, and Google AI Overviews don't rely only on static websites. They constantly scrape and cross-reference real-time social conversations on X, LinkedIn, Reddit, and TikTok. An active omni-channel footprint provides continuous citations and entity verification, ensuring AI engines recommend your brand when users ask for recommendations in your niche."
+      q: "How does active social posting help my AI Search (GEO) ranking?",
+      a: "Modern AI search engines like ChatGPT Search, Perplexity, Claude, and Google AI Overviews don't rely solely on static websites. They continuously scrape and cross-reference real-time social conversations on X, LinkedIn, and TikTok. An active omni-channel footprint provides the entity verification and citations required for AI engines to recommend your brand."
     },
     {
       q: "How are the images and videos generated?",
@@ -315,12 +140,12 @@ export default function LandingPage() {
       a: "Yes! You can connect custom Gmail or custom SMTP accounts. Markopilot includes smart deliverability governors, automated rate limits, and deduplication heuristics to safeguard your sender reputation while reaching qualified leads."
     },
     {
-      q: "Is the lead and email discovery process compliant?",
-      a: "Markopilot is designed for B2B outreach to public professional contacts, not consumer spam. It uses public business sources, verifies and deduplicates contacts, avoids suppressed addresses, includes sender identity and unsubscribe handling, and gives you Review Mode before outreach is sent. You are still responsible for using it lawfully in your market, but the product is built around permission-respecting outreach workflows."
+      q: "Is the lead discovery and email outreach process compliant?",
+      a: "Markopilot is designed specifically for B2B outreach to public professional contacts. It uses public business sources, verifies and deduplicates contacts, respects suppression lists, includes clear sender identity and one-click unsubscribe handling, and gives you Review Mode before outreach is sent."
     },
     {
-      q: "How does the Autonomous Marketing Calendar schedule content and background workers?",
-      a: "The Autonomous Marketing Calendar acts as the unified mission control for all your engines. It projects upcoming autonomous social posting, AI lead discovery sweeps, and cold email cadences across peak engagement windows. You can filter by channel, inspect AI reasoning for each post, make quick edits in Review Mode, or let the engine run hands-free."
+      q: "How does the autonomous cadence work without a complicated calendar?",
+      a: "Markopilot automatically optimizes dispatch times for your audience's global peak engagement windows. Instead of requiring you to configure calendar slots and alarms manually, background workers handle the pacing seamlessly while keeping your social feeds active and your outbound queue moving."
     }
   ];
 
@@ -376,11 +201,8 @@ export default function LandingPage() {
             </div>
             <span className="text-xl font-serif tracking-tight font-medium text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-300">Markopilot</span>
           </div>
-          <div className="hidden lg:flex items-center gap-8 text-sm font-medium text-gray-400">
-            <Link href="#solutions" className="hover:text-white hover:-translate-y-0.5 transition-all">Solutions</Link>
-            <Link href="#ai-discovery" className="hover:text-white hover:-translate-y-0.5 transition-all">AI Search (GEO)</Link>
-            <Link href="#channels" className="hover:text-white hover:-translate-y-0.5 transition-all">Channels</Link>
-            <Link href="#calendar" className="hover:text-white hover:-translate-y-0.5 transition-all flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse"></span>Calendar</Link>
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">
+            <Link href="#features" className="hover:text-white hover:-translate-y-0.5 transition-all">Features</Link>
             <Link href="#how-it-works" className="hover:text-white hover:-translate-y-0.5 transition-all">How It Works</Link>
             <Link href="#compliance" className="hover:text-white hover:-translate-y-0.5 transition-all">Compliance</Link>
             <Link href="#pricing" className="hover:text-white hover:-translate-y-0.5 transition-all">Pricing</Link>
@@ -395,13 +217,11 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <header className="relative z-10 min-h-[88vh] flex flex-col items-center justify-center pt-28 pb-16 overflow-visible">
+      <header className="relative z-10 min-h-[85vh] flex flex-col items-center justify-center pt-28 pb-16 overflow-visible">
         <div className="max-w-4xl mx-auto px-6 text-center space-y-7 relative z-20">
 
           {/* Headline with Typewriter */}
-          <h1
-            className="font-serif text-[clamp(44px,7vw,92px)] leading-[1.08] tracking-tight text-white font-normal"
-          >
+          <h1 className="font-serif text-[clamp(42px,6.5vw,88px)] leading-[1.08] tracking-tight text-white font-normal">
             Your Entire Growth Engine, <br />
             <span className="relative inline-block mt-1">
               {/* Ghost text to maintain stable layout */}
@@ -421,21 +241,17 @@ export default function LandingPage() {
             </span>
           </h1>
 
-          {/* Clear, High-Value Subtitle */}
-          <p
-            className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto font-sans font-light leading-relaxed"
-          >
+          {/* Clear Subtitle */}
+          <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto font-sans font-light leading-relaxed">
             Markopilot writes and publishes high-converting posts across <strong className="text-white font-medium">X, LinkedIn, Instagram, and TikTok</strong>, extracts verified B2B leads, and makes AI search engines recommend your brand 24/7.
           </p>
 
           {/* Primary CTAs */}
-          <div
-            className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-3"
-          >
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-3">
             <NavLink href="#" isAuth={true} isPrimary className="group relative w-full sm:w-auto px-7 py-3.5 rounded-full bg-white text-black font-semibold text-sm hover:bg-gray-100 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 overflow-hidden shadow-[0_0_30px_rgba(255,255,255,0.2)]">
               Start 7-Day Free Trial <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
             </NavLink>
-            <Link href="#solutions" className="w-full sm:w-auto px-6 py-3.5 rounded-full bg-white/5 border border-white/10 text-gray-200 font-medium text-sm hover:bg-white/10 hover:text-white hover:border-white/20 transition-all flex items-center justify-center gap-2 backdrop-blur-md">
+            <Link href="#features" className="w-full sm:w-auto px-6 py-3.5 rounded-full bg-white/5 border border-white/10 text-gray-200 font-medium text-sm hover:bg-white/10 hover:text-white hover:border-white/20 transition-all flex items-center justify-center gap-2 backdrop-blur-md">
               See How It Works
             </Link>
           </div>
@@ -446,28 +262,24 @@ export default function LandingPage() {
             <span className="hidden sm:inline text-white/20">•</span>
             <span className="flex items-center gap-1.5 text-gray-300"><CheckCircle2 size={13} className="text-emerald-400 flex-shrink-0" /> 2-minute setup</span>
             <span className="hidden sm:inline text-white/20">•</span>
-            <span className="flex items-center gap-1.5 text-gray-300"><CheckCircle2 size={13} className="text-emerald-400 flex-shrink-0" /> 1-Click Review or Full Autopilot</span>
+            <span className="flex items-center gap-1.5 text-gray-300"><CheckCircle2 size={13} className="text-emerald-400 flex-shrink-0" /> Review Mode or Autopilot</span>
           </div>
         </div>
 
-        {/* Clear Problem/Solution Explanation */}
-        <div
-          className="mt-16 w-full max-w-6xl mx-auto px-6 relative z-10 opacity-0 animate-[fadeUpIn_1.5s_cubic-bezier(0.16,1,0.3,1)_700ms_forwards]"
-        >
+        {/* 3 High-Impact Pillars */}
+        <div className="mt-16 w-full max-w-6xl mx-auto px-6 relative z-10 opacity-0 animate-[fadeUpIn_1.5s_cubic-bezier(0.16,1,0.3,1)_700ms_forwards]">
           <div className="grid lg:grid-cols-3 gap-5">
             <div className="rounded-2xl bg-red-500/[0.06] border border-red-400/20 p-6 text-left space-y-4">
               <div className="w-11 h-11 rounded-xl bg-red-500/10 border border-red-400/20 text-red-300 flex items-center justify-center">
                 <Flame size={20} />
               </div>
               <div>
-                <p className="text-xs font-mono uppercase tracking-wider text-red-300 mb-2">The pain</p>
-                <h2 className="text-2xl font-serif text-white">Great products still lose because founders stop marketing.</h2>
+                <p className="text-xs font-mono uppercase tracking-wider text-red-300 mb-2">The Problem</p>
+                <h2 className="text-xl font-serif text-white">Founders stop marketing when product building gets intense.</h2>
               </div>
-              <ul className="space-y-3 text-sm text-gray-300">
-                <li className="flex gap-2"><XCircle size={16} className="text-red-300 flex-shrink-0 mt-0.5" /> You forget to post when product work gets intense.</li>
-                <li className="flex gap-2"><XCircle size={16} className="text-red-300 flex-shrink-0 mt-0.5" /> Qualified buyers never hear from you.</li>
-                <li className="flex gap-2"><XCircle size={16} className="text-red-300 flex-shrink-0 mt-0.5" /> AI search engines cannot recommend a brand with no fresh public proof.</li>
-              </ul>
+              <p className="text-sm text-gray-400 leading-relaxed">
+                Writing threads, rendering videos, and sending outreach takes 20 hours a week. When code takes over, your distribution dies.
+              </p>
             </div>
 
             <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-6 text-left space-y-4 shadow-[0_0_60px_rgba(124,110,255,0.16)]">
@@ -475,14 +287,12 @@ export default function LandingPage() {
                 <Bot size={20} />
               </div>
               <div>
-                <p className="text-xs font-mono uppercase tracking-wider text-purple-300 mb-2">What Markopilot does</p>
-                <h2 className="text-2xl font-serif text-white">Turns your brand inputs into scheduled growth work.</h2>
+                <p className="text-xs font-mono uppercase tracking-wider text-purple-300 mb-2">What Markopilot Does</p>
+                <h2 className="text-xl font-serif text-white">Turns your product updates into daily autonomous growth.</h2>
               </div>
-              <ul className="space-y-3 text-sm text-gray-300">
-                <li className="flex gap-2"><CheckCircle2 size={16} className="text-emerald-300 flex-shrink-0 mt-0.5" /> Writes and schedules social posts from your website, releases, and voice.</li>
-                <li className="flex gap-2"><CheckCircle2 size={16} className="text-emerald-300 flex-shrink-0 mt-0.5" /> Finds public B2B prospects, scores fit, and drafts compliant outreach.</li>
-                <li className="flex gap-2"><CheckCircle2 size={16} className="text-emerald-300 flex-shrink-0 mt-0.5" /> Lets you approve everything or run the system on autopilot.</li>
-              </ul>
+              <p className="text-sm text-gray-400 leading-relaxed">
+                Connect your URL once. Markopilot automatically writes cross-channel posts, produces visuals, discovers B2B leads, and runs outreach.
+              </p>
             </div>
 
             <div className="rounded-2xl bg-emerald-500/[0.06] border border-emerald-400/20 p-6 text-left space-y-4">
@@ -490,21 +300,19 @@ export default function LandingPage() {
                 <TrendingUp size={20} />
               </div>
               <div>
-                <p className="text-xs font-mono uppercase tracking-wider text-emerald-300 mb-2">The outcome</p>
-                <h2 className="text-2xl font-serif text-white">You stay visible, followed up, and discoverable.</h2>
+                <p className="text-xs font-mono uppercase tracking-wider text-emerald-300 mb-2">The Outcome</p>
+                <h2 className="text-xl font-serif text-white">Stay visible, cited by AI search, and consistently inbound.</h2>
               </div>
-              <ul className="space-y-3 text-sm text-gray-300">
-                <li className="flex gap-2"><CheckCircle2 size={16} className="text-emerald-300 flex-shrink-0 mt-0.5" /> Consistent authority content across the channels buyers already check.</li>
-                <li className="flex gap-2"><CheckCircle2 size={16} className="text-emerald-300 flex-shrink-0 mt-0.5" /> Warmer outbound because prospects see proof before your email arrives.</li>
-                <li className="flex gap-2"><CheckCircle2 size={16} className="text-emerald-300 flex-shrink-0 mt-0.5" /> More public signals for ChatGPT, Perplexity, Google, and buyers to trust.</li>
-              </ul>
+              <p className="text-sm text-gray-400 leading-relaxed">
+                Your brand builds compounding authority across Google, ChatGPT, and Perplexity while you stay 100% focused on your product.
+              </p>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Integrations Bar (Infinite Scrolling Ticker) */}
-      <section className="py-10 border-y border-white/5 bg-black/40 backdrop-blur-md relative z-10 my-12 overflow-hidden">
+      {/* Integrations Bar */}
+      <section className="py-10 border-y border-white/5 bg-black/40 backdrop-blur-md relative z-10 my-10 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 mb-6 text-center text-xs uppercase tracking-widest text-gray-400 font-bold">
           Autonomous multi-modal pipelines powered by best-in-class engines
         </div>
@@ -516,1088 +324,516 @@ export default function LandingPage() {
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><InstagramIcon size={24} /> Instagram</div>
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><TikTokIcon size={24} /> TikTok</div>
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Mail size={26} /> Gmail & SMTP</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Wand2 size={26} /> Replicate (Flux 1.1 Pro)</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Film size={26} /> Creatomate Video API</div>
+              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Sparkles size={26} /> Flux 1.1 Pro 4K</div>
+              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Video size={26} /> Creatomate Video API</div>
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Bot size={26} /> OpenRouter Multi-LLM</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Database size={26} /> Supabase</div>
             </div>
-            {/* Duplicated for infinite looping */}
+            {/* Duplicated for infinite loop */}
             <div className="flex gap-20 items-center px-10 text-xl font-medium tracking-wide whitespace-nowrap">
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><XIcon size={24} /> Twitter (X)</div>
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><LinkedInIcon size={24} /> LinkedIn</div>
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><InstagramIcon size={24} /> Instagram</div>
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><TikTokIcon size={24} /> TikTok</div>
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Mail size={26} /> Gmail & SMTP</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Wand2 size={26} /> Replicate (Flux 1.1 Pro)</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Film size={26} /> Creatomate Video API</div>
+              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Sparkles size={26} /> Flux 1.1 Pro 4K</div>
+              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Video size={26} /> Creatomate Video API</div>
               <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Bot size={26} /> OpenRouter Multi-LLM</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Database size={26} /> Supabase</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* SECTION: Choose Your Pain / Interactive Persona Switcher */}
-      <section id="solutions" className="py-24 max-w-7xl mx-auto px-6 relative z-10 scroll-mt-20">
-        <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
+      {/* ========================================================================= */}
+      {/* ALTERNATING FEATURE FLOW SECTION (Clean, Simple, Readable, Visual Flow)  */}
+      {/* ========================================================================= */}
+      <section id="features" className="py-20 max-w-7xl mx-auto px-6 relative z-10 scroll-mt-20 space-y-28">
+
+        {/* Section Header */}
+        <div className="text-center max-w-3xl mx-auto space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-mono uppercase tracking-wider">
-            <Target size={14} /> Tailored Solutions
+            <Zap size={14} /> Core Capabilities
           </div>
           <h2 className="font-serif text-4xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">
-            Engineered for your exact growth bottleneck.
+            How Markopilot Powers Your Brand
           </h2>
           <p className="text-gray-400 text-base md:text-lg">
-            Select what best describes your situation to see how Markopilot transforms your daily workflow.
+            Everything your product needs to stay visible, attract customers, and rank on modern AI engines—simplified into an autonomous system.
           </p>
         </div>
 
-        {/* Tab Selection */}
-        <div className="flex flex-wrap items-center justify-center gap-3 mb-12 max-w-4xl mx-auto">
-          <button
-            onClick={() => setActivePersona("dev")}
-            className={`px-6 py-3.5 rounded-2xl font-medium text-sm transition-all duration-300 flex items-center gap-2.5 ${
-              activePersona === "dev"
-                ? "bg-[var(--accent-primary)] text-white shadow-[0_0_30px_rgba(124,110,255,0.4)] scale-105 border border-purple-400/40"
-                : "bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 border border-white/5"
-            }`}
-          >
-            <Code size={18} />
-            <span>I'm an Indie Dev & Solo Builder</span>
-          </button>
-          <button
-            onClick={() => setActivePersona("founder")}
-            className={`px-6 py-3.5 rounded-2xl font-medium text-sm transition-all duration-300 flex items-center gap-2.5 ${
-              activePersona === "founder"
-                ? "bg-blue-600 text-white shadow-[0_0_30px_rgba(37,99,235,0.4)] scale-105 border border-blue-400/40"
-                : "bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 border border-white/5"
-            }`}
-          >
-            <Clock size={18} />
-            <span>I'm an Overwhelmed Founder</span>
-          </button>
-          <button
-            onClick={() => setActivePersona("brand")}
-            className={`px-6 py-3.5 rounded-2xl font-medium text-sm transition-all duration-300 flex items-center gap-2.5 ${
-              activePersona === "brand"
-                ? "bg-emerald-600 text-white shadow-[0_0_30px_rgba(16,185,129,0.4)] scale-105 border border-emerald-400/40"
-                : "bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 border border-white/5"
-            }`}
-          >
-            <Search size={18} />
-            <span>I Want AI Search & Modern SEO (GEO)</span>
-          </button>
-        </div>
-
-        {/* Persona Details Card */}
-        <div className="bg-gradient-to-b from-[#111116] to-[#0a0a0d] border border-white/10 rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--accent-primary)]/10 blur-[120px] rounded-full pointer-events-none"></div>
-
-          {activePersona === "dev" && (
-            <div className="grid lg:grid-cols-12 gap-10 items-center">
-              <div className="lg:col-span-7 space-y-6">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-mono">
-                  <Terminal size={13} /> The Solo Developer Bottleneck
-                </div>
-                <h3 className="font-serif text-3xl md:text-4xl text-white">
-                  "I want to build and ship code, not be a 24/7 social media manager."
-                </h3>
-                <p className="text-gray-300 leading-relaxed text-base md:text-lg font-light">
-                  You spend 12 hours building an incredible product, and then dread the next phase: writing 10 promotional tweets, filming TikTok demos, formatting LinkedIn posts, and sending cold emails. 
-                </p>
-                <div className="space-y-4 pt-2">
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 flex-shrink-0 mt-1">
-                      <Check size={14} />
-                    </div>
-                    <div>
-                      <strong className="text-white font-medium block">Zero Context Switching from Your IDE</strong>
-                      <p className="text-gray-400 text-sm">Drop in your product URL or release notes once. Markopilot automatically extracts feature highlights, architectural innovations, and use cases to formulate high-converting launch threads and visuals.</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 flex-shrink-0 mt-1">
-                      <Check size={14} />
-                    </div>
-                    <div>
-                      <strong className="text-white font-medium block">Automatic Build-in-Public Presence</strong>
-                      <p className="text-gray-400 text-sm">Consistent daily authority content across X and LinkedIn while you remain heads-down in your terminal.</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="pt-4">
-                  <NavLink href="#" isAuth={true} isPrimary className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-black font-semibold text-sm hover:scale-105 transition shadow-lg">
-                    Ship Products While AI Markets Them <ArrowRight size={16} />
-                  </NavLink>
-                </div>
-              </div>
-
-              {/* Dev Mock Visual */}
-              <div className="lg:col-span-5 bg-black/60 border border-white/10 rounded-2xl p-5 font-mono text-xs shadow-xl space-y-4">
-                <div className="flex items-center justify-between text-gray-500 border-b border-white/5 pb-3">
-                  <span className="flex items-center gap-2 text-purple-300"><Terminal size={14} /> devlog_pipeline.ts</span>
-                  <span className="text-[10px] text-emerald-400">Autonomous</span>
-                </div>
-                <div className="text-gray-400 space-y-2">
-                  <p><span className="text-purple-400">const</span> product = <span className="text-yellow-300">"https://my-saas.app"</span>;</p>
-                  <p><span className="text-purple-400">const</span> update = <span className="text-yellow-300">"Shipped vector search + instant API"</span>;</p>
-                </div>
-                <div className="p-3 bg-purple-950/30 border border-purple-500/30 rounded-lg text-purple-200 space-y-1.5">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
-                    <Sparkle size={12} /> Markopilot Auto-Synthesized:
-                  </div>
-                  <p className="text-xs text-gray-200">
-                    "🚀 Most devs get vector search wrong. Here is how we indexed 100k embeddings in 2ms without breaking our database [Thread 🧵 1/6]"
-                  </p>
-                  <div className="text-[10px] text-gray-400 pt-1 flex items-center justify-between">
-                    <span>Generated: X Thread + LinkedIn Post + Flux Art</span>
-                    <span className="text-emerald-400 font-semibold">Ready to post</span>
-                  </div>
-                </div>
-              </div>
+        {/* ------------------------------------------------------------- */}
+        {/* ITEM 1: Multi-Channel Social (Text Left, Image/Visual Right)  */}
+        {/* ------------------------------------------------------------- */}
+        <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+          <div className="lg:col-span-6 space-y-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-mono">
+              <Share2 size={13} /> 01 • Multi-Channel Social Publishing
             </div>
-          )}
-
-          {activePersona === "founder" && (
-            <div className="grid lg:grid-cols-12 gap-10 items-center">
-              <div className="lg:col-span-7 space-y-6">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-mono">
-                  <Clock size={13} /> The Overwhelmed Founder Bottleneck
+            <h3 className="font-serif text-3xl md:text-4xl text-white leading-tight">
+              Publish native, high-converting posts across 4 major networks.
+            </h3>
+            <p className="text-gray-300 text-base leading-relaxed font-light">
+              Stop spending hours rewriting the same update for different apps. Markopilot takes your product announcements, devlogs, or website content and creates custom formats for each platform.
+            </p>
+            <div className="space-y-3.5 pt-2">
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 flex-shrink-0 mt-1">
+                  <Check size={14} />
                 </div>
-                <h3 className="font-serif text-3xl md:text-4xl text-white">
-                  "I hate having to log into 5 different social apps every day."
-                </h3>
-                <p className="text-gray-300 leading-relaxed text-base md:text-lg font-light">
-                  Between running operations, talking to customers, and managing your team, logging into Twitter, LinkedIn, Instagram, TikTok, and your email client burns 3 hours every day with unbearable context switching.
-                </p>
-                <div className="space-y-4 pt-2">
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 flex-shrink-0 mt-1">
-                      <Check size={14} />
-                    </div>
-                    <div>
-                      <strong className="text-white font-medium block">One Single Mission Control Cockpit</strong>
-                      <p className="text-gray-400 text-sm">Review, approve, or reject multi-modal drafts for X, LinkedIn, Instagram, TikTok, and outbound email in a 60-second morning scan.</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 flex-shrink-0 mt-1">
-                      <Check size={14} />
-                    </div>
-                    <div>
-                      <strong className="text-white font-medium block">Cross-Platform Tone Harmonization</strong>
-                      <p className="text-gray-400 text-sm">Markopilot automatically adapts content: witty & snappy on X, authoritative & analytical on LinkedIn, visually stunning on Instagram, dynamic & engaging on TikTok.</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="pt-4">
-                  <NavLink href="#" isAuth={true} isPrimary className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-black font-semibold text-sm hover:scale-105 transition shadow-lg">
-                    Eliminate App-Switching Fatigue <ArrowRight size={16} />
-                  </NavLink>
+                <div>
+                  <strong className="text-white text-sm block">Algorithm-Optimized Formats</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Viral threads on X, insightful B2B essays on LinkedIn, 4K visual carousels on Instagram, and vertical videos on TikTok.</p>
                 </div>
               </div>
-
-              {/* Founder Multi-App Mock */}
-              <div className="lg:col-span-5 bg-black/60 border border-white/10 rounded-2xl p-5 shadow-xl space-y-3">
-                <div className="text-xs font-mono text-gray-400 flex items-center justify-between border-b border-white/5 pb-2">
-                  <span className="text-blue-300 flex items-center gap-1.5"><Layers size={14} /> 5 Channels Synchronized</span>
-                  <span className="text-[10px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded">All-in-One</span>
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 flex-shrink-0 mt-1">
+                  <Check size={14} />
                 </div>
-                <div className="space-y-2">
-                  <div className="p-2.5 rounded-lg bg-white/5 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2"><XIcon size={14} className="text-white" /> Twitter (X)</div>
-                    <span className="text-[11px] text-emerald-400 font-mono">Autopilot (3/day)</span>
-                  </div>
-                  <div className="p-2.5 rounded-lg bg-white/5 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2"><LinkedInIcon size={14} className="text-[#0A66C2]" /> LinkedIn B2B</div>
-                    <span className="text-[11px] text-emerald-400 font-mono">Autopilot (1/day)</span>
-                  </div>
-                  <div className="p-2.5 rounded-lg bg-white/5 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2"><InstagramIcon size={14} className="text-pink-400" /> Instagram</div>
-                    <span className="text-[11px] text-purple-300 font-mono">Flux 1.1 Pro AI</span>
-                  </div>
-                  <div className="p-2.5 rounded-lg bg-white/5 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2"><TikTokIcon size={14} className="text-cyan-400" /> TikTok</div>
-                    <span className="text-[11px] text-cyan-300 font-mono">Creatomate Render</span>
-                  </div>
-                  <div className="p-2.5 rounded-lg bg-white/5 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2"><Mail size={14} className="text-emerald-400" /> Cold Outreach</div>
-                    <span className="text-[11px] text-amber-300 font-mono">Review Mode (14 drafts)</span>
-                  </div>
+                <div>
+                  <strong className="text-white text-sm block">Flux 1.1 Pro Images &amp; Creatomate Videos</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Generates high-resolution 4K imagery and short-form video clips automatically with zero design skill required.</p>
                 </div>
               </div>
-            </div>
-          )}
-
-          {activePersona === "brand" && (
-            <div className="grid lg:grid-cols-12 gap-10 items-center">
-              <div className="lg:col-span-7 space-y-6">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-mono">
-                  <Search size={13} /> The 2026 AI Search (GEO) Shift
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 flex-shrink-0 mt-1">
+                  <Check size={14} />
                 </div>
-                <h3 className="font-serif text-3xl md:text-4xl text-white">
-                  "I have a brand, but I didn't think social engagement was that important."
-                </h3>
-                <p className="text-gray-300 leading-relaxed text-base md:text-lg font-light">
-                  In 2026, buyers don't just type into Google — they ask <strong className="text-white font-normal">ChatGPT, Perplexity, Claude, and Gemini</strong>. When an AI search engine evaluates which product to recommend, it scours live social graphs. If your brand is silent on social, AI engines literally do not recommend you.
-                </p>
-                <div className="space-y-4 pt-2">
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0 mt-1">
-                      <Check size={14} />
-                    </div>
-                    <div>
-                      <strong className="text-white font-medium block">Generative Engine Optimization (GEO)</strong>
-                      <p className="text-gray-400 text-sm">Every high-authority X thread, LinkedIn post, and community citation is ingested by LLM crawlers, indexing your product as the authoritative solution in your category.</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0 mt-1">
-                      <Check size={14} />
-                    </div>
-                    <div>
-                      <strong className="text-white font-medium block">Entity Verification & Organic Backlinks</strong>
-                      <p className="text-gray-400 text-sm">Active social signals compound your traditional SEO authority, giving Google and Perplexity the trust signals required for page-one rankings.</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="pt-4">
-                  <NavLink href="#" isAuth={true} isPrimary className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-black font-semibold text-sm hover:scale-105 transition shadow-lg">
-                    Claim Your AI Search Ranking <ArrowRight size={16} />
-                  </NavLink>
+                <div>
+                  <strong className="text-white text-sm block">Peak Engagement Dispatch</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Dispatches content during peak algorithmic traffic windows to ensure maximum organic reach.</p>
                 </div>
               </div>
-
-              {/* Brand / GEO Simulation */}
-              <div className="lg:col-span-5 bg-black/60 border border-emerald-500/20 rounded-2xl p-5 shadow-xl space-y-3">
-                <div className="text-xs font-mono text-emerald-400 flex items-center justify-between border-b border-white/5 pb-2">
-                  <span className="flex items-center gap-1.5"><Globe size={14} /> Perplexity & ChatGPT Citation Index</span>
-                  <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded">+340% Citations</span>
-                </div>
-                <div className="p-3 bg-white/5 rounded-xl space-y-2 text-xs">
-                  <div className="text-[11px] text-gray-400 font-mono">User Query:</div>
-                  <div className="text-white font-medium">"What is the most reliable developer tooling for growth automation?"</div>
-                </div>
-                <div className="p-3 bg-emerald-950/30 border border-emerald-500/30 rounded-xl space-y-2 text-xs text-emerald-200">
-                  <div className="text-[10px] font-bold text-emerald-400 flex items-center gap-1.5">
-                    <Sparkles size={12} /> AI Recommendation Engine Response:
-                  </div>
-                  <p className="text-gray-200 text-[11px] leading-relaxed">
-                    "Based on recent technical breakdowns, developer feedback, and active multi-channel discussions, <span className="font-bold text-white bg-emerald-500/30 px-1 py-0.5 rounded">YourBrand</span> is the leading solution, noted for autonomous orchestration..."
-                  </p>
-                  <div className="text-[9px] text-emerald-400/80 font-mono flex items-center gap-2">
-                    <span>Sources: [X Threads] [LinkedIn Case Studies] [GitHub Logs]</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* SECTION: The AI Search & Modern SEO (GEO) Deep Dive */}
-      <section id="ai-discovery" className="py-24 max-w-7xl mx-auto px-6 relative z-10 border-t border-white/5">
-        <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs font-mono uppercase tracking-wider">
-            <Globe size={14} /> The Future of Search
-          </div>
-          <h2 className="font-serif text-4xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">
-            Why social presence is your #1 SEO strategy.
-          </h2>
-          <p className="text-gray-400 text-base md:text-lg">
-            Traditional keyword stuffing is obsolete. Modern AI search engines prioritize fresh, authentic social proof.
-          </p>
-        </div>
-
-        {/* Interactive Comparison Simulation */}
-        <div className="max-w-5xl mx-auto bg-black/40 border border-white/10 rounded-3xl p-6 md:p-10 backdrop-blur-xl shadow-2xl space-y-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-white/5 pb-6">
-            <div>
-              <h3 className="text-lg font-semibold text-white">Live Search Engine Simulation</h3>
-              <p className="text-xs text-gray-400">See what happens when an AI answers buyer questions in your category</p>
-            </div>
-            <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
-              <button
-                onClick={() => setGeoTab("with-marko")}
-                className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition ${
-                  geoTab === "with-marko" ? "bg-emerald-600 text-white shadow" : "text-gray-400 hover:text-white"
-                }`}
-              >
-                With Markopilot (Active Omni-Graph)
-              </button>
-              <button
-                onClick={() => setGeoTab("without-marko")}
-                className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition ${
-                  geoTab === "without-marko" ? "bg-red-600/80 text-white shadow" : "text-gray-400 hover:text-white"
-                }`}
-              >
-                Without Markopilot (Silent Brand)
-              </button>
             </div>
           </div>
 
-          {geoTab === "with-marko" ? (
-            <div className="space-y-4 animate-in fade-in duration-300">
-              <div className="flex items-center gap-3 text-xs font-mono text-gray-400 bg-white/5 p-3 rounded-xl border border-white/5">
-                <Search size={14} className="text-purple-400" />
-                <span className="text-white">Query:</span> "Best automated tool to run growth marketing for a B2B startup in 2026?"
-              </div>
-
-              <div className="p-6 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs font-mono text-emerald-400">
-                    <Sparkles size={14} /> AI Recommendation Engine Analysis
-                  </div>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">Live Citation Graph Ingested</span>
-                </div>
-                <p className="text-gray-200 text-sm md:text-base leading-relaxed">
-                  "Generative search engines evaluate brand citations, active social discussion clusters on X and LinkedIn, and structured knowledge graphs. With Markopilot's omni-channel output, your brand continuously provides the indexable proof points required for AI models to cite and recommend you."
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                  <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 text-[11px] text-gray-300 flex items-center gap-2">
-                    <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" /> Verified Social Citations
-                  </div>
-                  <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 text-[11px] text-gray-300 flex items-center gap-2">
-                    <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" /> Fresh Multi-Platform Footprint
-                  </div>
-                  <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 text-[11px] text-gray-300 flex items-center gap-2">
-                    <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" /> Authority Entity Mapping
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4 animate-in fade-in duration-300">
-              <div className="flex items-center gap-3 text-xs font-mono text-gray-400 bg-white/5 p-3 rounded-xl border border-white/5">
-                <Search size={14} className="text-purple-400" />
-                <span className="text-white">Query:</span> "Best automated tool to run growth marketing for a B2B startup in 2026?"
-              </div>
-
-              <div className="p-6 rounded-2xl bg-red-950/20 border border-red-500/30 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs font-mono text-red-400">
-                    <XCircle size={14} /> Zero Brand Recognition Found
-                  </div>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-red-500/20 text-red-300">Entity Absent</span>
-                </div>
-                <p className="text-gray-300 text-sm md:text-base leading-relaxed">
-                  "I found several legacy incumbents [Competitor A] and [Competitor B]. <span className="text-red-300 font-semibold">(Your brand is not mentioned anywhere in recent citations, live discussions, or indexable knowledge nodes)</span>."
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                  <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 text-[11px] text-gray-400 flex items-center gap-2">
-                    <XCircle size={14} className="text-red-400 flex-shrink-0" /> 0 Recent Social Signals
-                  </div>
-                  <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 text-[11px] text-gray-400 flex items-center gap-2">
-                    <XCircle size={14} className="text-red-400 flex-shrink-0" /> Invisible to AI RAG Pipelines
-                  </div>
-                  <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 text-[11px] text-gray-400 flex items-center gap-2">
-                    <XCircle size={14} className="text-red-400 flex-shrink-0" /> Competitors Win Buyer Intent
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* 3 Pillars Grid */}
-          <div className="grid md:grid-cols-3 gap-6 pt-6 border-t border-white/5">
-            <div className="space-y-2.5">
-              <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
-                <Bot size={20} />
-              </div>
-              <h4 className="text-base font-semibold text-white">1. Real-Time LLM Ingestion</h4>
-              <p className="text-xs text-gray-400 leading-relaxed">
-                Large language models constantly ingest fresh public web data. Consistent social posting ensures your product updates are permanently indexed in AI knowledge pools.
-              </p>
-            </div>
-            <div className="space-y-2.5">
-              <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-                <Globe size={20} />
-              </div>
-              <h4 className="text-base font-semibold text-white">2. Multi-Node Entity Trust</h4>
-              <p className="text-xs text-gray-400 leading-relaxed">
-                When Google and Perplexity discover identical verified handle presence across X, LinkedIn, Instagram, and TikTok, your domain authority accelerates tenfold.
-              </p>
-            </div>
-            <div className="space-y-2.5">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-                <TrendingUp size={20} />
-              </div>
-              <h4 className="text-base font-semibold text-white">3. Compounding Backlinks</h4>
-              <p className="text-xs text-gray-400 leading-relaxed">
-                Viral threads and engaging video demos get picked up by industry blogs, newsletters, and curators, generating effortless organic high-domain backlinks.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* SECTION: Supported Channels & Deep-Dive Platform Capabilities */}
-      <section id="channels" className="py-24 max-w-7xl mx-auto px-6 relative z-10 border-t border-white/5">
-        <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-300 text-xs font-mono uppercase tracking-wider">
-            <Share2 size={14} /> Full Platform Coverage
-          </div>
-          <h2 className="font-serif text-4xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">
-            What you can do on every supported channel.
-          </h2>
-          <p className="text-gray-400 text-base md:text-lg">
-            No cookie-cutter duplicate posts. Markopilot crafts native formats, media assets, and hooks customized for each network.
-          </p>
-        </div>
-
-        {/* Platform Selector Buttons */}
-        <div className="flex flex-wrap items-center justify-center gap-3 mb-12">
-          <button
-            onClick={() => setActivePlatform("twitter")}
-            className={`px-5 py-3 rounded-2xl font-medium text-xs md:text-sm transition flex items-center gap-2 ${
-              activePlatform === "twitter"
-                ? "bg-white text-black font-semibold shadow-[0_0_25px_rgba(255,255,255,0.3)] scale-105"
-                : "bg-white/5 text-gray-400 hover:text-white border border-white/5"
-            }`}
-          >
-            <XIcon size={16} /> Twitter / X
-          </button>
-          <button
-            onClick={() => setActivePlatform("linkedin")}
-            className={`px-5 py-3 rounded-2xl font-medium text-xs md:text-sm transition flex items-center gap-2 ${
-              activePlatform === "linkedin"
-                ? "bg-blue-600 text-white font-semibold shadow-[0_0_25px_rgba(37,99,235,0.4)] scale-105"
-                : "bg-white/5 text-gray-400 hover:text-white border border-white/5"
-            }`}
-          >
-            <LinkedInIcon size={16} /> LinkedIn
-          </button>
-          <button
-            onClick={() => setActivePlatform("instagram")}
-            className={`px-5 py-3 rounded-2xl font-medium text-xs md:text-sm transition flex items-center gap-2 ${
-              activePlatform === "instagram"
-                ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold shadow-[0_0_25px_rgba(236,72,153,0.4)] scale-105"
-                : "bg-white/5 text-gray-400 hover:text-white border border-white/5"
-            }`}
-          >
-            <InstagramIcon size={16} /> Instagram (Flux Pro)
-          </button>
-          <button
-            onClick={() => setActivePlatform("tiktok")}
-            className={`px-5 py-3 rounded-2xl font-medium text-xs md:text-sm transition flex items-center gap-2 ${
-              activePlatform === "tiktok"
-                ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold shadow-[0_0_25px_rgba(6,182,212,0.4)] scale-105"
-                : "bg-white/5 text-gray-400 hover:text-white border border-white/5"
-            }`}
-          >
-            <TikTokIcon size={16} /> TikTok (Creatomate MP4)
-          </button>
-          <button
-            onClick={() => setActivePlatform("outreach")}
-            className={`px-5 py-3 rounded-2xl font-medium text-xs md:text-sm transition flex items-center gap-2 ${
-              activePlatform === "outreach"
-                ? "bg-emerald-600 text-white font-semibold shadow-[0_0_25px_rgba(16,185,129,0.4)] scale-105"
-                : "bg-white/5 text-gray-400 hover:text-white border border-white/5"
-            }`}
-          >
-            <Mail size={16} /> Cold Email & Outreach
-          </button>
-        </div>
-
-        {/* Platform Details Card */}
-        <div className="bg-gradient-to-b from-[#111116] to-[#07070a] border border-white/10 rounded-3xl p-8 md:p-12 shadow-2xl">
-          {activePlatform === "twitter" && (
-            <div className="grid lg:grid-cols-12 gap-8 items-center">
-              <div className="lg:col-span-6 space-y-6">
-                <div className="flex items-center gap-2 text-xs font-mono text-gray-400 uppercase tracking-wider">
-                  <MessageSquare size={15} className="text-white" /> Channel: Twitter / X
-                </div>
-                <h3 className="font-serif text-3xl text-white">Viral Thread Formulation & Thought Leadership</h3>
-                <p className="text-gray-300 leading-relaxed text-sm md:text-base font-light">
-                  X moves fast. Markopilot crafts high-engagement single tweets, 5-to-10 part technical threads, and build-in-public updates engineered with proven hook templates.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                  <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-xs text-gray-300">
-                    <strong className="text-white block mb-1">⚡ Viral Hook Engineering</strong>
-                    Tested opening formulas that maximize retweets, bookmarks, and replies.
-                  </div>
-                  <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-xs text-gray-300">
-                    <strong className="text-white block mb-1">🧵 Multi-Part Threads</strong>
-                    In-depth teardowns, feature walk-throughs, and dev log storytelling.
-                  </div>
-                  <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-xs text-gray-300">
-                    <strong className="text-white block mb-1">💬 Automated Reply Triggers</strong>
-                    Engagement prompts that invite high-converting community discussions.
-                  </div>
-                  <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-xs text-gray-300">
-                    <strong className="text-white block mb-1">⏰ Smart Time-Zone Slotting</strong>
-                    Dispatches posts at peak traffic hours tailored to your audience geography.
-                  </div>
-                </div>
-              </div>
-              <div className="lg:col-span-6 bg-black/60 border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 flex items-center justify-center font-bold text-white">M</div>
-                  <div>
-                    <div className="text-sm font-semibold text-white flex items-center gap-1.5">Markopilot <span className="text-xs text-gray-500 font-normal">@markopilot_ai · 2h</span></div>
-                    <div className="text-xs text-gray-400">Autonomous Growth Engine</div>
-                  </div>
-                </div>
-                <p className="text-xs md:text-sm text-gray-200 leading-relaxed font-sans">
-                  "Most B2B founders make the same marketing mistake: they spend 40 hours building a feature and 0 minutes telling the world about it.<br /><br />
-                  Here is the exact 4-step autonomous system we use to turn raw code commits into 100k+ monthly impressions 🧵👇"
-                </p>
-                <div className="flex items-center justify-between text-xs text-gray-500 border-t border-white/5 pt-3">
-                  <span className="flex items-center gap-1.5"><MessageSquare size={13} /> 48 replies</span>
-                  <span className="flex items-center gap-1.5"><RefreshCw size={13} /> 182 reposts</span>
-                  <span className="flex items-center gap-1.5"><Flame size={13} className="text-orange-400" /> 1.4k likes</span>
-                  <span className="flex items-center gap-1.5"><Target size={13} /> 42k views</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activePlatform === "linkedin" && (
-            <div className="grid lg:grid-cols-12 gap-8 items-center">
-              <div className="lg:col-span-6 space-y-6">
-                <div className="flex items-center gap-2 text-xs font-mono text-blue-400 uppercase tracking-wider">
-                  <Briefcase size={15} /> Channel: LinkedIn B2B
-                </div>
-                <h3 className="font-serif text-3xl text-white">High-Converting B2B Authority & Case Studies</h3>
-                <p className="text-gray-300 leading-relaxed text-sm md:text-base font-light">
-                  LinkedIn is the ultimate revenue driver for B2B founders. Markopilot formats long-form problem-solution essays, carousel slide narratives, and data-backed authority pieces.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                  <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-xs text-gray-300">
-                    <strong className="text-white block mb-1">👔 Executive Tone Matching</strong>
-                    Refined, professional phrasing without cheesy buzzwords or AI fluff.
-                  </div>
-                  <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-xs text-gray-300">
-                    <strong className="text-white block mb-1">📊 Case Study Breakdowns</strong>
-                    Transforms customer wins and metrics into viral business case studies.
-                  </div>
-                  <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-xs text-gray-300">
-                    <strong className="text-white block mb-1">🎯 ICP Conversion Hooks</strong>
-                    Direct calls to action that drive decision-makers straight to your inbox.
-                  </div>
-                  <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-xs text-gray-300">
-                    <strong className="text-white block mb-1">📈 Algorithm-Compliant Pacing</strong>
-                    Formatted with spacing and line-breaks optimized for high dwell time.
-                  </div>
-                </div>
-              </div>
-              <div className="lg:col-span-6 bg-black/60 border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white">in</div>
-                  <div>
-                    <div className="text-sm font-semibold text-white">Founder Insight • Following</div>
-                    <div className="text-xs text-gray-400">12,400 followers · 3h · 🌐</div>
-                  </div>
-                </div>
-                <div className="text-xs md:text-sm text-gray-200 space-y-2 leading-relaxed">
-                  <p>How we reduced customer acquisition cost by 62% in 30 days without spending an extra dollar on ads:</p>
-                  <p className="text-gray-400">1. We audited our AI Search entity footprint across Perplexity & ChatGPT.<br />2. We automated multi-channel knowledge dissemination.<br />3. Inbound leads 3x'd organically.</p>
-                </div>
-                <div className="p-3 bg-blue-950/30 border border-blue-500/20 rounded-lg text-xs text-blue-200">
-                  💡 Key takeaway: Build the system once, let autonomous orchestration compound.
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activePlatform === "instagram" && (
-            <div className="grid lg:grid-cols-12 gap-8 items-center">
-              <div className="lg:col-span-6 space-y-6">
-                <div className="flex items-center gap-2 text-xs font-mono text-pink-400 uppercase tracking-wider">
-                  <Camera size={15} /> Channel: Instagram (Flux 1.1 Pro Engine)
-                </div>
-                <h3 className="font-serif text-3xl text-white">Photorealistic AI Visuals & Carousel Assets</h3>
-                <p className="text-gray-300 leading-relaxed text-sm md:text-base font-light">
-                  Never worry about designing Instagram graphics from scratch. Powered by Replicate's Flux 1.1 Pro, Markopilot generates contextual 4K images and carousel infographics that stop the scroll.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                  <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-xs text-gray-300">
-                    <strong className="text-white block mb-1">🎨 Flux 1.1 Pro AI Generation</strong>
-                    Ultra-crisp photorealistic and 3D stylized visual assets on demand.
-                  </div>
-                  <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-xs text-gray-300">
-                    <strong className="text-white block mb-1">📱 Carousel Formatting</strong>
-                    Multi-slide design setups explaining complex product features simply.
-                  </div>
-                  <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-xs text-gray-300">
-                    <strong className="text-white block mb-1">✍️ Contextual Captions</strong>
-                    Storytelling captions complete with verified hashtags for discovery.
-                  </div>
-                  <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-xs text-gray-300">
-                    <strong className="text-white block mb-1">🌟 Brand Aesthetic Locking</strong>
-                    Consistent color palette and stylistic coherence across every post.
-                  </div>
-                </div>
-              </div>
-              <div className="lg:col-span-6 bg-black/60 border border-white/10 rounded-2xl p-6 shadow-xl flex justify-center">
-                <div className="w-64 bg-[#111116] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
-                  <div className="p-3 flex items-center justify-between border-b border-white/5">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-yellow-400 to-pink-500 p-[1px]">
-                        <div className="w-full h-full bg-black rounded-full"></div>
-                      </div>
-                      <span className="text-[11px] font-semibold text-white">markopilot</span>
-                    </div>
-                    <span className="text-[10px] text-purple-400 font-mono">Flux 1.1 Pro</span>
-                  </div>
-                  <div className="w-full aspect-square relative bg-gray-900 overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200&auto=format&fit=crop" className="w-full h-full object-cover" alt="AI Generated Asset" />
-                    <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[9px] font-mono text-white">4K Render</div>
-                  </div>
-                  <div className="p-3 space-y-1">
-                    <div className="text-[11px] text-white font-medium">The future of autonomous tech is here.</div>
-                    <div className="text-[10px] text-gray-400">#indiedev #saasgrowth #buildinpublic #ai</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activePlatform === "tiktok" && (
-            <div className="grid lg:grid-cols-12 gap-8 items-center">
-              <div className="lg:col-span-6 space-y-6">
-                <div className="flex items-center gap-2 text-xs font-mono text-cyan-400 uppercase tracking-wider">
-                  <Video size={15} /> Channel: TikTok & Shorts (Creatomate MP4 API)
-                </div>
-                <h3 className="font-serif text-3xl text-white">Automated Short-Form Video Generation</h3>
-                <p className="text-gray-300 leading-relaxed text-sm md:text-base font-light">
-                  Short-form video is the fastest path to viral organic reach. Markopilot writes the script, stitches dynamic background footage via Creatomate, and renders engaging kinetic captions automatically.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                  <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-xs text-gray-300">
-                    <strong className="text-white block mb-1">🎬 Creatomate MP4 Compilation</strong>
-                    Serverless programmatic video rendering with zero watermarks.
-                  </div>
-                  <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-xs text-gray-300">
-                    <strong className="text-white block mb-1">🔤 Kinetic Typography</strong>
-                    Bold, high-retention subtitles that hold viewer attention to the last second.
-                  </div>
-                  <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-xs text-gray-300">
-                    <strong className="text-white block mb-1">⚡ Viral Hook Scripts</strong>
-                    Calculated opening hooks designed specifically for TikTok's FYP algorithm.
-                  </div>
-                  <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-xs text-gray-300">
-                    <strong className="text-white block mb-1">📐 Vertical 9:16 Format</strong>
-                    Exported ready for cross-posting to TikTok, YouTube Shorts, and IG Reels.
-                  </div>
-                </div>
-              </div>
-              <div className="lg:col-span-6 bg-black/60 border border-white/10 rounded-2xl p-6 shadow-xl flex justify-center">
-                <div className="w-56 h-80 bg-black rounded-2xl border border-white/10 overflow-hidden relative shadow-2xl flex flex-col justify-between p-4">
-                  <div className="absolute inset-0 z-0">
-                    <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800&auto=format&fit=crop" className="w-full h-full object-cover opacity-60" alt="Video frame" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/40"></div>
-                  </div>
-                  <div className="relative z-10 flex justify-between items-center text-[10px] font-mono">
-                    <span className="bg-cyan-500/30 border border-cyan-400/40 text-cyan-200 px-2 py-0.5 rounded">Creatomate API</span>
-                    <span className="text-white">00:32</span>
-                  </div>
-                  <div className="relative z-10 text-center space-y-2">
-                    <div className="inline-block bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/20 text-xs font-bold text-yellow-300 uppercase tracking-wide shadow-lg">
-                      "Stop Managing Socials Manually"
-                    </div>
-                    <div className="text-[11px] text-gray-300 font-sans">9:16 Vertical Render Active</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activePlatform === "outreach" && (
-            <div className="grid lg:grid-cols-12 gap-8 items-center">
-              <div className="lg:col-span-6 space-y-6">
-                <div className="flex items-center gap-2 text-xs font-mono text-emerald-400 uppercase tracking-wider">
-                  <Mail size={15} /> Channel: AI Outbound & Email Engine
-                </div>
-                <h3 className="font-serif text-3xl text-white">100-Point Lead Qualification & Cold Outreach</h3>
-                <p className="text-gray-300 leading-relaxed text-sm md:text-base font-light">
-                  Beyond social posting, Markopilot discovers verified decision-makers matching your ideal customer profile, scores their relevance out of 100, and drafts hyper-personalized outreach emails.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                  <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-xs text-gray-300">
-                    <strong className="text-white block mb-1">🎯 100-Point ICP Heuristics</strong>
-                    Filters out unqualified leads and only targets verified decision-makers.
-                  </div>
-                  <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-xs text-gray-300">
-                    <strong className="text-white block mb-1">✍️ Hyper-Personalized Copy</strong>
-                    References the lead's exact company news, tech stack, and pain points.
-                  </div>
-                  <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-xs text-gray-300">
-                    <strong className="text-white block mb-1">🛡️ Human-in-the-Loop Review</strong>
-                    Inspect and approve any draft before SMTP delivery with 1 click.
-                  </div>
-                  <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-xs text-gray-300">
-                    <strong className="text-white block mb-1">📬 Deliverability Governors</strong>
-                    Automated throttling and SPF/DKIM protection to keep your domain safe.
-                  </div>
-                </div>
-              </div>
-              <div className="lg:col-span-6 bg-black/60 border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
-                <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                  <div className="text-xs text-emerald-400 font-mono flex items-center gap-1.5"><Mail size={14} /> Outbound Draft [Score: 96/100]</div>
-                  <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-mono">Awaiting Review</span>
-                </div>
-                <div className="text-xs space-y-2 text-gray-300 font-mono">
-                  <div><span className="text-gray-500">To:</span> david@saasscale.io (Founder)</div>
-                  <div><span className="text-gray-500">Subject:</span> Scaling growth automation at SaaSScale</div>
-                </div>
-                <div className="p-3 bg-white/5 rounded-xl text-xs text-gray-200 leading-relaxed font-sans">
-                  "Hi David — noticed SaaSScale just rolled out your new API tier last week. Most developer tools struggle to maintain multi-channel organic presence without hiring a dedicated agency..."
-                </div>
-                <div className="flex gap-2 pt-2">
-                  <button className="flex-1 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-500 transition">Approve & Send</button>
-                  <button className="px-3 py-1.5 rounded-lg bg-white/10 text-gray-300 text-xs hover:bg-white/20 transition">Edit Draft</button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* SECTION: Autonomous Multi-Channel Calendar & Schedule Engine */}
-      <section id="calendar" className="py-24 max-w-7xl mx-auto px-6 relative z-10 border-t border-white/5 scroll-mt-20">
-        <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-mono uppercase tracking-wider">
-            <Calendar size={14} className="text-purple-400" /> Autonomous Schedule Engine
-          </div>
-          <h2 className="font-serif text-4xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">
-            One unified calendar. <br className="hidden md:inline" />
-            Infinite autonomous marketing cadence.
-          </h2>
-          <p className="text-gray-400 text-base md:text-lg">
-            Stop juggling 5 different tab schedulers and reminder alarms. Markopilot synchronizes social posts, background lead discovery sweeps, and cold email cadences in one live mission control.
-          </p>
-        </div>
-
-        {/* Live Autonomous Worker Telemetry HUD */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-gradient-to-br from-purple-950/20 to-black/40 border border-purple-500/20 rounded-2xl p-4 flex items-center justify-between backdrop-blur-md shadow-lg">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-300">
-                <Share2 size={18} />
-              </div>
-              <div>
-                <div className="text-xs text-gray-400 font-mono flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                  <span>Social Worker</span>
-                </div>
-                <div className="text-sm font-semibold text-white">Next run in 02h 14m</div>
-              </div>
-            </div>
-            <span className="text-[11px] font-mono px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20">
-              4 Posts / Wk
-            </span>
-          </div>
-
-          <div className="bg-gradient-to-br from-blue-950/20 to-black/40 border border-blue-500/20 rounded-2xl p-4 flex items-center justify-between backdrop-blur-md shadow-lg">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-300">
-                <Users size={18} />
-              </div>
-              <div>
-                <div className="text-xs text-gray-400 font-mono flex items-center gap-1.5">
+          <div className="lg:col-span-6">
+            <div className="bg-gradient-to-b from-[#121218] to-[#0a0a0e] border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-4 relative overflow-hidden">
+              <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                <span className="text-xs font-mono text-gray-400 flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  <span>Lead Discovery Worker</span>
-                </div>
-                <div className="text-sm font-semibold text-white">Next sweep in 04h 32m</div>
-              </div>
-            </div>
-            <span className="text-[11px] font-mono px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-300 border border-blue-500/20">
-              20 Leads / Day
-            </span>
-          </div>
-
-          <div className="bg-gradient-to-br from-emerald-950/20 to-black/40 border border-emerald-500/20 rounded-2xl p-4 flex items-center justify-between backdrop-blur-md shadow-lg">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-300">
-                <Send size={18} />
-              </div>
-              <div>
-                <div className="text-xs text-gray-400 font-mono flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                  <span>Outreach Engine</span>
-                </div>
-                <div className="text-sm font-semibold text-white">Smart Throttle Active</div>
-              </div>
-            </div>
-            <span className="text-[11px] font-mono px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-              15 / Hour Cap
-            </span>
-          </div>
-        </div>
-
-        {/* Interactive Calendar Explorer Card */}
-        <div className="bg-gradient-to-b from-[#111117] to-[#08080c] border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl space-y-6">
-          {/* Controls Bar */}
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 border-b border-white/5 pb-6">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-mono text-gray-400 uppercase tracking-wider mr-2 hidden sm:inline">Filter:</span>
-              <button
-                onClick={() => setCalendarFilter("all")}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition ${
-                  calendarFilter === "all"
-                    ? "bg-white text-black shadow-md"
-                    : "bg-white/5 text-gray-400 hover:text-white border border-white/5"
-                }`}
-              >
-                All Engines (9)
-              </button>
-              <button
-                onClick={() => setCalendarFilter("social")}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 ${
-                  calendarFilter === "social"
-                    ? "bg-purple-600 text-white shadow-md"
-                    : "bg-white/5 text-gray-400 hover:text-white border border-white/5"
-                }`}
-              >
-                <Share2 size={13} /> Social Posts (5)
-              </button>
-              <button
-                onClick={() => setCalendarFilter("leads")}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 ${
-                  calendarFilter === "leads"
-                    ? "bg-blue-600 text-white shadow-md"
-                    : "bg-white/5 text-gray-400 hover:text-white border border-white/5"
-                }`}
-              >
-                <Users size={13} /> AI Lead Sweeps (2)
-              </button>
-              <button
-                onClick={() => setCalendarFilter("outreach")}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 ${
-                  calendarFilter === "outreach"
-                    ? "bg-emerald-600 text-white shadow-md"
-                    : "bg-white/5 text-gray-400 hover:text-white border border-white/5"
-                }`}
-              >
-                <Send size={13} /> Outreach (2)
-              </button>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 text-xs">
-                <button
-                  onClick={() => setCalendarView("week")}
-                  className={`px-3 py-1 rounded-lg font-medium transition ${
-                    calendarView === "week" ? "bg-white/20 text-white" : "text-gray-400 hover:text-white"
-                  }`}
-                >
-                  Week Matrix
-                </button>
-                <button
-                  onClick={() => setCalendarView("timeline")}
-                  className={`px-3 py-1 rounded-lg font-medium transition ${
-                    calendarView === "timeline" ? "bg-white/20 text-white" : "text-gray-400 hover:text-white"
-                  }`}
-                >
-                  Timeline View
-                </button>
-              </div>
-              <div className="hidden sm:flex items-center gap-1 text-xs font-mono text-gray-400 bg-white/5 px-3 py-1.5 rounded-xl border border-white/5">
-                <Clock size={13} className="text-purple-400" /> UTC Synced
-              </div>
-            </div>
-          </div>
-
-          {/* Main Grid & Preview Layout */}
-          <div className="grid lg:grid-cols-12 gap-6 items-start">
-            {/* Calendar Events List / Grid */}
-            <div className="lg:col-span-7 space-y-3">
-              <div className="text-xs font-mono text-gray-400 flex items-center justify-between px-1">
-                <span>August 2026 • Autonomous Weekly Schedule</span>
-                <span className="text-purple-400">Click any card to inspect AI payload</span>
+                  Multi-Channel Pipeline
+                </span>
+                <span className="text-[11px] font-mono bg-purple-500/20 text-purple-300 px-2.5 py-0.5 rounded-full">
+                  4 Channels Active
+                </span>
               </div>
 
-              <div className="space-y-2.5 max-h-[520px] overflow-y-auto pr-1">
-                {calendarEvents
-                  .filter((ev) => calendarFilter === "all" || ev.type === calendarFilter)
-                  .map((ev) => {
-                    const isSelected = selectedCalendarEvent === ev.id;
-                    return (
-                      <div
-                        key={ev.id}
-                        onClick={() => setSelectedCalendarEvent(ev.id)}
-                        className={`p-4 rounded-2xl border transition-all duration-200 cursor-pointer text-left flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
-                          isSelected
-                            ? "bg-gradient-to-r from-white/[0.08] to-purple-950/20 border-purple-500/50 shadow-[0_0_20px_rgba(168,85,247,0.15)] ring-1 ring-purple-500/40"
-                            : "bg-white/[0.02] border-white/5 hover:bg-white/[0.05] hover:border-white/10"
-                        }`}
-                      >
-                        <div className="flex items-start gap-3.5">
-                          {/* Day Pill */}
-                          <div className="flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex-shrink-0">
-                            <span className="text-[10px] uppercase font-mono text-gray-400">{ev.dayName}</span>
-                            <span className="text-sm font-bold text-white">{ev.dateStr.split(" ")[1]}</span>
-                          </div>
-
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              {ev.platform === "twitter" && (
-                                <span className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-full bg-white/10 text-white">
-                                  <MessageSquare size={11} /> Twitter/X
-                                </span>
-                              )}
-                              {ev.platform === "linkedin" && (
-                                <span className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300">
-                                  <Briefcase size={11} /> LinkedIn
-                                </span>
-                              )}
-                              {ev.platform === "instagram" && (
-                                <span className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300">
-                                  <Camera size={11} /> Instagram
-                                </span>
-                              )}
-                              {ev.platform === "tiktok" && (
-                                <span className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300">
-                                  <Video size={11} /> TikTok
-                                </span>
-                              )}
-                              {ev.platform === "lead" && (
-                                <span className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300">
-                                  <Users size={11} /> AI Lead Sweep
-                                </span>
-                              )}
-                              {ev.platform === "outreach" && (
-                                <span className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">
-                                  <Mail size={11} /> Cold Email
-                                </span>
-                              )}
-
-                              <span className="text-[11px] font-mono text-gray-500 flex items-center gap-1">
-                                <Clock size={11} /> {ev.time}
-                              </span>
-                            </div>
-
-                            <h4 className="text-sm font-medium text-gray-200 line-clamp-1 group-hover:text-white">
-                              {ev.title}
-                            </h4>
-                          </div>
-                        </div>
-
-                        {/* Status Badge */}
-                        <div className="flex sm:flex-col items-end justify-between w-full sm:w-auto gap-2 flex-shrink-0">
-                          <span
-                            className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-medium ${
-                              ev.statusColor === "emerald"
-                                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                                : ev.statusColor === "purple"
-                                ? "bg-purple-500/20 text-purple-300 border border-purple-500/30 animate-pulse"
-                                : ev.statusColor === "amber"
-                                ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                                : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
-                            }`}
-                          >
-                            {ev.status}
-                          </span>
-                          <span className="text-[10px] text-gray-400 font-mono hidden sm:inline">{ev.metrics}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-              </div>
-            </div>
-
-            {/* Event Inspector & AI Context Preview Drawer */}
-            <div className="lg:col-span-5 bg-black/60 border border-white/10 rounded-2xl p-5 md:p-6 space-y-5 shadow-xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-48 h-48 bg-purple-500/10 blur-3xl pointer-events-none"></div>
-
-              {(() => {
-                const active = calendarEvents.find((e) => e.id === selectedCalendarEvent) || calendarEvents[4];
-                return (
-                  <div className="space-y-4 animate-in fade-in duration-200">
-                    <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                      <div className="flex items-center gap-2">
-                        <Sparkles size={15} className="text-purple-400" />
-                        <span className="text-xs font-mono uppercase tracking-wider text-gray-300">Schedule Telemetry</span>
-                      </div>
-                      <span className="text-xs font-mono text-purple-300 bg-purple-500/10 px-2.5 py-0.5 rounded-full border border-purple-500/20">
-                        {active.badge}
-                      </span>
+              {/* 4 Channel Rows */}
+              <div className="space-y-2.5">
+                <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between hover:bg-white/[0.06] transition">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-black flex items-center justify-center text-white border border-white/10">
+                      <XIcon size={16} />
                     </div>
-
-                    <div className="space-y-2">
-                      <div className="text-[11px] font-mono text-gray-400 flex items-center gap-2">
-                        <span>{active.dateStr}</span> • <span>{active.time}</span>
-                      </div>
-                      <h3 className="text-base font-semibold text-white leading-snug">
-                        {active.title}
-                      </h3>
-                      <p className="text-xs text-gray-300 leading-relaxed bg-white/5 p-3 rounded-xl border border-white/5 font-sans">
-                        "{active.snippet}"
-                      </p>
-                    </div>
-
-                    <div className="space-y-3 pt-2">
-                      <div className="text-[11px] font-mono uppercase text-gray-400 tracking-wider">
-                        AI Reasoning & Cadence Strategy
-                      </div>
-                      <div className="p-3 rounded-xl bg-purple-950/20 border border-purple-500/20 text-xs text-gray-300 space-y-1.5">
-                        <div className="text-purple-300 font-medium flex items-center gap-1.5">
-                          <CheckCircle2 size={13} className="text-purple-400" /> Algorithmic Peak Engagement Slot
-                        </div>
-                        <p className="text-[11px] text-gray-400">
-                          {active.aiHook}
-                        </p>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-                        <div className="p-2.5 rounded-lg bg-white/5 border border-white/5">
-                          <span className="text-gray-500 block text-[10px]">Media Asset</span>
-                          <span className="text-white font-medium">{active.mediaType}</span>
-                        </div>
-                        <div className="p-2.5 rounded-lg bg-white/5 border border-white/5">
-                          <span className="text-gray-500 block text-[10px]">Execution Status</span>
-                          <span className="text-emerald-400 font-medium">{active.status}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="pt-2 flex gap-2">
-                      <NavLink href="#" isAuth={true} isPrimary className="flex-1 py-2.5 rounded-xl bg-white text-black text-xs font-semibold hover:scale-[1.02] transition shadow flex items-center justify-center gap-2">
-                        Open Live Calendar <ExternalLink size={13} />
-                      </NavLink>
+                    <div>
+                      <div className="text-xs font-semibold text-white">Twitter / X</div>
+                      <div className="text-[11px] text-gray-400">Viral launch threads &amp; devlog insights</div>
                     </div>
                   </div>
-                );
-              })()}
+                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Auto-Formatted</span>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between hover:bg-white/[0.06] transition">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-[#0A66C2]/20 flex items-center justify-center text-[#0A66C2] border border-[#0A66C2]/30">
+                      <LinkedInIcon size={16} />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-white">LinkedIn B2B</div>
+                      <div className="text-[11px] text-gray-400">Case studies, metrics &amp; thought leadership</div>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Executive Tone</span>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between hover:bg-white/[0.06] transition">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-pink-500/20 flex items-center justify-center text-pink-400 border border-pink-500/30">
+                      <InstagramIcon size={16} />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-white">Instagram</div>
+                      <div className="text-[11px] text-gray-400">Flux 1.1 Pro 4K infographics &amp; carousels</div>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded">4K Generated</span>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between hover:bg-white/[0.06] transition">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-cyan-500/20 flex items-center justify-center text-cyan-400 border border-cyan-500/30">
+                      <TikTokIcon size={16} />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-white">TikTok &amp; Shorts</div>
+                      <div className="text-[11px] text-gray-400">Creatomate dynamic video &amp; kinetic captions</div>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded">9:16 Video</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* 3 Value Pillars for the Calendar Engine */}
-        <div className="grid md:grid-cols-3 gap-6 mt-8">
-          <div className="bg-gradient-to-b from-white/[0.04] to-transparent border border-white/5 rounded-2xl p-6 space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400">
-              <Sparkles size={20} />
+        {/* ------------------------------------------------------------- */}
+        {/* ITEM 2: AI Search (GEO) (Image/Visual Left, Text Right)       */}
+        {/* ------------------------------------------------------------- */}
+        <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+          <div className="lg:col-span-6 order-2 lg:order-1">
+            <div className="bg-gradient-to-b from-[#111618] to-[#070b0e] border border-emerald-500/20 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                <span className="text-xs font-mono text-emerald-400 flex items-center gap-2">
+                  <Globe size={14} />
+                  AI Engine Ingestion Index
+                </span>
+                <span className="text-[11px] font-mono bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full">
+                  Rank #1 Recommended
+                </span>
+              </div>
+
+              <div className="p-4 bg-white/[0.03] rounded-2xl border border-white/5 space-y-2">
+                <div className="text-[11px] font-mono text-gray-400">Buyer Asks ChatGPT / Perplexity:</div>
+                <div className="text-sm font-medium text-white">"What's the best tool to run growth marketing for a B2B startup in 2026?"</div>
+              </div>
+
+              <div className="p-4 bg-emerald-950/25 rounded-2xl border border-emerald-500/30 space-y-2 text-xs">
+                <div className="text-[11px] font-bold text-emerald-400 flex items-center gap-1.5">
+                  <Sparkles size={13} /> AI Recommendation Engine Response:
+                </div>
+                <p className="text-gray-200 leading-relaxed">
+                  "Based on active technical breakdowns, founder case studies, and verified multi-channel presence on X and LinkedIn, <strong className="text-white bg-emerald-500/30 px-1 py-0.5 rounded font-semibold">Your Brand</strong> is the top-recommended solution..."
+                </p>
+                <div className="pt-2 text-[10px] text-emerald-400/80 font-mono flex items-center gap-3">
+                  <span>✓ 340% Higher Citations</span>
+                  <span>✓ Entity Verified</span>
+                </div>
+              </div>
             </div>
-            <h3 className="text-lg font-semibold text-white">Algorithmic Peak Dispatcher</h3>
-            <p className="text-sm text-gray-400 leading-relaxed font-light">
-              Markopilot models your global audience timezones and triggers posts at peak algorithmic reach windows across X, LinkedIn, Instagram, and TikTok.
-            </p>
           </div>
 
-          <div className="bg-gradient-to-b from-white/[0.04] to-transparent border border-white/5 rounded-2xl p-6 space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400">
-              <RefreshCw size={20} />
+          <div className="lg:col-span-6 space-y-6 order-1 lg:order-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-mono">
+              <Globe size={13} /> 02 • AI Search &amp; Modern SEO (GEO)
             </div>
-            <h3 className="text-lg font-semibold text-white">Cross-Pipeline Synchronization</h3>
-            <p className="text-sm text-gray-400 leading-relaxed font-light">
-              Lead discovery sweeps, email cadence steps, and public social proofs are synchronized so prospects see your brand active before you reach out.
+            <h3 className="font-serif text-3xl md:text-4xl text-white leading-tight">
+              Get recommended when buyers ask ChatGPT &amp; Perplexity.
+            </h3>
+            <p className="text-gray-300 text-base leading-relaxed font-light">
+              Traditional keyword stuffing is dead. In 2026, buyers ask AI models for software recommendations. AI search engines crawl live social conversations to verify which products are active and trusted.
             </p>
-          </div>
-
-          <div className="bg-gradient-to-b from-white/[0.04] to-transparent border border-white/5 rounded-2xl p-6 space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
-              <SlidersHorizontal size={20} />
+            <div className="space-y-3.5 pt-2">
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0 mt-1">
+                  <Check size={14} />
+                </div>
+                <div>
+                  <strong className="text-white text-sm block">Live LLM Ingestion</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Active discussions on X and LinkedIn ensure AI crawlers continuously index your latest features and updates.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0 mt-1">
+                  <Check size={14} />
+                </div>
+                <div>
+                  <strong className="text-white text-sm block">Multi-Platform Entity Trust</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">When search engines find matching verified handles across 4 networks, your domain ranking accelerates exponentially.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0 mt-1">
+                  <Check size={14} />
+                </div>
+                <div>
+                  <strong className="text-white text-sm block">Effortless Organic Backlinks</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">High-value threads and case studies get quoted in newsletters and blogs, creating compounding organic backlinks.</p>
+                </div>
+              </div>
             </div>
-            <h3 className="text-lg font-semibold text-white">Review Mode or 100% Autopilot</h3>
-            <p className="text-sm text-gray-400 leading-relaxed font-light">
-              Inspect upcoming scheduled items in your queue, tweak captions with 1 click, or let autonomous workers dispatch directly without manual friction.
-            </p>
           </div>
         </div>
+
+        {/* ------------------------------------------------------------- */}
+        {/* ITEM 3: Lead Intelligence (Text Left, Image/Visual Right)     */}
+        {/* ------------------------------------------------------------- */}
+        <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+          <div className="lg:col-span-6 space-y-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-mono">
+              <Users size={13} /> 03 • B2B Lead Extraction &amp; Outreach
+            </div>
+            <h3 className="font-serif text-3xl md:text-4xl text-white leading-tight">
+              Find verified decision-makers &amp; send personalized emails.
+            </h3>
+            <p className="text-gray-300 text-base leading-relaxed font-light">
+              Stop buying stale database lists. Markopilot searches public business footprints for high-intent prospects matching your Ideal Customer Profile (ICP), scores them for relevance, and writes personalized outbound emails.
+            </p>
+            <div className="space-y-3.5 pt-2">
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 flex-shrink-0 mt-1">
+                  <Check size={14} />
+                </div>
+                <div>
+                  <strong className="text-white text-sm block">100-Point ICP Scoring</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Filters out unqualified contacts and only targets real decision-makers who need your exact solution.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 flex-shrink-0 mt-1">
+                  <Check size={14} />
+                </div>
+                <div>
+                  <strong className="text-white text-sm block">Context-Aware Email Personalization</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">References the lead's latest product launch, hiring milestone, or public announcement automatically.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 flex-shrink-0 mt-1">
+                  <Check size={14} />
+                </div>
+                <div>
+                  <strong className="text-white text-sm block">Deliverability &amp; Suppression Safeguards</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Built-in sending rate throttles, verified MX records, and one-click unsubscribe to protect domain reputation.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-6">
+            <div className="bg-gradient-to-b from-[#11141a] to-[#080a0e] border border-blue-500/20 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                <span className="text-xs font-mono text-blue-400 flex items-center gap-2">
+                  <Users size={14} />
+                  Verified Prospect Found
+                </span>
+                <span className="text-[11px] font-mono bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full">
+                  Fit Score: 96 / 100
+                </span>
+              </div>
+
+              <div className="p-4 bg-white/[0.03] rounded-2xl border border-white/5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="text-xs font-semibold text-white">David Miller • Founder @ SaaSScale</div>
+                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Verified Email</span>
+                </div>
+                <div className="text-[11px] text-gray-400 font-mono">david@saasscale.io • Cloud &amp; DevTools B2B</div>
+              </div>
+
+              <div className="p-4 bg-blue-950/20 rounded-2xl border border-blue-500/20 space-y-2 text-xs">
+                <div className="text-[11px] font-mono text-blue-300 font-semibold flex items-center gap-1.5">
+                  <Mail size={13} /> Auto-Drafted Outreach (Review Ready):
+                </div>
+                <p className="text-gray-300 leading-relaxed text-[11px]">
+                  "Hi David — noticed SaaSScale just launched your new API tier last week. Most developer platforms struggle to maintain continuous multi-channel presence without hiring an agency..."
+                </p>
+                <div className="flex gap-2 pt-2">
+                  <button className="flex-1 py-2 rounded-lg bg-emerald-600 text-white font-semibold text-xs hover:bg-emerald-500 transition shadow">
+                    Approve &amp; Send
+                  </button>
+                  <button className="px-3 py-2 rounded-lg bg-white/10 text-gray-300 text-xs hover:bg-white/20 transition">
+                    Edit Copy
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ------------------------------------------------------------- */}
+        {/* ITEM 4: Automated Cadence (Image/Visual Left, Text Right)      */}
+        {/* ------------------------------------------------------------- */}
+        <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+          <div className="lg:col-span-6 order-2 lg:order-1">
+            <div className="bg-gradient-to-b from-[#13111a] to-[#09080d] border border-purple-500/20 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                <span className="text-xs font-mono text-purple-300 flex items-center gap-2">
+                  <Clock size={14} />
+                  Continuous Growth Cadence
+                </span>
+                <span className="text-[11px] font-mono bg-purple-500/20 text-purple-300 px-2.5 py-0.5 rounded-full">
+                  Hands-Free
+                </span>
+              </div>
+
+              {/* 3 Cadence Flow Steps */}
+              <div className="space-y-3">
+                <div className="p-3.5 rounded-2xl bg-purple-950/20 border border-purple-500/20 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-300 flex items-center justify-center">
+                      <Share2 size={15} />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-white">Daily Social Broadcast</div>
+                      <div className="text-[10px] text-gray-400">Dispatches at morning peak across X &amp; LinkedIn</div>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono text-emerald-400">Scheduled</span>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-blue-950/20 border border-blue-500/20 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-300 flex items-center justify-center">
+                      <Users size={15} />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-white">B2B Lead Discovery Sweep</div>
+                      <div className="text-[10px] text-gray-400">Autonomous crawl extracts 20 verified decision-makers</div>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono text-blue-400">Sweeping</span>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-emerald-950/20 border border-emerald-500/20 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center">
+                      <Send size={15} />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-white">Cold Outbound Throttling</div>
+                      <div className="text-[10px] text-gray-400">Personalized emails delivered safely with smart pacing</div>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono text-emerald-400">15/hr Cap</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-6 space-y-6 order-1 lg:order-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-mono">
+              <Clock size={13} /> 04 • Autonomous Cadence &amp; Scheduling
+            </div>
+            <h3 className="font-serif text-3xl md:text-4xl text-white leading-tight">
+              One steady growth cadence. Zero calendar headaches.
+            </h3>
+            <p className="text-gray-300 text-base leading-relaxed font-light">
+              Forget complicated calendar grids, spreadsheets, and reminder alarms. Markopilot orchestrates your growth engine continuously in the background so you never have to remember to post or follow up.
+            </p>
+            <div className="space-y-3.5 pt-2">
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 flex-shrink-0 mt-1">
+                  <Check size={14} />
+                </div>
+                <div>
+                  <strong className="text-white text-sm block">Hands-Free Automation</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Background workers keep your social presence active and your outbound pipeline full without manual intervention.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 flex-shrink-0 mt-1">
+                  <Check size={14} />
+                </div>
+                <div>
+                  <strong className="text-white text-sm block">Synchronized Touchpoints</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Social proof is timed so that when cold emails land in inboxes, prospects already recognize your brand from recent online chatter.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 flex-shrink-0 mt-1">
+                  <Check size={14} />
+                </div>
+                <div>
+                  <strong className="text-white text-sm block">Timezone Intelligence</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Calculates audience timezones automatically to deliver content when your buyers are actually browsing.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ------------------------------------------------------------- */}
+        {/* ITEM 5: Review Mode or Autopilot (Text Left, Visual Right)    */}
+        {/* ------------------------------------------------------------- */}
+        <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+          <div className="lg:col-span-6 space-y-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-300 text-xs font-mono">
+              <SlidersHorizontal size={13} /> 05 • Full Control or Autopilot
+            </div>
+            <h3 className="font-serif text-3xl md:text-4xl text-white leading-tight">
+              Review everything in 60 seconds, or let it run hands-free.
+            </h3>
+            <p className="text-gray-300 text-base leading-relaxed font-light">
+              You never have to worry about AI hallucinating or posting off-brand content. Use Review Mode for simple 1-click approvals, or flip the switch to 100% Autonomous Mode when you're confident.
+            </p>
+            <div className="space-y-3.5 pt-2">
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-300 flex-shrink-0 mt-1">
+                  <Check size={14} />
+                </div>
+                <div>
+                  <strong className="text-white text-sm block">1-Click Morning Approvals</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Quickly approve or tweak scheduled posts and cold emails in a clean, unified morning queue.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-300 flex-shrink-0 mt-1">
+                  <Check size={14} />
+                </div>
+                <div>
+                  <strong className="text-white text-sm block">Autonomous Autopilot Switch</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Toggle between human-in-the-loop review and hands-free automated dispatch whenever you choose.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-300 flex-shrink-0 mt-1">
+                  <Check size={14} />
+                </div>
+                <div>
+                  <strong className="text-white text-sm block">Consistent Brand Voice</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Every piece of copy aligns strictly with your product tone guidelines and target persona.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-6">
+            <div className="bg-gradient-to-b from-[#151412] to-[#0a0908] border border-yellow-500/20 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                <span className="text-xs font-mono text-yellow-300 flex items-center gap-2">
+                  <SlidersHorizontal size={14} />
+                  Mode Selector
+                </span>
+                <span className="text-[11px] font-mono bg-yellow-500/20 text-yellow-300 px-2.5 py-0.5 rounded-full">
+                  1-Click Switch
+                </span>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs font-semibold text-white">Review Mode (Human-in-the-Loop)</div>
+                    <div className="text-[11px] text-gray-400">Inspect drafts before anything goes live</div>
+                  </div>
+                  <div className="w-10 h-6 bg-emerald-500 rounded-full p-0.5 flex items-center justify-end">
+                    <div className="w-5 h-5 bg-white rounded-full shadow-md"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs font-semibold text-white">Autonomous Mode (Autopilot)</div>
+                    <div className="text-[11px] text-gray-400">AI drafts, verifies, and posts automatically</div>
+                  </div>
+                  <div className="w-10 h-6 bg-white/20 rounded-full p-0.5 flex items-center">
+                    <div className="w-5 h-5 bg-gray-400 rounded-full shadow-md"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-3 bg-yellow-950/20 border border-yellow-500/20 rounded-xl text-xs text-yellow-200">
+                ⚡ Result: You stay 100% in charge of your brand voice with zero manual friction.
+              </div>
+            </div>
+          </div>
+        </div>
+
       </section>
 
-      {/* SECTION: The Old Way vs The Markopilot Way */}
+      {/* ========================================================================= */}
+      {/* SECTION: The Old Way vs The Markopilot Way                                */}
+      {/* ========================================================================= */}
       <section className="py-24 max-w-7xl mx-auto px-6 relative z-10 border-t border-white/5">
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-300 text-xs font-mono uppercase tracking-wider">
@@ -1615,25 +851,27 @@ export default function LandingPage() {
           {/* The Old Way */}
           <div className="bg-red-950/10 border border-red-500/20 rounded-3xl p-8 space-y-6">
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold text-red-300 flex items-center gap-2"><XCircle size={20} className="text-red-400" /> The Fragmented Old Way</h3>
+              <h3 className="text-xl font-semibold text-red-300 flex items-center gap-2">
+                <XCircle size={20} className="text-red-400" /> The Fragmented Old Way
+              </h3>
               <span className="text-xs font-mono text-red-400 bg-red-500/20 px-2.5 py-1 rounded-full">18-22 hrs/week</span>
             </div>
             <ul className="space-y-4 text-sm text-gray-300">
               <li className="flex items-start gap-3">
                 <XCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
-                <span>Logging into 5 different social apps every morning with severe context switching.</span>
+                <span>Logging into 5 separate social and outreach platforms every morning.</span>
               </li>
               <li className="flex items-start gap-3">
                 <XCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
-                <span>Paying $500+/mo across separate schedulers, image editors, video tools, and email lead databases.</span>
+                <span>Paying $500+/mo across separate schedulers, image editors, video tools, and lead databases.</span>
               </li>
               <li className="flex items-start gap-3">
                 <XCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
-                <span>Zero presence on AI search engines (Perplexity, ChatGPT) because social citations are stale.</span>
+                <span>Invisible on modern AI search (Perplexity, ChatGPT) because social citations are stale.</span>
               </li>
               <li className="flex items-start gap-3">
                 <XCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
-                <span>Burnout: Solo founders abandoning marketing after 2 weeks to focus on code.</span>
+                <span>Founder marketing burnout: marketing stops whenever coding sprints begin.</span>
               </li>
             </ul>
           </div>
@@ -1644,7 +882,9 @@ export default function LandingPage() {
               The Modern Standard
             </div>
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold text-emerald-300 flex items-center gap-2"><CheckCircle2 size={20} className="text-emerald-400" /> The Markopilot System</h3>
+              <h3 className="text-xl font-semibold text-emerald-300 flex items-center gap-2">
+                <CheckCircle2 size={20} className="text-emerald-400" /> The Markopilot System
+              </h3>
               <span className="text-xs font-mono text-emerald-300 bg-emerald-500/20 px-2.5 py-1 rounded-full">15 mins/week</span>
             </div>
             <ul className="space-y-4 text-sm text-gray-200">
@@ -1654,11 +894,11 @@ export default function LandingPage() {
               </li>
               <li className="flex items-start gap-3">
                 <CheckCircle2 size={16} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <span>Flux 1.1 Pro images + Creatomate TikTok video rendering included natively.</span>
+                <span>Flux 1.1 Pro images &amp; Creatomate TikTok video rendering included natively.</span>
               </li>
               <li className="flex items-start gap-3">
                 <CheckCircle2 size={16} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <span>Generative Engine Optimization (GEO) turns social footprint into top AI search citations.</span>
+                <span>Generative Engine Optimization (GEO) turns social presence into top AI search citations.</span>
               </li>
               <li className="flex items-start gap-3">
                 <CheckCircle2 size={16} className="text-emerald-400 flex-shrink-0 mt-0.5" />
@@ -1669,7 +909,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* SECTION: How It Works Pipeline */}
+      {/* ========================================================================= */}
+      {/* SECTION: 3-Step Setup (How It Works)                                      */}
+      {/* ========================================================================= */}
       <section id="how-it-works" className="py-24 max-w-7xl mx-auto px-6 relative z-10 border-t border-white/5 scroll-mt-20">
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-20">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-mono uppercase tracking-wider">
@@ -1679,7 +921,7 @@ export default function LandingPage() {
             From zero to autonomous growth in 2 minutes.
           </h2>
           <p className="text-gray-400 text-base md:text-lg">
-            No complex setup scripts or onboarding marathons.
+            No complex setup scripts or lengthy onboarding.
           </p>
         </div>
 
@@ -1690,7 +932,7 @@ export default function LandingPage() {
             </div>
             <h3 className="text-xl font-semibold text-white">Connect Your Brand</h3>
             <p className="text-gray-400 text-sm leading-relaxed">
-              Enter your website URL, product descriptions, or target audience. Markopilot instantly scans your value propositions and builds a persistent brand knowledge base.
+              Enter your website URL or drop your product description. Markopilot scans your value propositions and builds a persistent brand knowledge base.
             </p>
           </div>
 
@@ -1700,7 +942,7 @@ export default function LandingPage() {
             </div>
             <h3 className="text-xl font-semibold text-white">Engines Activate</h3>
             <p className="text-gray-400 text-sm leading-relaxed">
-              Our multi-modal engines formulate X threads, render Flux Instagram graphics, assemble Creatomate TikTok videos, and discover 90+ scored ICP leads automatically.
+              Our multi-modal engines formulate X threads, render Flux Instagram graphics, assemble Creatomate TikTok videos, and discover scored ICP leads automatically.
             </p>
           </div>
 
@@ -1716,7 +958,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Pricing Section */}
+      {/* ========================================================================= */}
+      {/* SECTION: Pricing                                                          */}
+      {/* ========================================================================= */}
       <section id="pricing" className="py-28 relative z-10 border-t border-white/5 bg-gradient-to-b from-white/[0.02] to-transparent scroll-mt-20">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-20 space-y-4">
@@ -1805,7 +1049,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* SECTION: Compliance, Privacy & Data Sourcing */}
+      {/* ========================================================================= */}
+      {/* SECTION: Compliance, Privacy & Data Sourcing                              */}
+      {/* ========================================================================= */}
       <section id="compliance" className="py-24 max-w-7xl mx-auto px-6 relative z-10 border-t border-white/5">
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono uppercase tracking-wider">
@@ -1833,15 +1079,15 @@ export default function LandingPage() {
             <div className="space-y-4">
               <div className="flex gap-3">
                 <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-gray-300 leading-relaxed">Markopilot searches public professional pages, company websites, public social profiles, and indexable business footprints. It is built for B2B contacts, not consumer lists.</p>
+                <p className="text-sm text-gray-300 leading-relaxed">Markopilot searches public professional pages, company websites, public social profiles, and indexable business footprints. Built for B2B contacts, not consumer lists.</p>
               </div>
               <div className="flex gap-3">
                 <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-gray-300 leading-relaxed">Every prospect is scored against your ICP before outreach. Low-fit contacts should not enter the queue just because an email can be guessed.</p>
+                <p className="text-sm text-gray-300 leading-relaxed">Every prospect is scored against your ICP before outreach. Low-fit contacts are filtered out automatically.</p>
               </div>
               <div className="flex gap-3">
                 <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-gray-300 leading-relaxed">Emails are verified, deduplicated, and checked against suppression data before a message is drafted or sent.</p>
+                <p className="text-sm text-gray-300 leading-relaxed">Emails are verified, deduplicated, and checked against suppression lists before messages are drafted.</p>
               </div>
             </div>
           </div>
@@ -1859,15 +1105,15 @@ export default function LandingPage() {
             <div className="space-y-4">
               <div className="flex gap-3">
                 <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-gray-300 leading-relaxed">Review Mode lets you approve, edit, or reject every outbound email before it sends. Autopilot is available only when you are comfortable with the workflow.</p>
+                <p className="text-sm text-gray-300 leading-relaxed">Review Mode lets you approve, edit, or reject every outbound email before it sends. Autopilot is available when you are ready.</p>
               </div>
               <div className="flex gap-3">
                 <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-gray-300 leading-relaxed">Outbound messages include truthful subject lines, your brand identity, business address/footer details, and unsubscribe handling.</p>
+                <p className="text-sm text-gray-300 leading-relaxed">Outbound messages include truthful subject lines, brand identity, address details, and 1-click unsubscribe handling.</p>
               </div>
               <div className="flex gap-3">
                 <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-gray-300 leading-relaxed">Smart throttles, daily limits, and follow-up rules protect sender reputation and prevent aggressive blasting.</p>
+                <p className="text-sm text-gray-300 leading-relaxed">Smart throttles and daily caps protect sender reputation and prevent aggressive sending spikes.</p>
               </div>
             </div>
           </div>
@@ -1880,7 +1126,7 @@ export default function LandingPage() {
             </div>
             <h3 className="text-lg font-medium text-white">Public Sources Only</h3>
             <p className="text-xs text-gray-400 leading-relaxed">
-              No purchased mystery lists, no consumer databases, and no hidden broker dumps. The system works from public B2B context and company-level signals.
+              No purchased mystery lists, consumer databases, or hidden broker dumps. The system works strictly from public B2B signals.
             </p>
           </div>
 
@@ -1890,7 +1136,7 @@ export default function LandingPage() {
             </div>
             <h3 className="text-lg font-medium text-white">Instant Suppression</h3>
             <p className="text-xs text-gray-400 leading-relaxed">
-              One unsubscribe suppresses that contact for the brand, cancels pending follow-ups, and blocks future outreach from being queued.
+              One unsubscribe suppresses that contact globally, cancels pending follow-ups, and blocks future outreach.
             </p>
           </div>
 
@@ -1900,21 +1146,19 @@ export default function LandingPage() {
             </div>
             <h3 className="text-lg font-medium text-white">Your Inbox, Your Identity</h3>
             <p className="text-xs text-gray-400 leading-relaxed">
-              Messages send through connected Gmail or SMTP accounts with your sender details, so outreach stays accountable instead of anonymous.
+              Messages dispatch through connected Gmail or custom SMTP accounts with verified sender details for complete transparency.
             </p>
           </div>
         </div>
-
-        <p className="max-w-4xl mx-auto mt-8 text-center text-xs text-gray-500 leading-relaxed">
-          Compliance requirements vary by jurisdiction. Markopilot provides guardrails for responsible B2B outreach, but users remain responsible for reviewing campaigns and following the laws that apply to their business and recipients.
-        </p>
       </section>
 
-      {/* SECTION: FAQ Accordion */}
+      {/* ========================================================================= */}
+      {/* SECTION: FAQ Accordion                                                    */}
+      {/* ========================================================================= */}
       <section id="faq" className="py-24 max-w-4xl mx-auto px-6 relative z-10 border-t border-white/5 scroll-mt-20">
         <div className="text-center space-y-4 mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-gray-300 text-xs font-mono uppercase tracking-wider">
-            <HelpCircle size={14} className="text-purple-400" /> Knowledge & FAQ
+            <Sparkles size={14} className="text-purple-400" /> Knowledge &amp; FAQ
           </div>
           <h2 className="font-serif text-4xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">
             Frequently Asked Questions
@@ -1997,11 +1241,11 @@ export default function LandingPage() {
             <div className="md:col-span-4 md:col-start-7 space-y-3">
               <div className="text-xs uppercase tracking-wider text-gray-300 font-semibold font-mono">Product &amp; Solutions</div>
               <ul className="space-y-2.5 text-sm text-gray-400">
-                <li><Link href="#solutions" className="hover:text-white transition-colors">Founder &amp; Dev Solutions</Link></li>
-                <li><Link href="#ai-discovery" className="hover:text-white transition-colors">AI Search Optimization (GEO)</Link></li>
-                <li><Link href="#channels" className="hover:text-white transition-colors">Omni-Channel Engine</Link></li>
-                <li><Link href="#calendar" className="hover:text-white transition-colors">Autonomous Calendar</Link></li>
+                <li><Link href="#features" className="hover:text-white transition-colors">Core Capabilities</Link></li>
+                <li><Link href="#how-it-works" className="hover:text-white transition-colors">How It Works</Link></li>
+                <li><Link href="#compliance" className="hover:text-white transition-colors">Compliance &amp; Trust</Link></li>
                 <li><Link href="#pricing" className="hover:text-white transition-colors">Plans &amp; Pricing</Link></li>
+                <li><Link href="#faq" className="hover:text-white transition-colors">FAQ</Link></li>
               </ul>
             </div>
 
