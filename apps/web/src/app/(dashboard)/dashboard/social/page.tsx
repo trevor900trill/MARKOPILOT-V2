@@ -256,6 +256,7 @@ export default function SocialPage() {
 
         <div className="flex items-center gap-3">
           <button
+            data-tour="social-create-btn"
             onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-2 bg-[var(--accent-primary)] hover:bg-opacity-90 text-white px-4 py-2.5 rounded-xl transition font-medium text-sm shadow-lg shadow-[var(--accent-glow)]/20"
           >
@@ -277,7 +278,7 @@ export default function SocialPage() {
           <div className="h-9 w-40 bg-white/10 rounded-xl" />
         </div>
       ) : (
-        <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xl">
+        <div data-tour="social-workflow" className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xl">
           <div className="flex items-center gap-3.5">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${isReviewQueueEnabled ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`}>
               <Sliders size={20} />
@@ -309,7 +310,7 @@ export default function SocialPage() {
       )}
 
       {/* Tabs Navigation */}
-      <div className="flex items-center gap-2 border-b border-[var(--border)] pb-0 overflow-x-auto">
+      <div data-tour="social-tabs" className="flex items-center gap-2 border-b border-[var(--border)] pb-0 overflow-x-auto">
         <button
           onClick={() => setActiveTab("accounts")}
           className={`pb-3 px-4 text-sm font-medium transition border-b-2 ${activeTab === 'accounts' ? 'border-[var(--accent-primary)] text-white' : 'border-transparent text-[var(--text-secondary)] hover:text-white'}`}

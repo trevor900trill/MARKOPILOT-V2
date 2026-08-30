@@ -84,7 +84,7 @@ export default function AccountPage() {
          )}
 
          {/* PROFILE SECTION */}
-         <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-8 slide-in-from-bottom-4 duration-300 animate-in">
+         <div data-tour="account-profile" className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-8 slide-in-from-bottom-4 duration-300 animate-in">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
                <div className="flex items-center gap-5">
                   {session?.user?.image ? (
@@ -122,7 +122,7 @@ export default function AccountPage() {
          {/* SUBSCRIPTION & BILLING */}
          <div className="grid md:grid-cols-2 gap-6 slide-in-from-bottom-6 duration-500 animate-in">
             {/* Current Plan */}
-            <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6 flex flex-col justify-between">
+            <div data-tour="account-plan" className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6 flex flex-col justify-between">
                <div>
                   <div className="flex justify-between items-center mb-6">
                      <div className="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-xl flex items-center justify-center shadow-lg border border-emerald-500/20">
@@ -165,7 +165,7 @@ export default function AccountPage() {
             </div>
 
             {/* Quota Usage */}
-            <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6 flex flex-col justify-between">
+            <div data-tour="account-quota" className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6 flex flex-col justify-between">
                <div>
                   <h3 className="text-base font-medium text-white mb-6">Current Cycle Quota</h3>
 
@@ -192,7 +192,7 @@ export default function AccountPage() {
                   </div>
                </div>
 
-               <div className="p-4 rounded-xl bg-white/5 border border-white/5 text-[11px] text-gray-400">
+               <div data-tour="account-mpesa" className="p-4 rounded-xl bg-white/5 border border-white/5 text-[11px] text-gray-400">
                   <span>Payment Method: </span>
                   <span className="font-mono text-emerald-400 font-semibold">M-PESA Express</span>
                   <span className="block text-[10px] text-gray-500 mt-1">Instant activation via Safaricom STK Push</span>

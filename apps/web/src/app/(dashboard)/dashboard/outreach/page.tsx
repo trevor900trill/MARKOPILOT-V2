@@ -259,6 +259,7 @@ export default function OutreachPage() {
            </h1>
            {activeTab === "overview" && isGmailConnected && (
              <button 
+                data-tour="outreach-toggle"
                 onClick={async () => {
                   const newState = !isAutomationEnabled;
                   if (newState && !isSubscriptionActive) {
@@ -291,7 +292,7 @@ export default function OutreachPage() {
        </div>
 
        {/* Tabs */}
-       <div className="flex items-center gap-2 border-b border-[var(--border)] pb-0">
+       <div data-tour="outreach-tabs" className="flex items-center gap-2 border-b border-[var(--border)] pb-0">
           <button onClick={() => setActiveTab("overview")} className={`pb-3 px-4 text-sm font-medium transition border-b-2 flex items-center gap-2 ${activeTab === 'overview' ? 'border-[var(--accent-primary)] text-white' : 'border-transparent text-[var(--text-secondary)] hover:text-white'}`}>
             <Mail size={14} /> Connection
           </button>
@@ -310,7 +311,7 @@ export default function OutreachPage() {
        {/* OVERVIEW */}
        {activeTab === "overview" && (
          <div className="grid md:grid-cols-2 gap-6 animate-in fade-in zoom-in-95 duration-200">
-           <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6 flex flex-col justify-between">
+           <div data-tour="outreach-connection" className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6 flex flex-col justify-between">
              <div className="flex justify-between items-start mb-6">
                <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center shadow-lg">
                  <Mail size={28} className="text-red-500" />
@@ -344,7 +345,7 @@ export default function OutreachPage() {
              </div>
            </div>
 
-           <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6">
+           <div data-tour="outreach-status" className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6">
              <h3 className="flex flex-col gap-1 text-white font-serif text-xl border-b border-[var(--border)] pb-4 mb-4">
                  Engine Status
                  <span className="text-xs font-sans text-[var(--text-muted)] uppercase tracking-wider">Metrics & Limitations</span>

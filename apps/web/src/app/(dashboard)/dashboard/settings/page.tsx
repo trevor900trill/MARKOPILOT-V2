@@ -203,7 +203,7 @@ export default function BrandSettingsPage() {
       </div>
 
       {/* Workflow & Approval Settings Banner */}
-      <section className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6">
+      <section data-tour="settings-approval" className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6">
         <h2 className="text-xl font-medium text-white mb-2">Automation & Review Workflow</h2>
         <p className="text-xs text-[var(--text-secondary)] mb-6">Configure whether autonomous workers publish directly or wait for manual review in queues.</p>
         
@@ -247,7 +247,7 @@ export default function BrandSettingsPage() {
       </section>
 
       <div className="grid md:grid-cols-2 gap-8">
-        <section className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6 space-y-4">
+        <section data-tour="settings-general" className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6 space-y-4">
           <h2 className="text-xl font-medium text-white mb-4">General Details</h2>
           <div>
             <label className="block text-sm text-[var(--text-secondary)] mb-1">Brand Name</label>
@@ -269,7 +269,7 @@ export default function BrandSettingsPage() {
         </section>
 
         <div className="space-y-8">
-          <section className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6 space-y-4">
+          <section data-tour="settings-audience" className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6 space-y-4">
             <h2 className="text-xl font-medium text-white mb-4">Target Audience Definitions</h2>
             <div>
               <label className="block text-sm text-[var(--text-secondary)] mb-1">Audience Description</label>
@@ -281,7 +281,7 @@ export default function BrandSettingsPage() {
             <TagInput label="Geographies (Press Enter)" tags={formData.targetGeographies} setTags={(t) => updateForm("targetGeographies", t)} />
           </section>
 
-          <section className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6 space-y-6">
+          <section data-tour="settings-voice" className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6 space-y-6">
             <h2 className="text-xl font-medium text-white mb-4">Brand Voice & Persona</h2>
             {[
               { label: "Formality", opts: ["casual", "professional", "executive"], val: formData.brandVoiceFormality, key: "brandVoiceFormality" },

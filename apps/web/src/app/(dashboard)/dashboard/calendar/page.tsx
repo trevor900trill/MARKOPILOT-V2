@@ -297,7 +297,7 @@ export default function CalendarPage() {
       </div>
 
       {/* 3 LIVE COUNTDOWN TELEMETRY CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div data-tour="calendar-telemetry" className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {/* 1. LEAD DISCOVERY */}
         <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-3xl p-6 relative overflow-hidden group hover:border-[var(--accent-primary)]/50 transition-all duration-300 shadow-xl">
           <div className="flex items-center justify-between mb-4">
@@ -414,7 +414,7 @@ export default function CalendarPage() {
       </div>
 
       {/* CONTROLS BAR: Filters, Month Nav, View Mode */}
-      <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div data-tour="calendar-controls" className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
         {/* Month Navigation */}
         <div className="flex items-center gap-3">
           <h2 className="text-xl font-serif text-white min-w-44">
@@ -455,7 +455,7 @@ export default function CalendarPage() {
           </button>
           <button
             onClick={() => setFilterType("outreach")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition flex items-center gap-1.5 ${filterType === "outreach" ? "bg-purple-600 text-white" : "bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-white border border-[var(--border)]"}`}
+            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition flex items-center gap-1.5 ${filterType === "outreach" ? "bg-purple-500 text-white" : "bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-white border border-[var(--border)]"}`}
           >
             <Mail size={12} /> Outreach
           </button>
@@ -480,7 +480,7 @@ export default function CalendarPage() {
 
       {/* MONTH VIEW GRID */}
       {viewMode === "month" && (
-        <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-3xl overflow-hidden shadow-2xl">
+        <div data-tour="calendar-grid" className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-3xl overflow-hidden shadow-2xl">
           {/* Day Headers */}
           <div className="grid grid-cols-7 border-b border-[var(--border)] bg-white/[0.02]">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (

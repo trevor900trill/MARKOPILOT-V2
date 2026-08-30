@@ -24,6 +24,7 @@ export default function BrandsPage() {
           </p>
         </div>
         <button
+          data-tour="brands-add-btn"
           onClick={() => { window.location.href = "/onboarding"; }}
           className="flex items-center gap-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/90 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-[var(--accent-glow)]/20 hover:scale-105 active:scale-95"
         >
@@ -62,7 +63,7 @@ export default function BrandsPage() {
           ))}
         </div>
       ) : brands && brands.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div data-tour="brands-card-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {brands.map((brand) => (
             <BrandCard
               key={brand.id}

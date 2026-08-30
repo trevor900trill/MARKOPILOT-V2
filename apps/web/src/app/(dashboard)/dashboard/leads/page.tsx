@@ -317,6 +317,7 @@ export default function LeadsPage() {
             <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
           </button>
           <button
+            data-tour="leads-run-btn"
             onClick={handleRunDiscovery}
             disabled={isDiscovering || !leadsAutomationEnabled}
             className="flex items-center gap-2 px-4 py-2 bg-[var(--accent-primary)] text-white hover:bg-opacity-90 rounded-xl transition font-medium text-xs disabled:opacity-50"
@@ -329,7 +330,7 @@ export default function LeadsPage() {
       </div>
 
       {/* Analytics Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div data-tour="leads-analytics" className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-[var(--bg-elevated)] border border-[var(--border)] p-5 rounded-2xl">
           <h3 className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-medium mb-1">Total Leads Mined</h3>
           <p className="text-2xl font-serif text-white">{totalLeads}</p>
@@ -351,7 +352,9 @@ export default function LeadsPage() {
         </div>
       </div>
 
-      <DiscoveryInsights performance={performance} isLoading={isPerformanceLoading} />
+      <div data-tour="leads-insights">
+        <DiscoveryInsights performance={performance} isLoading={isPerformanceLoading} />
+      </div>
 
       {/* Engine Paused Banner (lead + outreach switches off) */}
       {!leadsAutomationEnabled && !outreachAutomationEnabled && (
@@ -375,7 +378,7 @@ export default function LeadsPage() {
       {/* Main Table Area */}
       <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl overflow-hidden flex flex-col">
         {/* Toolbar & Filters */}
-        <div className="p-4 border-b border-[var(--border)] flex flex-col md:flex-row gap-4 justify-between items-center bg-[#111114]">
+        <div data-tour="leads-filters" className="p-4 border-b border-[var(--border)] flex flex-col md:flex-row gap-4 justify-between items-center bg-[#111114]">
           {/* Search bar */}
           <div className="relative w-full md:w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={16} />
@@ -434,7 +437,7 @@ export default function LeadsPage() {
         </div>
 
         {/* Table structure */}
-        <div className="overflow-x-auto">
+        <div data-tour="leads-table" className="overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-[#111114] border-b border-[var(--border)] text-[var(--text-muted)]">
               <tr>

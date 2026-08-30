@@ -83,7 +83,7 @@ export default function ActivityPage() {
               <Activity className="text-[var(--accent-primary)]" size={32} />
               Activity Log
            </h1>
-           <div className="flex bg-[var(--bg-elevated)] border border-[var(--border)] rounded-xl p-1 gap-1">
+           <div data-tour="activity-filters" className="flex bg-[var(--bg-elevated)] border border-[var(--border)] rounded-xl p-1 gap-1">
               <button 
                  onClick={() => { setFilterType("all"); setPage(1); }} 
                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${filterType === 'all' ? 'bg-[var(--bg-surface)] text-white' : 'text-[var(--text-muted)] hover:text-white'}`}
@@ -99,7 +99,7 @@ export default function ActivityPage() {
            </div>
        </div>
 
-       <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl overflow-hidden shadow-xl animate-in slide-in-from-bottom-4 duration-500">
+       <div data-tour="activity-feed" className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl overflow-hidden shadow-xl animate-in slide-in-from-bottom-4 duration-500">
            <div className="divide-y divide-[var(--border)]">
               {isLoading ? (
                 <div className="p-16 text-center text-[var(--text-muted)] animate-pulse">Loading activity logs...</div>
