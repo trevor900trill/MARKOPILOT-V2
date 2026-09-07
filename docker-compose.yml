@@ -1,0 +1,95 @@
+# =============================================
+# MARKOPILOT V2 — Docker Compose
+# Spins up all services for local development
+# =============================================
+#
+# Usage:
+#   docker compose up --build          # Build & start everything
+#   docker compose up --build api      # Just the API
+#   docker compose up -d               # Detached mode
+#   docker compose down                # Stop & remove containers
+#   docker compose logs -f api         # Tail API logs
+
+services:
+  # ── .NET API ───────────────────────────────────
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Markopilot.Api/Dockerfile
+    container_name: markopilot-api
+    ports:
+      - "5000:8080"
+    env_file:
+      - ./apps/api/.env           # Create from appsettings.json values
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - markopilot-net
+    restart: unless-stopped
+
+  # ── .NET Background Workers ────────────────────
+  workers:
+    build:
+      context: ./apps/api
+      dockerfile: Markopilot.Workers/Dockerfile
+    container_name: markopilot-workers
+    env_file:
+      - ./apps/api/.env           # Same env as the API
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - markopilot-net
+    restart: unless-stopped
+
+  # ── Next.js Web App ────────────────────────────
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+      args:
+        # Build-time args for NEXT_PUBLIC_* env vars
+        NEXT_PUBLIC_API_URL: http://localhost:5000
+        NEXT_PUBLIC_BASE_URL: http://localhost:3000
+    container_name: markopilot-web
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./apps/web/.env.local
+    environment:
+      - NEXT_PUBLIC_API_URL=http://api:8080
+      - NEXT_PUBLIC_BASE_URL=http://localhost:3000
+    depends_on:
+      - api
+    networks:
+      - markopilot-net
+    restart: unless-stopped
+
+  # ── Redis (local cache / queues) ───────────────
+  redis:
+    image: redis:7-alpine
+    container_name: markopilot-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - markopilot-net
+    restart: unless-stopped
+
+networks:
+  markopilot-net:
+    driver: bridge
+
+volumes:
+  redis-data:
