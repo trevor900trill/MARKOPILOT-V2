@@ -48,6 +48,13 @@ public interface IUserRepository
     Task<MpesaTransaction?> GetMpesaTransactionAsync(string checkoutRequestId);
     Task AddToCountryWaitlistAsync(CountryWaitlist entry);
 
+    // ── Manual M-PESA Payments & Admin ───────────
+    Task RecordManualPaymentAsync(ManualPaymentSubmission submission);
+    Task<List<ManualPaymentSubmission>> GetManualPaymentsAsync(string? status = null);
+    Task<ManualPaymentSubmission?> GetManualPaymentByIdAsync(Guid id);
+    Task UpdateManualPaymentStatusAsync(Guid id, string status, string? reviewedBy, string? adminNotes);
+    Task<List<AdminUserSummary>> GetOnboardedUsersForAdminAsync();
+
     // ── Subscription Monitoring ─────────────────────
     Task<List<User>> GetUsersWithTrialExpiringAsync(DateTimeOffset expiryDate);
     Task<List<User>> GetUsersWithExpiredTrialsAsync(DateTimeOffset now);

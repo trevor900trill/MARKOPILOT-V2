@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutDashboard, Send, Users, Activity, Settings, ChevronDown, ChevronsLeft, ChevronsRight, Mail, Briefcase, Calendar, HelpCircle, Rocket, Radar } from "lucide-react";
+import { LayoutDashboard, Send, Users, Activity, Settings, ChevronDown, ChevronsLeft, ChevronsRight, Mail, Briefcase, Calendar, HelpCircle, Rocket, Radar, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -13,6 +13,8 @@ export function AppSidebar() {
   const [toursOpen, setToursOpen] = useState(false);
   const pathname = usePathname();
   const { brands, activeBrand, setActiveBrandId, user, isLoading } = useBrand();
+
+  const isSuperAdmin = user?.email?.toLowerCase() === "trevormugolawrence@gmail.com";
 
   const planName = user?.planName || "Starter";
   const postsUsed = user?.quotaPostsUsed || 0;
@@ -118,6 +120,31 @@ export function AppSidebar() {
             </Link>
           );
         })}
+
+        {/* Super Admin Section (Gated to trevormugolawrence@gmail.com) */}
+        {isSuperAdmin && (
+          <div className="pt-2 mt-2 border-t border-white/5 space-y-1">
+            {!collapsed && (
+              <div className="px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-amber-400/70">
+                Super Admin
+              </div>
+            )}
+            <Link
+              href="/dashboard/admin"
+              title={collapsed ? "Admin Hub" : undefined}
+              className={`flex items-center rounded-xl text-sm font-medium transition-all ${
+                collapsed ? "w-11 h-11 mx-auto justify-center p-0" : "gap-3 px-3 py-2.5"
+              } ${
+                isActive("/dashboard/admin")
+                  ? "bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-lg shadow-amber-500/10"
+                  : "text-amber-400/80 hover:text-amber-200 hover:bg-amber-500/10"
+              }`}
+            >
+              <ShieldCheck size={18} className="flex-shrink-0 text-amber-400" />
+              {!collapsed && <span>Admin & Engines</span>}
+            </Link>
+          </div>
+        )}
       </nav>
 
       {/* Footer Area with Settings and Quota */}

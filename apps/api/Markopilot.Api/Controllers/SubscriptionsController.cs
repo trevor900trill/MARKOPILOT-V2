@@ -83,7 +83,7 @@ public class SubscriptionsController : ControllerBase
             {
                 tillNumber = _configuration["Mpesa:TillNumber"] ?? "1635990",
                 storeNumber = _configuration["Mpesa:StoreNumber"] ?? "1162771",
-                msisdn = _configuration["Mpesa:Msisdn"] ?? "0117849456"
+                accountName = "Trevor Lawrence Mugo"
             }
         });
     }
@@ -259,6 +259,68 @@ public class SubscriptionsController : ControllerBase
             _logger.LogError(ex, "Error dispatching payment notification/activity log for user {UserId}", userId);
         }
     }
+
+    [HttpPost("manual-payment")]
+    public async Task<IActionResult> SubmitManualPayment([FromBody] ManualPaymentRequest request)
+    {
+        var userId = HttpContext.GetUserId();
+        if (userId == Guid.Empty) return Unauthorized();
+
+        var user = await _userRepo.GetUserByIdAsync(userId);
+        if (user == null) return NotFound();
+
+        if (string.IsNullOrWhiteSpace(request.PhoneNumber))
+        {
+            return BadRequest(new { error = "Please provide the phone number used to make payment." });
+        }
+
+        if (string.IsNullOrWhiteSpace(request.MpesaMessage))
+        {
+            return BadRequest(new { error = "Please paste your M-PESA confirmation SMS or transaction receipt." });
+        }
+
+        var plan = PlanCatalog.GetByName(request.PlanId);
+
+        // Attempt to extract receipt/code if not explicitly provided (e.g., QK87YTREWQ)
+        var transactionCode = request.TransactionCode;
+        if (string.IsNullOrWhiteSpace(transactionCode))
+        {
+            var match = System.Text.RegularExpressions.Regex.Match(request.MpesaMessage, @"\b([A-Z0-9]{10})\b");
+            if (match.Success)
+            {
+                transactionCode = match.Groups[1].Value;
+            }
+        }
+
+        var submission = new ManualPaymentSubmission
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            UserEmail = user.Email,
+            UserDisplayName = user.DisplayName,
+            PlanName = plan.Name,
+            Amount = plan.PriceKes,
+            PhoneNumber = request.PhoneNumber.Trim(),
+            TransactionCode = transactionCode?.Trim(),
+            MpesaMessage = request.MpesaMessage.Trim(),
+            Status = "pending",
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        await _userRepo.RecordManualPaymentAsync(submission);
+
+        _logger.LogInformation("Recorded manual M-PESA payment submission {SubmissionId} for user {UserId}, plan {Plan}, amount {Amount}",
+            submission.Id, userId, plan.Name, plan.PriceKes);
+
+        return Ok(new
+        {
+            success = true,
+            submissionId = submission.Id,
+            message = "Payment details submitted! A member of our team will review and activate your subscription shortly."
+        });
+    }
 }
 
 public record MpesaStkPushRequest(string PlanId, string PhoneNumber);
+public record ManualPaymentRequest(string PlanId, string PhoneNumber, string MpesaMessage, string? TransactionCode = null);
+

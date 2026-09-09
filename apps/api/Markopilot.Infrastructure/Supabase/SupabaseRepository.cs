@@ -2435,4 +2435,212 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
             UpdatedAt = reader.GetDateTime(15)
         };
     }
+
+    // ── MANUAL PAYMENTS & ADMIN ───────────────────────
+
+    private async Task EnsureManualPaymentsTableExistsAsync()
+    {
+        try
+        {
+            await using var conn = CreateConnection();
+            await conn.OpenAsync();
+            await using var cmd = new NpgsqlCommand(@"
+                CREATE TABLE IF NOT EXISTS manual_payment_submissions (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+                    plan_name VARCHAR(50) NOT NULL,
+                    amount NUMERIC(12, 2) NOT NULL,
+                    phone_number VARCHAR(30) NOT NULL,
+                    transaction_code VARCHAR(100),
+                    mpesa_message TEXT NOT NULL,
+                    status VARCHAR(50) DEFAULT 'pending',
+                    admin_notes TEXT,
+                    created_at TIMESTAMPTZ DEFAULT NOW(),
+                    reviewed_at TIMESTAMPTZ,
+                    reviewed_by VARCHAR(255)
+                );
+                CREATE INDEX IF NOT EXISTS idx_manual_payments_user_id ON manual_payment_submissions(user_id);
+                CREATE INDEX IF NOT EXISTS idx_manual_payments_status ON manual_payment_submissions(status);
+                CREATE INDEX IF NOT EXISTS idx_manual_payments_created_at ON manual_payment_submissions(created_at DESC);", conn);
+            await cmd.ExecuteNonQueryAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to ensure manual_payment_submissions table exists");
+        }
+    }
+
+    public async Task RecordManualPaymentAsync(ManualPaymentSubmission submission)
+    {
+        await EnsureManualPaymentsTableExistsAsync();
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            INSERT INTO manual_payment_submissions (id, user_id, plan_name, amount, phone_number, transaction_code, mpesa_message, status, created_at)
+            VALUES (@id, @userId, @planName, @amount, @phone, @txCode, @msg, @status, @createdAt)", conn);
+
+        cmd.Parameters.AddWithValue("id", submission.Id == Guid.Empty ? Guid.NewGuid() : submission.Id);
+        cmd.Parameters.AddWithValue("userId", submission.UserId);
+        cmd.Parameters.AddWithValue("planName", submission.PlanName);
+        cmd.Parameters.AddWithValue("amount", submission.Amount);
+        cmd.Parameters.AddWithValue("phone", submission.PhoneNumber);
+        cmd.Parameters.AddWithValue("txCode", (object?)submission.TransactionCode ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("msg", submission.MpesaMessage);
+        cmd.Parameters.AddWithValue("status", submission.Status);
+        cmd.Parameters.AddWithValue("createdAt", submission.CreatedAt);
+
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task<List<ManualPaymentSubmission>> GetManualPaymentsAsync(string? status = null)
+    {
+        await EnsureManualPaymentsTableExistsAsync();
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        var sql = @"
+            SELECT m.*, u.email as user_email, u.display_name as user_display_name
+            FROM manual_payment_submissions m
+            LEFT JOIN users u ON m.user_id = u.id
+            WHERE (@status IS NULL OR m.status = @status)
+            ORDER BY m.created_at DESC";
+
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("status", (object?)status ?? DBNull.Value);
+
+        var list = new List<ManualPaymentSubmission>();
+        await using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            list.Add(new ManualPaymentSubmission
+            {
+                Id = reader.GetGuid(reader.GetOrdinal("id")),
+                UserId = reader.GetGuid(reader.GetOrdinal("user_id")),
+                UserEmail = reader.IsDBNull(reader.GetOrdinal("user_email")) ? "" : reader.GetString(reader.GetOrdinal("user_email")),
+                UserDisplayName = reader.IsDBNull(reader.GetOrdinal("user_display_name")) ? null : reader.GetString(reader.GetOrdinal("user_display_name")),
+                PlanName = reader.GetString(reader.GetOrdinal("plan_name")),
+                Amount = reader.GetDecimal(reader.GetOrdinal("amount")),
+                PhoneNumber = reader.GetString(reader.GetOrdinal("phone_number")),
+                TransactionCode = reader.IsDBNull(reader.GetOrdinal("transaction_code")) ? null : reader.GetString(reader.GetOrdinal("transaction_code")),
+                MpesaMessage = reader.GetString(reader.GetOrdinal("mpesa_message")),
+                Status = reader.GetString(reader.GetOrdinal("status")),
+                AdminNotes = reader.IsDBNull(reader.GetOrdinal("admin_notes")) ? null : reader.GetString(reader.GetOrdinal("admin_notes")),
+                CreatedAt = reader.GetFieldValue<DateTimeOffset>(reader.GetOrdinal("created_at")),
+                ReviewedAt = reader.IsDBNull(reader.GetOrdinal("reviewed_at")) ? null : reader.GetFieldValue<DateTimeOffset>(reader.GetOrdinal("reviewed_at")),
+                ReviewedBy = reader.IsDBNull(reader.GetOrdinal("reviewed_by")) ? null : reader.GetString(reader.GetOrdinal("reviewed_by"))
+            });
+        }
+        return list;
+    }
+
+    public async Task<ManualPaymentSubmission?> GetManualPaymentByIdAsync(Guid id)
+    {
+        await EnsureManualPaymentsTableExistsAsync();
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            SELECT m.*, u.email as user_email, u.display_name as user_display_name
+            FROM manual_payment_submissions m
+            LEFT JOIN users u ON m.user_id = u.id
+            WHERE m.id = @id
+            LIMIT 1", conn);
+        cmd.Parameters.AddWithValue("id", id);
+
+        await using var reader = await cmd.ExecuteReaderAsync();
+        if (!await reader.ReadAsync()) return null;
+
+        return new ManualPaymentSubmission
+        {
+            Id = reader.GetGuid(reader.GetOrdinal("id")),
+            UserId = reader.GetGuid(reader.GetOrdinal("user_id")),
+            UserEmail = reader.IsDBNull(reader.GetOrdinal("user_email")) ? "" : reader.GetString(reader.GetOrdinal("user_email")),
+            UserDisplayName = reader.IsDBNull(reader.GetOrdinal("user_display_name")) ? null : reader.GetString(reader.GetOrdinal("user_display_name")),
+            PlanName = reader.GetString(reader.GetOrdinal("plan_name")),
+            Amount = reader.GetDecimal(reader.GetOrdinal("amount")),
+            PhoneNumber = reader.GetString(reader.GetOrdinal("phone_number")),
+            TransactionCode = reader.IsDBNull(reader.GetOrdinal("transaction_code")) ? null : reader.GetString(reader.GetOrdinal("transaction_code")),
+            MpesaMessage = reader.GetString(reader.GetOrdinal("mpesa_message")),
+            Status = reader.GetString(reader.GetOrdinal("status")),
+            AdminNotes = reader.IsDBNull(reader.GetOrdinal("admin_notes")) ? null : reader.GetString(reader.GetOrdinal("admin_notes")),
+            CreatedAt = reader.GetFieldValue<DateTimeOffset>(reader.GetOrdinal("created_at")),
+            ReviewedAt = reader.IsDBNull(reader.GetOrdinal("reviewed_at")) ? null : reader.GetFieldValue<DateTimeOffset>(reader.GetOrdinal("reviewed_at")),
+            ReviewedBy = reader.IsDBNull(reader.GetOrdinal("reviewed_by")) ? null : reader.GetString(reader.GetOrdinal("reviewed_by"))
+        };
+    }
+
+    public async Task UpdateManualPaymentStatusAsync(Guid id, string status, string? reviewedBy, string? adminNotes)
+    {
+        await EnsureManualPaymentsTableExistsAsync();
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            UPDATE manual_payment_submissions
+            SET status = @status,
+                reviewed_at = NOW(),
+                reviewed_by = @reviewedBy,
+                admin_notes = COALESCE(@adminNotes, admin_notes)
+            WHERE id = @id", conn);
+
+        cmd.Parameters.AddWithValue("id", id);
+        cmd.Parameters.AddWithValue("status", status);
+        cmd.Parameters.AddWithValue("reviewedBy", (object?)reviewedBy ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("adminNotes", (object?)adminNotes ?? DBNull.Value);
+
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task<List<AdminUserSummary>> GetOnboardedUsersForAdminAsync()
+    {
+        await EnsureManualPaymentsTableExistsAsync();
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var userCmd = new NpgsqlCommand(@"
+            SELECT u.*,
+                   COALESCE((SELECT COUNT(*) FROM manual_payment_submissions m WHERE m.user_id = u.id AND m.status = 'pending'), 0) as pending_payments
+            FROM users u
+            ORDER BY u.onboarding_completed DESC, u.created_at DESC", conn);
+
+        var usersList = new List<AdminUserSummary>();
+        await using (var reader = await userCmd.ExecuteReaderAsync())
+        {
+            while (await reader.ReadAsync())
+            {
+                var user = MapUser(reader);
+                var pendingCount = reader.IsDBNull(reader.GetOrdinal("pending_payments")) ? 0 : Convert.ToInt32(reader.GetInt64(reader.GetOrdinal("pending_payments")));
+                usersList.Add(new AdminUserSummary
+                {
+                    Id = user.Id,
+                    Email = user.Email,
+                    DisplayName = user.DisplayName,
+                    PhotoUrl = user.PhotoUrl,
+                    OnboardingCompleted = user.OnboardingCompleted,
+                    SubscriptionStatus = user.SubscriptionStatus,
+                    PlanName = user.PlanName,
+                    CurrentPeriodEnd = user.CurrentPeriodEnd,
+                    TrialEndsAt = user.TrialEndsAt ?? user.CreatedAt.AddDays(7),
+                    QuotaLeadsPerMonth = user.QuotaLeadsPerMonth,
+                    QuotaPostsPerMonth = user.QuotaPostsPerMonth,
+                    QuotaBrandsAllowed = user.QuotaBrandsAllowed,
+                    QuotaLeadsUsed = user.QuotaLeadsUsed,
+                    QuotaPostsUsed = user.QuotaPostsUsed,
+                    CreatedAt = user.CreatedAt,
+                    PendingPaymentsCount = pendingCount
+                });
+            }
+        }
+
+        foreach (var u in usersList)
+        {
+            var brands = await GetBrandsByOwnerAsync(u.Id);
+            u.BrandsCount = brands.Count;
+            u.BrandNames = brands.Select(b => b.Name).ToList();
+            u.IsEngineActive = brands.Count > 0 && brands.Any(b => b.AutomationPostsEnabled || b.AutomationLeadsEnabled || b.AutomationOutreachEnabled);
+        }
+
+        return usersList;
+    }
 }
