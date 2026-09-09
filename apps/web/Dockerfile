@@ -20,6 +20,7 @@ COPY . .
 
 # Next.js collects telemetry data — disable it during build
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_OUTPUT_STANDALONE=true
 
 RUN npm run build
 
@@ -46,7 +47,6 @@ USER nextjs
 
 EXPOSE 3000
 
-ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 CMD ["node", "server.js"]
