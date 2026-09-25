@@ -44,8 +44,6 @@ import { useState, useEffect } from "react";
 export default function LandingPage() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [mounted, setMounted] = useState(false);
-  const [typedText, setTypedText] = useState("");
-  const fullText = "Always Watching. Always Acting.";
 
   // State for FAQ Accordion
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -57,24 +55,8 @@ export default function LandingPage() {
     };
     window.addEventListener("mousemove", handleMouseMove);
 
-    // Typewriter effect
-    let typeInterval: NodeJS.Timeout;
-    const startDelay = setTimeout(() => {
-      let i = 0;
-      typeInterval = setInterval(() => {
-        if (i < fullText.length) {
-          setTypedText(fullText.substring(0, i + 1));
-          i++;
-        } else {
-          clearInterval(typeInterval);
-        }
-      }, 80);
-    }, 1000);
-
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
-      clearTimeout(startDelay);
-      if (typeInterval) clearInterval(typeInterval);
     };
   }, []);
 
@@ -220,34 +202,24 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <header className="relative z-10 min-h-[85vh] flex flex-col items-center justify-center pt-28 pb-16 overflow-visible">
-        <div className="max-w-4xl mx-auto px-6 text-center space-y-7 relative z-20">
+      <header className="relative z-10 pt-28 pb-12 overflow-visible">
+        <div className="max-w-4xl mx-auto px-6 text-center space-y-6 relative z-20">
 
           {/* Headline */}
-          <h1 className="font-serif text-[clamp(42px,6.5vw,88px)] leading-[1.08] tracking-tight text-white font-normal">
+          <h1 className="font-serif text-4xl sm:text-6xl md:text-7xl lg:text-[76px] leading-[1.12] tracking-tight text-white font-normal">
             Your AI Growth Agent. <br />
-            <span className="relative inline-block mt-1">
-              <span className="opacity-0 tracking-tight select-none pointer-events-none pb-2 inline-block">
-                {fullText}
-              </span>
-              <span className="absolute inset-0 text-left whitespace-nowrap text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-white to-purple-200 pb-2 inline-block">
-                {typedText}
-                <span
-                  className={`inline-block w-[3px] h-[0.75em] bg-[var(--accent-primary)] ml-1 md:ml-2 align-baseline transition-opacity ${
-                    typedText.length === fullText.length ? "animate-pulse" : ""
-                  } ${typedText.length === 0 ? "opacity-0" : "opacity-100"}`}
-                ></span>
-              </span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-white to-purple-200">
+              Always Watching. Always Acting.
             </span>
           </h1>
 
           {/* Plain English Subtitle */}
-          <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto font-sans font-light leading-relaxed">
+          <p className="text-base sm:text-lg md:text-xl text-gray-300 max-w-2xl mx-auto font-sans font-light leading-relaxed">
             Tell MarkoPilot your growth goal. It continuously <strong className="text-white font-medium">monitors your market, spots opportunities</strong> your competitors miss, and takes action — drafting posts, reaching out to prospects, and growing your brand 24/7.
           </p>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-3">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-2">
             <NavLink href="#" isAuth={true} isPrimary className="group relative w-full sm:w-auto px-7 py-3.5 rounded-full bg-white text-black font-semibold text-sm hover:bg-gray-100 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 overflow-hidden shadow-[0_0_30px_rgba(255,255,255,0.2)]">
               Activate Your Growth Agent <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
             </NavLink>
@@ -257,7 +229,7 @@ export default function LandingPage() {
           </div>
 
           {/* Trust Guarantees */}
-          <div className="pt-2 text-xs text-gray-400 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+          <div className="pt-1 text-xs text-gray-400 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
             <span className="flex items-center gap-1.5 text-gray-300"><CheckCircle2 size={13} className="text-emerald-400 flex-shrink-0" /> No credit card needed</span>
             <span className="hidden sm:inline text-white/20">•</span>
             <span className="flex items-center gap-1.5 text-gray-300"><CheckCircle2 size={13} className="text-emerald-400 flex-shrink-0" /> 2-minute setup</span>
@@ -267,7 +239,7 @@ export default function LandingPage() {
         </div>
 
         {/* 3 Simple Overview Cards */}
-        <div className="mt-16 w-full max-w-6xl mx-auto px-6 relative z-10 opacity-0 animate-[fadeUpIn_1.5s_cubic-bezier(0.16,1,0.3,1)_700ms_forwards]">
+        <div className="mt-12 w-full max-w-6xl mx-auto px-6 relative z-10 opacity-0 animate-[fadeUpIn_1.2s_cubic-bezier(0.16,1,0.3,1)_300ms_forwards]">
           <div className="grid lg:grid-cols-3 gap-5">
             <div className="rounded-2xl bg-red-500/[0.06] border border-red-400/20 p-6 text-left space-y-4">
               <div className="w-11 h-11 rounded-xl bg-red-500/10 border border-red-400/20 text-red-300 flex items-center justify-center">
