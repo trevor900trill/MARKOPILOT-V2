@@ -22,6 +22,18 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_OUTPUT_STANDALONE=true
 
+# NEXT_PUBLIC_* vars are inlined at build time by Next.js.
+# Railway injects these from service variables automatically.
+ARG NEXT_PUBLIC_API_URL=https://api.markopilot.com
+ARG NEXT_PUBLIC_BASE_URL=https://markopilot.com
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_BASE_URL=$NEXT_PUBLIC_BASE_URL
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+
 RUN npm run build
 
 # ── Runner (Production) ─────────────────────────

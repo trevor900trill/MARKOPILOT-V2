@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5030/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.markopilot.com/api";
 
 export async function fetchServerApi(endpoint: string, options: RequestInit = {}) {
   const session = await auth();

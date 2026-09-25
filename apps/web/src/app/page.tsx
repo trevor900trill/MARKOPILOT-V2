@@ -5,48 +5,43 @@ import { signIn } from "next-auth/react";
 import {
   Check,
   ArrowRight,
-  Share2,
-  Users,
-  Send,
-  Rocket,
   Sparkles,
   Zap,
   ShieldCheck,
-  Camera,
-  Video,
-  Mail,
   Bot,
   Globe,
   Search,
-  Sparkle,
-  TrendingUp,
   SlidersHorizontal,
-  Ban,
   ChevronDown,
   Radar,
   CheckCircle2,
   XCircle,
-  BarChart3,
   Clock,
-  Flame,
   Eye,
   Brain,
   Target,
   Activity,
   Shield,
   LineChart,
-  RefreshCw
+  Terminal,
+  Cpu,
+  Mail,
+  Send,
+  Lock,
+  Compass,
+  Layers,
+  Flame,
+  ArrowUpRight
 } from "lucide-react";
 import { PLANS } from "@/lib/plans";
-import { XIcon, LinkedInIcon, InstagramIcon, TikTokIcon } from "@/components/icons/SocialIcons";
 import { useState, useEffect } from "react";
 
 export default function LandingPage() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [mounted, setMounted] = useState(false);
-
-  // State for FAQ Accordion
+  const [activePlaybook, setActivePlaybook] = useState<number>(0);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [autonomyLevel, setAutonomyLevel] = useState<number>(2);
 
   useEffect(() => {
     setMounted(true);
@@ -54,7 +49,6 @@ export default function LandingPage() {
       setMousePos({ x: e.clientX, y: e.clientY });
     };
     window.addEventListener("mousemove", handleMouseMove);
-
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
     };
@@ -65,7 +59,7 @@ export default function LandingPage() {
   };
 
   const GoogleLogo = () => (
-    <svg className="w-5 h-5 bg-white rounded-full p-[2px] shadow-sm flex-shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <svg className="w-4 h-4 bg-white rounded-full p-[2px] shadow-sm flex-shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
       <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
       <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
       <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
@@ -73,1159 +67,956 @@ export default function LandingPage() {
     </svg>
   );
 
-  const NavLink = ({
-    href,
-    className,
-    children,
-    isPrimary = false,
-    isAuth = false
-  }: {
-    href: string;
-    className?: string;
-    children: React.ReactNode;
-    isPrimary?: boolean;
-    isAuth?: boolean;
-  }) => {
-    if (isAuth) {
-      return (
-        <button onClick={handleSignIn} className={`cursor-pointer flex items-center justify-center gap-2 ${className}`}>
-          {isPrimary && <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></span>}
-          <GoogleLogo />
-          {children}
-        </button>
-      );
+  const playbooks = [
+    {
+      id: "competitor-diff",
+      title: "Competitor Diff Arbitrage",
+      badge: "Real-time Intercept",
+      description: "When competitors change pricing, discontinue features, or face outages, the agent detects the shift within minutes, formulates counter-arguments, and reaches out to dissatisfied users.",
+      metric: "< 8 min latency",
+      tag: "Competitive Defense",
+      example: {
+        trigger: "Competitor raised prices +35% & removed free tier",
+        action: "Published technical migration guide and engaged 42 frustrated users on Reddit & X with 1-click import offer",
+        outcome: "19 qualified demo requests booked"
+      }
+    },
+    {
+      id: "prospect-extraction",
+      title: "High-Intent B2B Prospecting",
+      badge: "Targeted Outreach",
+      description: "Continuously identifies companies and decision-makers actively searching for your solution. Enriches verified work emails, synthesizes personalized context, and initiates calibrated dialogue.",
+      metric: "99.2% Deliverability",
+      tag: "Outbound Pipeline",
+      example: {
+        trigger: "Identified 65 FinTech founders actively hiring marketing roles in Kenya & Nigeria",
+        action: "Drafted hyper-personalized value proposition referencing their recent product announcements",
+        outcome: "34% open rate, 11 introductory calls scheduled"
+      }
+    },
+    {
+      id: "geo-optimization",
+      title: "Generative Engine Optimization (GEO)",
+      badge: "AI Search Dominance",
+      description: "Positions your product as the authoritative answer when prospective customers ask ChatGPT, Perplexity, Claude, or Google AI Overviews for vendor recommendations in your space.",
+      metric: "#1 Recommended",
+      tag: "AEO / GEO Engine",
+      example: {
+        trigger: "Perplexity citation gap detected on 'Best AI Growth Tools for B2B'",
+        action: "Injected structured factual proof points and verified comparison benchmarks across open web authorities",
+        outcome: "Top citation on ChatGPT Search & Perplexity within 72 hours"
+      }
+    },
+    {
+      id: "reactive-authority",
+      title: "Reactive Narrative Velocity",
+      badge: "Thought Leadership",
+      description: "Monitors regulatory updates, platform API changes, and breaking industry trends. Translates breaking market news into authoritative editorial commentary before anyone else publishes.",
+      metric: "Zero Hallucination",
+      tag: "Market Authority",
+      example: {
+        trigger: "Meta deprecated legacy API tokens affecting marketing automations",
+        action: "Drafted an emergency mitigation breakdown and shared strategic advisory note across LinkedIn and X",
+        outcome: "28k impressions and 180 newsletter subscriptions"
+      }
     }
-
-    return (
-      <Link href={href} className={className}>
-        {children}
-      </Link>
-    );
-  };
+  ];
 
   const faqs = [
     {
-      q: "How much control do I have over the agent?",
-      a: "You set your autonomy level. 'Approve Everything' means the agent proposes and you decide. 'Approve Outreach' means posts go out automatically but emails wait for your okay. 'Full Auto' means the agent runs your growth function end to end. You can change this anytime."
+      q: "How is an AI Growth Agent different from a social media scheduler?",
+      a: "Social media schedulers like Buffer or Hootsuite are passive calendars: you write the post, set a timer, and hope people see it. Markopilot is an active, autonomous growth engine. It monitors competitor moves, ingests trending market discussions, finds verified buyers looking for your solution, crafts strategic messaging, and initiates targeted outreach — 24 hours a day, 7 days a week."
     },
     {
-      q: "How does posting on social media help my brand get recommended by ChatGPT?",
-      a: "When potential customers ask AI tools like ChatGPT, Perplexity, or Google for recommendations, the AI checks live internet conversations to see which products are real, active, and trusted. Regular social activity gives AI engines the fresh proof they need to recommend your brand."
+      q: "How does the agent know what is relevant to my product?",
+      a: "During onboarding, you define your Growth Objective (e.g. 'Acquire B2B customers in East Africa' or 'Grow developer tool adoption'). The agent continuously measures every internet signal — competitor changes, Reddit threads, tech news, and customer pain points — against your specific Ideal Customer Profile (ICP), filtering out 99% of noise and acting only on high-yield opportunities."
     },
     {
-      q: "What does the agent actually do?",
-      a: "It watches your market 24/7 — news, social media, competitors, Reddit, trending topics. When it spots something relevant to your growth goal, it decides what to do: draft a reactive post, identify a creator to reach out to, queue an outreach email, or update your lead pipeline. Everything is logged in your agent feed."
+      q: "Can I review the agent's actions before they go live?",
+      a: "Yes. You have complete control through the Autonomy Dial. In Level 1 (Copilot), the agent proposes every post and outreach email for manual approval. In Level 2 (Calibrated Autonomy), safe brand actions publish autonomously while outbound cold outreach pauses for 1-click confirmation. In Level 3 (Full Autopilot), the agent executes independently within strict safety and budget guardrails."
     },
     {
-      q: "I'm a solo founder. Can an AI really replace a marketing team?",
-      a: "Not replace — operate your growth function while you build. Solo founders spend 15 to 20 hours a week on marketing. With MarkoPilot's agent, you spend 15 minutes reviewing its decisions and approving actions. The agent handles the other 19+ hours."
+      q: "How does Generative Engine Optimization (GEO) help my business get recommended by ChatGPT?",
+      a: "Modern buyers search for recommendations directly inside AI engines like ChatGPT, Claude, and Perplexity. These AI models synthesize live web proof to formulate answers. Markopilot strategically seeds verified product facts, technical comparisons, and customer outcomes so AI engines cite your brand as the premier recommendation."
     },
     {
-      q: "Can I use my own email address for outreach?",
-      a: "Yes! You can connect your existing Gmail or company work email. Markopilot spaces out emails safely and follows anti-spam limits so your inbox reputation stays healthy."
+      q: "Will my outreach emails end up in spam?",
+      a: "No. Markopilot implements enterprise deliverability standards: human-mimicking send intervals, strict daily sending limits, direct sender authentication (via your connected Gmail or Google Workspace), and zero purchased lists. We only engage verified business contacts with verifiable pain points, complete with one-click unsubscribe links."
     },
     {
-      q: "Is the customer search and email process safe and legal?",
-      a: "Yes. Markopilot searches public business websites for verified work contacts. It removes duplicate emails, checks for real company matches, includes a one-click unsubscribe button in every email, and lets you review every message before it sends."
-    },
-    {
-      q: "How does the agent know what's relevant to my business?",
-      a: "When you onboard, you tell the agent your growth goal — like 'Grow in Kenya' or 'Get 100 SaaS leads this month.' The agent uses this to filter everything it monitors, only surfacing signals and opportunities that match your market, industry, and business context."
+      q: "How do payments work in Kenya and across Africa?",
+      a: "Markopilot supports instant Safaricom M-PESA STK push and Buy Goods Till numbers for frictionless checkout in Kenyan Shillings (KES). All plans start with a 7-day free trial. If you are outside Kenya, you can join our International Priority Waitlist for immediate card billing rollout."
     }
   ];
 
   return (
-    <div className="min-h-screen bg-[#07070a] text-white selection:bg-[var(--accent-primary)] selection:text-white relative pb-12 overflow-hidden">
+    <div className="min-h-screen bg-[#07070a] text-white selection:bg-[#7c6eff] selection:text-white relative overflow-x-hidden">
 
-      {/* Inline Keyframe Animations */}
-      <style dangerouslySetInnerHTML={{
-        __html: `
-        @keyframes scroll {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        .animate-scroll {
-          animation: scroll 30s linear infinite;
-        }
-        @keyframes fadeUpIn {
-          0% { opacity: 0; transform: translateY(32px) scale(0.98); }
-          100% { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-      `}} />
+      {/* Ambient Radial Lights */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] bg-[radial-gradient(ellipse_at_top,rgba(124,110,255,0.18),transparent_65%)]" />
+        <div className="absolute top-[800px] left-1/3 w-[800px] h-[500px] bg-[radial-gradient(ellipse_at_center,rgba(59,130,246,0.08),transparent_70%)]" />
+        <div className="absolute bottom-0 right-1/4 w-[900px] h-[600px] bg-[radial-gradient(ellipse_at_bottom,rgba(124,110,255,0.12),transparent_70%)]" />
+      </div>
 
-      {/* Mouse Glow Background */}
+      {/* Dynamic Cursor Glow */}
       {mounted && mousePos.x !== 0 && (
         <div
-          className="fixed z-0 pointer-events-none rounded-full blur-[120px] opacity-25 transition-opacity duration-300"
+          className="fixed z-0 pointer-events-none rounded-full blur-[140px] opacity-20 transition-opacity duration-300"
           style={{
-            width: '500px',
-            height: '500px',
-            background: 'radial-gradient(circle, var(--accent-primary) 0%, transparent 70%)',
-            transform: `translate(${mousePos.x - 250}px, ${mousePos.y - 250}px)`,
+            width: "550px",
+            height: "550px",
+            background: "radial-gradient(circle, #7c6eff 0%, rgba(59,130,246,0.3) 50%, transparent 70%)",
+            transform: `translate(${mousePos.x - 275}px, ${mousePos.y - 275}px)`,
           }}
         />
       )}
 
-      {/* Background Gradients */}
-      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 inset-x-0 h-[600px] bg-[radial-gradient(ellipse_at_top,rgba(124,110,255,0.12),transparent_70%)]" />
-        <div className="absolute top-[1000px] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-[radial-gradient(ellipse_at_center,rgba(59,130,246,0.07),transparent_70%)]" />
-        <div className="absolute bottom-0 inset-x-0 h-[600px] bg-[radial-gradient(ellipse_at_bottom,rgba(124,110,255,0.08),transparent_70%)]" />
-      </div>
-
-      {/* Navigation */}
-      <nav className="fixed top-0 w-full z-50 bg-[#07070a]/70 backdrop-blur-2xl border-b border-white/5 transition-all">
+      {/* ── Top Navigation ────────────────────────────────────────────────────────── */}
+      <nav className="fixed top-0 w-full z-50 bg-[#07070a]/80 backdrop-blur-2xl border-b border-white/5 transition-all">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-white to-gray-400 flex items-center justify-center text-black shadow-lg">
-              <Rocket size={18} />
+          <div className="flex items-center gap-3.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-white via-gray-200 to-gray-400 flex items-center justify-center text-black shadow-lg shadow-white/10">
+              <Bot size={20} className="stroke-[2.2]" />
             </div>
-            <span className="text-xl font-serif tracking-tight font-medium text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-300">Markopilot</span>
+            <div className="flex items-baseline gap-2.5">
+              <span className="text-xl font-medium tracking-tight text-white font-serif">Markopilot</span>
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-mono text-emerald-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                v2.4 Agent Runtime
+              </span>
+            </div>
           </div>
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">
-            <Link href="#features" className="hover:text-white hover:-translate-y-0.5 transition-all">Features</Link>
-            <Link href="#how-it-works" className="hover:text-white hover:-translate-y-0.5 transition-all">How It Works</Link>
-            <Link href="#compliance" className="hover:text-white hover:-translate-y-0.5 transition-all">Safe Outreach</Link>
-            <Link href="#pricing" className="hover:text-white hover:-translate-y-0.5 transition-all">Pricing</Link>
-            <Link href="#faq" className="hover:text-white hover:-translate-y-0.5 transition-all">FAQ</Link>
+
+          <div className="hidden lg:flex items-center gap-8 text-sm font-medium text-gray-400">
+            <Link href="#mission-control" className="hover:text-white transition-colors">Mission Control</Link>
+            <Link href="#architecture" className="hover:text-white transition-colors">Architecture</Link>
+            <Link href="#playbooks" className="hover:text-white transition-colors">Playbooks</Link>
+            <Link href="#governance" className="hover:text-white transition-colors">Governance</Link>
+            <Link href="#pricing" className="hover:text-white transition-colors">Pricing</Link>
+            <Link href="#faq" className="hover:text-white transition-colors">FAQ</Link>
           </div>
-          <div className="flex items-center gap-4">
-            <NavLink href="#" isAuth={true} className="relative group px-5 py-2.5 rounded-full overflow-hidden inline-flex items-center justify-center font-medium bg-white/10 hover:bg-white/20 border border-white/10 hover:border-white/30 transition-all text-white text-sm tracking-wide shadow-sm">
-              <span>Sign In</span>
-            </NavLink>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleSignIn}
+              className="px-5 py-2.5 rounded-full text-sm font-medium bg-white text-black hover:bg-gray-100 transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)] flex items-center gap-2 cursor-pointer active:scale-95"
+            >
+              <GoogleLogo />
+              <span>Deploy Agent</span>
+            </button>
           </div>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <header className="relative z-10 pt-28 pb-12 overflow-visible">
-        <div className="max-w-4xl mx-auto px-6 text-center space-y-6 relative z-20">
-
-          {/* Headline */}
-          <h1 className="font-serif text-4xl sm:text-6xl md:text-7xl lg:text-[76px] leading-[1.12] tracking-tight text-white font-normal">
-            Your AI Growth Agent. <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-white to-purple-200">
-              Always Watching. Always Acting.
-            </span>
-          </h1>
-
-          {/* Plain English Subtitle */}
-          <p className="text-base sm:text-lg md:text-xl text-gray-300 max-w-2xl mx-auto font-sans font-light leading-relaxed">
-            Tell MarkoPilot your growth goal. It continuously <strong className="text-white font-medium">monitors your market, spots opportunities</strong> your competitors miss, and takes action — drafting posts, reaching out to prospects, and growing your brand 24/7.
-          </p>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-2">
-            <NavLink href="#" isAuth={true} isPrimary className="group relative w-full sm:w-auto px-7 py-3.5 rounded-full bg-white text-black font-semibold text-sm hover:bg-gray-100 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 overflow-hidden shadow-[0_0_30px_rgba(255,255,255,0.2)]">
-              Activate Your Growth Agent <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
-            </NavLink>
-            <Link href="#features" className="w-full sm:w-auto px-6 py-3.5 rounded-full bg-white/5 border border-white/10 text-gray-200 font-medium text-sm hover:bg-white/10 hover:text-white hover:border-white/20 transition-all flex items-center justify-center gap-2 backdrop-blur-md">
-              See How It Works
-            </Link>
-          </div>
-
-          {/* Trust Guarantees */}
-          <div className="pt-1 text-xs text-gray-400 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
-            <span className="flex items-center gap-1.5 text-gray-300"><CheckCircle2 size={13} className="text-emerald-400 flex-shrink-0" /> No credit card needed</span>
-            <span className="hidden sm:inline text-white/20">•</span>
-            <span className="flex items-center gap-1.5 text-gray-300"><CheckCircle2 size={13} className="text-emerald-400 flex-shrink-0" /> 2-minute setup</span>
-            <span className="hidden sm:inline text-white/20">•</span>
-            <span className="flex items-center gap-1.5 text-gray-300"><CheckCircle2 size={13} className="text-emerald-400 flex-shrink-0" /> You stay in control</span>
-          </div>
+      {/* ── Hero Section ────────────────────────────────────────────────────────── */}
+      <header className="relative z-10 pt-36 pb-20 max-w-6xl mx-auto px-6 text-center">
+        {/* Release Pill */}
+        <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-md mb-8 hover:border-white/20 transition-all">
+          <span className="flex h-2 w-2 relative">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#7c6eff] opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#7c6eff]"></span>
+          </span>
+          <span className="text-xs font-mono text-gray-300">Autonomous Market Ingestion &amp; Execution</span>
+          <span className="text-gray-600">•</span>
+          <span className="text-xs font-mono text-[#a89eff] font-medium">Zero Human Gruntwork</span>
         </div>
 
-        {/* 3 Simple Overview Cards */}
-        <div className="mt-12 w-full max-w-6xl mx-auto px-6 relative z-10 opacity-0 animate-[fadeUpIn_1.2s_cubic-bezier(0.16,1,0.3,1)_300ms_forwards]">
-          <div className="grid lg:grid-cols-3 gap-5">
-            <div className="rounded-2xl bg-red-500/[0.06] border border-red-400/20 p-6 text-left space-y-4">
-              <div className="w-11 h-11 rounded-xl bg-red-500/10 border border-red-400/20 text-red-300 flex items-center justify-center">
-                <Flame size={20} />
-              </div>
-              <div>
-                <p className="text-xs font-mono uppercase tracking-wider text-red-300 mb-2">The Problem</p>
-                <h2 className="text-xl font-serif text-white">You&apos;re blind to what&apos;s happening in your market.</h2>
-              </div>
-              <p className="text-sm text-gray-400 leading-relaxed">
-                Competitors launch features, creators mention your space, trends emerge — and you miss it all because you&apos;re building.
-              </p>
-            </div>
+        {/* Hero Title */}
+        <h1 className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-white font-normal leading-[1.08] mb-8">
+          The Autonomous <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-white to-purple-300">
+            AI Growth Engine
+          </span>
+        </h1>
 
-            <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-6 text-left space-y-4 shadow-[0_0_60px_rgba(124,110,255,0.16)]">
-              <div className="w-11 h-11 rounded-xl bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)]/30 text-purple-200 flex items-center justify-center">
-                <Bot size={20} />
-              </div>
-              <div>
-                <p className="text-xs font-mono uppercase tracking-wider text-purple-300 mb-2">The Solution</p>
-                <h2 className="text-xl font-serif text-white">An AI agent that never sleeps.</h2>
-              </div>
-              <p className="text-sm text-gray-400 leading-relaxed">
-                Tell it your growth goal. It watches your market, identifies what matters, and acts — drafting content, reaching prospects, responding to opportunities.
-              </p>
-            </div>
+        {/* Plain-English High-Impact Value Proposition */}
+        <p className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto font-sans font-light leading-relaxed mb-10">
+          Markopilot operates your company&apos;s growth function 24/7. It continuously scans your market, intercepts competitor shifts, extracts high-intent buyers, and executes high-converting interventions — while you build.
+        </p>
 
-            <div className="rounded-2xl bg-emerald-500/[0.06] border border-emerald-400/20 p-6 text-left space-y-4">
-              <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-400/20 text-emerald-300 flex items-center justify-center">
-                <TrendingUp size={20} />
-              </div>
-              <div>
-                <p className="text-xs font-mono uppercase tracking-wider text-emerald-300 mb-2">The Result</p>
-                <h2 className="text-xl font-serif text-white">Growth on autopilot, decisions in your hands.</h2>
-              </div>
-              <p className="text-sm text-gray-400 leading-relaxed">
-                Every opportunity spotted. Every action logged. You approve what matters, the agent handles the rest.
-              </p>
-            </div>
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
+          <button
+            onClick={handleSignIn}
+            className="w-full sm:w-auto px-8 py-4 rounded-full bg-white text-black font-semibold text-base hover:bg-gray-100 hover:scale-[1.02] transition-all flex items-center justify-center gap-2.5 shadow-[0_0_35px_rgba(255,255,255,0.25)] active:scale-95 cursor-pointer"
+          >
+            <GoogleLogo />
+            <span>Deploy Your Growth Agent</span>
+            <ArrowRight size={17} />
+          </button>
+          <a
+            href="#mission-control"
+            className="w-full sm:w-auto px-7 py-4 rounded-full bg-white/5 border border-white/10 text-gray-200 font-medium text-base hover:bg-white/10 hover:text-white hover:border-white/20 transition-all flex items-center justify-center gap-2 backdrop-blur-md"
+          >
+            <Terminal size={17} className="text-[#a89eff]" />
+            <span>Inspect Live Telemetry</span>
+          </a>
+        </div>
+
+        {/* Trust Badges */}
+        <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs text-gray-400 font-mono">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" />
+            <span>10,000+ Signals Ingested Daily</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" />
+            <span>Zero Hallucination Guardrails</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" />
+            <span>Supervised L1–L3 Autonomy</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" />
+            <span>M-PESA &amp; Global Billing</span>
           </div>
         </div>
       </header>
 
-      {/* Social Platforms Bar */}
-      <section className="py-10 border-y border-white/5 bg-black/40 backdrop-blur-md relative z-10 my-10 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 mb-6 text-center text-xs uppercase tracking-widest text-gray-400 font-bold">
-          Works seamlessly with the platforms and tools you use
-        </div>
-        <div className="flex max-w-full relative opacity-60 hover:opacity-100 transition-opacity duration-500 overflow-hidden" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 15%, black 85%, transparent)', maskImage: 'linear-gradient(to right, transparent, black 15%, black 85%, transparent)' }}>
-          <div className="flex w-max animate-scroll pointer-events-none">
-            <div className="flex gap-20 items-center px-10 text-xl font-medium tracking-wide whitespace-nowrap">
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><XIcon size={24} /> Twitter (X)</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><LinkedInIcon size={24} /> LinkedIn</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><InstagramIcon size={24} /> Instagram</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><TikTokIcon size={24} /> TikTok</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Mail size={26} /> Gmail &amp; Work Email</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Sparkles size={26} /> 4K AI Images</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Video size={26} /> Short-Form Videos</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Bot size={26} /> Multi-LLM Brain</div>
+      {/* ── Mission Control Terminal Mockup ────────────────────────────────────── */}
+      <section id="mission-control" className="max-w-7xl mx-auto px-6 py-12 relative z-10 scroll-mt-24">
+        <div className="rounded-3xl border border-white/15 bg-gradient-to-b from-[#111116] via-[#0c0c10] to-[#07070a] shadow-[0_0_80px_rgba(124,110,255,0.12)] overflow-hidden">
+
+          {/* Console Header Bar */}
+          <div className="px-6 py-4 border-b border-white/10 bg-white/[0.02] flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-full bg-red-500/80"></span>
+                <span className="w-3 h-3 rounded-full bg-yellow-500/80"></span>
+                <span className="w-3 h-3 rounded-full bg-emerald-500/80"></span>
+              </div>
+              <span className="text-xs font-mono text-gray-400 border-l border-white/10 pl-3">
+                AGENT CORE: <strong className="text-white">MARKOPILOT-ALPHA</strong>
+              </span>
             </div>
-            {/* Duplicated for loop */}
-            <div className="flex gap-20 items-center px-10 text-xl font-medium tracking-wide whitespace-nowrap">
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><XIcon size={24} /> Twitter (X)</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><LinkedInIcon size={24} /> LinkedIn</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><InstagramIcon size={24} /> Instagram</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><TikTokIcon size={24} /> TikTok</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Mail size={26} /> Gmail &amp; Work Email</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Sparkles size={26} /> 4K AI Images</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Video size={26} /> Short-Form Videos</div>
-              <div className="flex items-center gap-3 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"><Bot size={26} /> Multi-LLM Brain</div>
+
+            <div className="flex items-center gap-4 text-xs font-mono">
+              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>STATE: AUTONOMOUS LOOP ACTIVE</span>
+              </div>
+              <div className="hidden md:flex items-center gap-2 text-gray-400">
+                <span>INGESTION:</span>
+                <span className="text-[#a89eff] font-semibold">48 SIGNALS / MIN</span>
+              </div>
             </div>
           </div>
+
+          {/* Console Content: 3-Column Agent Cockpit */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-white/10">
+
+            {/* Column 1: Multi-Source Sensory Stream (Perceive) */}
+            <div className="lg:col-span-4 p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-mono text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                  <Radar size={14} className="text-[#a89eff] animate-pulse" />
+                  Sensory Stream (Perceive)
+                </span>
+                <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-white/5 text-gray-300">Live</span>
+              </div>
+
+              <div className="space-y-3">
+                <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 hover:border-white/15 transition">
+                  <div className="flex items-center justify-between text-[11px] font-mono text-gray-400 mb-1.5">
+                    <span className="text-amber-400">COMPETITOR DIFF</span>
+                    <span>2 mins ago</span>
+                  </div>
+                  <p className="text-xs text-gray-200 font-medium leading-relaxed">
+                    Supabase alternative raised entry pricing +40% &amp; deprecated free tier limits.
+                  </p>
+                  <div className="mt-2 flex items-center justify-between text-[10px] font-mono text-gray-400">
+                    <span>Relevance: 98%</span>
+                    <span className="text-emerald-400">High Urgency</span>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 hover:border-white/15 transition">
+                  <div className="flex items-center justify-between text-[11px] font-mono text-gray-400 mb-1.5">
+                    <span className="text-blue-400">BUYER INTENT SIGNAL</span>
+                    <span>7 mins ago</span>
+                  </div>
+                  <p className="text-xs text-gray-200 font-medium leading-relaxed">
+                    r/SaaS: "Frustrated with manual cold email setup for our B2B agency. Any agentic tools that work?"
+                  </p>
+                  <div className="mt-2 flex items-center justify-between text-[10px] font-mono text-gray-400">
+                    <span>Target Fit: 95%</span>
+                    <span className="text-blue-400">ICP Match</span>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 hover:border-white/15 transition">
+                  <div className="flex items-center justify-between text-[11px] font-mono text-gray-400 mb-1.5">
+                    <span className="text-purple-400">SEARCH ALGORITHM SHIFT</span>
+                    <span>14 mins ago</span>
+                  </div>
+                  <p className="text-xs text-gray-200 font-medium leading-relaxed">
+                    Perplexity ranking query shift detected on: "Best autonomous marketing infrastructure 2026".
+                  </p>
+                  <div className="mt-2 flex items-center justify-between text-[10px] font-mono text-gray-400">
+                    <span>GEO Opportunity</span>
+                    <span className="text-purple-300">Actionable</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Column 2: Cognitive Reasoning Engine (Decide) */}
+            <div className="lg:col-span-4 p-6 space-y-4 bg-white/[0.01]">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-mono text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                  <Brain size={14} className="text-emerald-400" />
+                  Reasoning Core (Decide)
+                </span>
+                <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400">96.4% Confidence</span>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-black/40 border border-white/10 space-y-3 font-mono text-xs">
+                <div className="text-gray-400 text-[11px]">ACTIVE REASONING HYPOTHESIS:</div>
+                <p className="text-gray-200 leading-relaxed font-sans text-xs">
+                  "Target accounts are experiencing severe pricing friction from legacy competitor. Probability of conversion via migration messaging is 3.4x baseline."
+                </p>
+                <div className="h-px bg-white/10 my-2"></div>
+                <div className="space-y-1.5 text-[11px]">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Selected Playbook:</span>
+                    <span className="text-white font-medium">Competitor Churn Intercept</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Enriched Accounts:</span>
+                    <span className="text-emerald-400 font-semibold">28 Verified Founders</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Safety Verification:</span>
+                    <span className="text-emerald-400">Passed (0 spam indicators)</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Human Approval:</span>
+                    <span className="text-amber-400">Auto-Bypassed (L2 Policy)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-purple-950/20 border border-purple-500/20">
+                <div className="flex items-center gap-2 text-xs font-mono text-[#a89eff] mb-1">
+                  <Cpu size={14} /> Multi-Model Synthesis
+                </div>
+                <p className="text-[11px] text-gray-300 font-sans leading-relaxed">
+                  Synthesizing ICP profile data, competitor diffs, and verified business registries into tailored multi-channel actions.
+                </p>
+              </div>
+            </div>
+
+            {/* Column 3: Executed Autonomous Interventions (Act) */}
+            <div className="lg:col-span-4 p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-mono text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                  <Send size={14} className="text-blue-400" />
+                  Growth Interventions (Act)
+                </span>
+                <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-blue-500/10 text-blue-400">Autonomous</span>
+              </div>
+
+              <div className="space-y-3">
+                <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 space-y-2">
+                  <div className="flex items-center justify-between text-[11px] font-mono">
+                    <span className="text-emerald-400 font-semibold">OUTREACH DISPATCHED</span>
+                    <span className="text-gray-500">#ACT-1082</span>
+                  </div>
+                  <p className="text-xs text-gray-300 leading-relaxed font-sans">
+                    Sent 28 context-aware migration proposals to verified B2B engineering heads via authenticated company inbox.
+                  </p>
+                  <div className="flex items-center gap-2 text-[10px] font-mono text-gray-400 pt-1">
+                    <span className="text-emerald-400">✓ 100% Delivered</span>
+                    <span>•</span>
+                    <span>0 Bounces</span>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 space-y-2">
+                  <div className="flex items-center justify-between text-[11px] font-mono">
+                    <span className="text-purple-400 font-semibold">GEO KNOWLEDGE SEEDED</span>
+                    <span className="text-gray-500">#ACT-1083</span>
+                  </div>
+                  <p className="text-xs text-gray-300 leading-relaxed font-sans">
+                    Indexed comprehensive comparison matrix on developer portals to capture Perplexity &amp; ChatGPT recommendations.
+                  </p>
+                  <div className="flex items-center gap-2 text-[10px] font-mono text-gray-400 pt-1">
+                    <span className="text-purple-300">✓ AI Citation Verified</span>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 space-y-2">
+                  <div className="flex items-center justify-between text-[11px] font-mono">
+                    <span className="text-blue-400 font-semibold">NARRATIVE PUBLISHED</span>
+                    <span className="text-gray-500">#ACT-1084</span>
+                  </div>
+                  <p className="text-xs text-gray-300 leading-relaxed font-sans">
+                    Published counter-positioning teardown to LinkedIn and X addressing the competitor shift.
+                  </p>
+                  <div className="flex items-center gap-2 text-[10px] font-mono text-gray-400 pt-1">
+                    <span className="text-blue-300">✓ +4.8k Reach in 30m</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Console Bottom Status Row */}
+          <div className="px-6 py-3.5 bg-black/60 border-t border-white/10 flex flex-wrap items-center justify-between text-xs font-mono text-gray-400">
+            <div className="flex items-center gap-4">
+              <span className="text-gray-500">GOAL:</span>
+              <span className="text-white">"Acquire 100 Active SaaS Accounts in East Africa &amp; Global Dev Hubs"</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-emerald-400">CYCLE LATENCY: 340ms</span>
+              <span className="text-gray-600">|</span>
+              <span className="text-gray-400">UPTIME: 99.98%</span>
+            </div>
+          </div>
+
         </div>
       </section>
 
-      {/* ========================================================================= */}
-      {/* ALTERNATING FEATURE FLOW SECTION (Clean, Simple, Readable, Zigzag)        */}
-      {/* ========================================================================= */}
-      <section id="features" className="py-20 max-w-7xl mx-auto px-6 relative z-10 scroll-mt-20 space-y-28">
-
-        {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-mono uppercase tracking-wider">
-            <Zap size={14} /> The Agent Loop
+      {/* ── Architectural Loop Section ────────────────────────────────────────── */}
+      <section id="architecture" className="py-24 max-w-7xl mx-auto px-6 relative z-10 scroll-mt-20">
+        <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#7c6eff]/10 border border-[#7c6eff]/20 text-[#a89eff] text-xs font-mono uppercase tracking-wider">
+            <Zap size={13} /> The Autonomous Loop
           </div>
-          <h2 className="font-serif text-4xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">
-            Perceive. Understand. Decide. Act.
+          <h2 className="font-serif text-4xl sm:text-5xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 font-normal">
+            Perceive. Reason. Synthesize. Execute.
           </h2>
-          <p className="text-gray-400 text-base md:text-lg">
-            Your AI growth agent continuously runs a loop — watching your market, understanding what matters, and taking action autonomously.
+          <p className="text-gray-300 text-base sm:text-lg font-light leading-relaxed">
+            Unlike human teams that context-switch and drop the ball, Markopilot runs a deterministic 4-stage growth loop around the clock.
           </p>
         </div>
 
-        {/* ------------------------------------------------------------- */}
-        {/* ITEM 1: Social Media (Text Left, Visual Right)                */}
-        {/* ------------------------------------------------------------- */}
-        <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
-          <div className="lg:col-span-6 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-mono">
-              <Eye size={13} /> 01 • Watches Your Market
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+          {/* Phase 1 */}
+          <div className="rounded-3xl bg-white/[0.02] border border-white/10 p-7 hover:border-white/20 transition-all flex flex-col justify-between group">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs text-purple-400 bg-purple-500/10 px-2.5 py-1 rounded-md">PHASE 01</span>
+                <Eye size={20} className="text-purple-300 group-hover:scale-110 transition-transform" />
+              </div>
+              <h3 className="font-serif text-2xl text-white">Universal Sensory Radar</h3>
+              <p className="text-sm text-gray-400 leading-relaxed font-light">
+                Continuous ingestion of competitor software changelogs, industry news, customer complaints, Reddit discussions, and keyword velocity.
+              </p>
             </div>
-            <h3 className="font-serif text-3xl md:text-4xl text-white leading-tight">
-              Continuously scans news, social media, competitors &amp; trends.
-            </h3>
-            <p className="text-gray-300 text-base leading-relaxed font-light">
-              The agent monitors everything relevant to your growth goal — news, social media, Reddit, blogs, competitor activity, creator posts, and industry events — 24/7 without you lifting a finger.
-            </p>
-            <div className="space-y-3.5 pt-2">
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 flex-shrink-0 mt-1">
-                  <Check size={14} />
-                </div>
-                <div>
-                  <strong className="text-white text-sm block">Multi-Source Signal Collection</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Scans Twitter/X, LinkedIn, Reddit, RSS feeds, tech blogs, and competitor websites for signals relevant to your business.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 flex-shrink-0 mt-1">
-                  <Check size={14} />
-                </div>
-                <div>
-                  <strong className="text-white text-sm block">Competitor Tracking</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Notices when competitors launch features, raise funding, or make moves that create opportunities for you.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 flex-shrink-0 mt-1">
-                  <Check size={14} />
-                </div>
-                <div>
-                  <strong className="text-white text-sm block">Trend Detection</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Spots emerging topics and conversations in your market before they go mainstream — keeping you ahead.</p>
-                </div>
-              </div>
+            <div className="pt-6 border-t border-white/5 mt-6">
+              <div className="text-xs font-mono text-gray-400">Ingests: <span className="text-white">Competitor Diffs, RSS, X, Reddit</span></div>
             </div>
           </div>
 
-          <div className="lg:col-span-6">
-            <div className="bg-gradient-to-b from-[#121218] to-[#0a0a0e] border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-4 relative overflow-hidden">
-              <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                <span className="text-xs font-mono text-gray-400 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  Live Signal Feed
-                </span>
-                <span className="text-[11px] font-mono bg-purple-500/20 text-purple-300 px-2.5 py-0.5 rounded-full">
-                  12 New Signals
-                </span>
+          {/* Phase 2 */}
+          <div className="rounded-3xl bg-white/[0.02] border border-white/10 p-7 hover:border-white/20 transition-all flex flex-col justify-between group">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md">PHASE 02</span>
+                <Brain size={20} className="text-emerald-300 group-hover:scale-110 transition-transform" />
               </div>
-
-              {/* Signal Feed Rows */}
-              <div className="space-y-2.5">
-                <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between hover:bg-white/[0.06] transition">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-orange-500/20 flex items-center justify-center text-orange-400 border border-orange-500/30">
-                      <Globe size={16} />
-                    </div>
-                    <div>
-                      <div className="text-xs font-semibold text-white">Reddit r/KenyanSMEs</div>
-                      <div className="text-[11px] text-gray-400">&quot;Anyone using AI for marketing?&quot;</div>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-mono text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded">Creator Opp</span>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between hover:bg-white/[0.06] transition">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-red-500/20 flex items-center justify-center text-red-400 border border-red-500/30">
-                      <TrendingUp size={16} />
-                    </div>
-                    <div>
-                      <div className="text-xs font-semibold text-white">TechCrunch</div>
-                      <div className="text-[11px] text-gray-400">Competitor X raises $5M Series A</div>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-mono text-red-400 bg-red-500/10 px-2 py-0.5 rounded">Competitor</span>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between hover:bg-white/[0.06] transition">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-black flex items-center justify-center text-white border border-white/10">
-                      <XIcon size={16} />
-                    </div>
-                    <div>
-                      <div className="text-xs font-semibold text-white">@sarahbuilds on X</div>
-                      <div className="text-[11px] text-gray-400">&quot;Struggling with social scheduling...&quot;</div>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-mono text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded">Lead Signal</span>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between hover:bg-white/[0.06] transition">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400 border border-emerald-500/30">
-                      <Activity size={16} />
-                    </div>
-                    <div>
-                      <div className="text-xs font-semibold text-white">Trending Topic</div>
-                      <div className="text-[11px] text-gray-400">&quot;AI agents for SMEs&quot; spiking in Kenya</div>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Market Trend</span>
-                </div>
-              </div>
+              <h3 className="font-serif text-2xl text-white">Cognitive Intent Filter</h3>
+              <p className="text-sm text-gray-400 leading-relaxed font-light">
+                Multi-model AI rejects 99% of vanity noise. Scores signals purely on revenue relevance, urgency, and alignment with your target ICP.
+              </p>
+            </div>
+            <div className="pt-6 border-t border-white/5 mt-6">
+              <div className="text-xs font-mono text-gray-400">Relevance: <span className="text-white">Strict ICP &amp; Budget Matching</span></div>
             </div>
           </div>
+
+          {/* Phase 3 */}
+          <div className="rounded-3xl bg-white/[0.02] border border-white/10 p-7 hover:border-white/20 transition-all flex flex-col justify-between group">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-md">PHASE 03</span>
+                <Target size={20} className="text-blue-300 group-hover:scale-110 transition-transform" />
+              </div>
+              <h3 className="font-serif text-2xl text-white">Strategic Synthesis</h3>
+              <p className="text-sm text-gray-400 leading-relaxed font-light">
+                Formulates the highest-leverage growth playbook: competitor hijack, personalized email outreach, GEO knowledge injection, or editorial authority.
+              </p>
+            </div>
+            <div className="pt-6 border-t border-white/5 mt-6">
+              <div className="text-xs font-mono text-gray-400">Precision: <span className="text-white">Contextual Argument Generation</span></div>
+            </div>
+          </div>
+
+          {/* Phase 4 */}
+          <div className="rounded-3xl bg-white/[0.02] border border-white/10 p-7 hover:border-white/20 transition-all flex flex-col justify-between group">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-md">PHASE 04</span>
+                <Activity size={20} className="text-amber-300 group-hover:scale-110 transition-transform" />
+              </div>
+              <h3 className="font-serif text-2xl text-white">Calibrated Execution</h3>
+              <p className="text-sm text-gray-400 leading-relaxed font-light">
+                Executes via verified authenticated inboxes, authoritative web surfaces, and professional channels within strict rate limits and reputation safety bounds.
+              </p>
+            </div>
+            <div className="pt-6 border-t border-white/5 mt-6">
+              <div className="text-xs font-mono text-gray-400">Outcome: <span className="text-white">Telemetry &amp; Continuous Learning</span></div>
+            </div>
+          </div>
+
         </div>
-
-        {/* ------------------------------------------------------------- */}
-        {/* ITEM 2: AI Search Recommendations (Visual Left, Text Right)   */}
-        {/* ------------------------------------------------------------- */}
-        <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
-          <div className="lg:col-span-6 order-2 lg:order-1">
-            <div className="bg-gradient-to-b from-[#111618] to-[#070b0e] border border-emerald-500/20 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-4">
-              <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                <span className="text-xs font-mono text-emerald-400 flex items-center gap-2">
-                  <Globe size={14} />
-                  ChatGPT &amp; Perplexity Search
-                </span>
-                <span className="text-[11px] font-mono bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full">
-                  Top Recommended
-                </span>
-              </div>
-
-              <div className="p-4 bg-white/[0.03] rounded-2xl border border-white/5 space-y-2">
-                <div className="text-[11px] font-mono text-gray-400">User Query to AI:</div>
-                <div className="text-sm font-medium text-white">"What's the best tool to automate marketing for a startup in 2026?"</div>
-              </div>
-
-              <div className="p-4 bg-emerald-950/25 rounded-2xl border border-emerald-500/30 space-y-2 text-xs">
-                <div className="text-[11px] font-bold text-emerald-400 flex items-center gap-1.5">
-                  <Sparkles size={13} /> AI Assistant Answer:
-                </div>
-                <p className="text-gray-200 leading-relaxed">
-                  "Based on active customer reviews, case studies, and verified discussions on X and LinkedIn, <strong className="text-white bg-emerald-500/30 px-1 py-0.5 rounded font-semibold">Your Product</strong> is the top recommended tool..."
-                </p>
-                <div className="pt-2 text-[10px] text-emerald-400/80 font-mono flex items-center gap-3">
-                  <span>✓ Cited by AI Search</span>
-                  <span>✓ Verified Business Footprint</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="lg:col-span-6 space-y-6 order-1 lg:order-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-mono">
-              <Brain size={13} /> 02 • Understands What Matters
-            </div>
-            <h3 className="font-serif text-3xl md:text-4xl text-white leading-tight">
-              AI classifies every signal and scores its relevance.
-            </h3>
-            <p className="text-gray-300 text-base leading-relaxed font-light">
-              Not every signal matters. The agent uses multi-model AI to classify each one — is it a creator opportunity? A competitor move? A trending topic? — and scores how relevant it is to your specific growth goal.
-            </p>
-            <div className="space-y-3.5 pt-2">
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0 mt-1">
-                  <Check size={14} />
-                </div>
-                <div>
-                  <strong className="text-white text-sm block">Contextual Relevance Scoring</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Each signal gets a relevance score (0-100) based on how closely it matches your growth goal, market, and brand.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0 mt-1">
-                  <Check size={14} />
-                </div>
-                <div>
-                  <strong className="text-white text-sm block">Smart Classification</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">&quot;This creator posted about struggling with scheduling&quot; vs &quot;This competitor launched a new feature&quot; — different signal, different response.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0 mt-1">
-                  <Check size={14} />
-                </div>
-                <div>
-                  <strong className="text-white text-sm block">Filters the Noise</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Out of hundreds of daily signals, only the ones worth acting on reach your feed or trigger autonomous actions.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ------------------------------------------------------------- */}
-        {/* ITEM 3: Finding Leads & Outreach (Text Left, Visual Right)    */}
-        {/* ------------------------------------------------------------- */}
-        <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
-          <div className="lg:col-span-6 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-mono">
-              <Target size={13} /> 03 • Generates Opportunities
-            </div>
-            <h3 className="font-serif text-3xl md:text-4xl text-white leading-tight">
-              Identifies which signals are worth acting on.
-            </h3>
-            <p className="text-gray-300 text-base leading-relaxed font-light">
-              The agent doesn&apos;t just watch — it thinks. It evaluates every classified signal and decides: is this a potential customer? A partnership lead? A content moment? A competitive gap worth exploiting?
-            </p>
-            <div className="space-y-3.5 pt-2">
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 flex-shrink-0 mt-1">
-                  <Check size={14} />
-                </div>
-                <div>
-                  <strong className="text-white text-sm block">Priority-Ranked Opportunities</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Each opportunity is ranked by potential impact — a struggling creator to reach out to vs a trending topic to post about.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 flex-shrink-0 mt-1">
-                  <Check size={14} />
-                </div>
-                <div>
-                  <strong className="text-white text-sm block">Multi-Type Detection</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Spots lead opportunities, content moments, partnership signals, and competitive gaps — all from the same signal feed.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 flex-shrink-0 mt-1">
-                  <Check size={14} />
-                </div>
-                <div>
-                  <strong className="text-white text-sm block">Reasoning You Can See</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Every opportunity comes with a plain-English explanation of why the agent thinks it&apos;s worth your time.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="lg:col-span-6">
-            <div className="bg-gradient-to-b from-[#11141a] to-[#080a0e] border border-blue-500/20 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-4">
-              <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                <span className="text-xs font-mono text-blue-400 flex items-center gap-2">
-                  <Users size={14} />
-                  Verified Prospect Found
-                </span>
-                <span className="text-[11px] font-mono bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full">
-                  Fit Score: 96 / 100
-                </span>
-              </div>
-
-              <div className="p-4 bg-white/[0.03] rounded-2xl border border-white/5 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="text-xs font-semibold text-white">David Miller • Founder @ SaaSScale</div>
-                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Verified Email</span>
-                </div>
-                <div className="text-[11px] text-gray-400 font-mono">david@saasscale.io • Cloud &amp; DevTools B2B</div>
-              </div>
-
-              <div className="p-4 bg-blue-950/20 rounded-2xl border border-blue-500/20 space-y-2 text-xs">
-                <div className="text-[11px] font-mono text-blue-300 font-semibold flex items-center gap-1.5">
-                  <Mail size={13} /> Drafted Email (Ready to Review):
-                </div>
-                <p className="text-gray-300 leading-relaxed text-[11px]">
-                  "Hi David — noticed SaaSScale just launched your new API tier last week. Most developer platforms struggle to maintain continuous social presence without hiring an agency..."
-                </p>
-                <div className="flex gap-2 pt-2">
-                  <button className="flex-1 py-2 rounded-lg bg-emerald-600 text-white font-semibold text-xs hover:bg-emerald-500 transition shadow">
-                    Approve &amp; Send
-                  </button>
-                  <button className="px-3 py-2 rounded-lg bg-white/10 text-gray-300 text-xs hover:bg-white/20 transition">
-                    Edit Text
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ------------------------------------------------------------- */}
-        {/* ITEM 4: Automatic Timing (Visual Left, Text Right)            */}
-        {/* ------------------------------------------------------------- */}
-        <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
-          <div className="lg:col-span-6 order-2 lg:order-1">
-            <div className="bg-gradient-to-b from-[#13111a] to-[#09080d] border border-purple-500/20 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-4">
-              <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                <span className="text-xs font-mono text-purple-300 flex items-center gap-2">
-                  <Clock size={14} />
-                  Automatic Daily Schedule
-                </span>
-                <span className="text-[11px] font-mono bg-purple-500/20 text-purple-300 px-2.5 py-0.5 rounded-full">
-                  Runs Automatically
-                </span>
-              </div>
-
-              {/* 3 Step Timeline */}
-              <div className="space-y-3">
-                <div className="p-3.5 rounded-2xl bg-purple-950/20 border border-purple-500/20 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-300 flex items-center justify-center">
-                      <Share2 size={15} />
-                    </div>
-                    <div>
-                      <div className="text-xs font-semibold text-white">Daily Social Posts</div>
-                      <div className="text-[10px] text-gray-400">Published at peak morning hours on X &amp; LinkedIn</div>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-mono text-emerald-400">Scheduled</span>
-                </div>
-
-                <div className="p-3.5 rounded-2xl bg-blue-950/20 border border-blue-500/20 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-300 flex items-center justify-center">
-                      <Users size={15} />
-                    </div>
-                    <div>
-                      <div className="text-xs font-semibold text-white">Find New Customer Leads</div>
-                      <div className="text-[10px] text-gray-400">Extracts 20 verified decision-makers every day</div>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-mono text-blue-400">Active</span>
-                </div>
-
-                <div className="p-3.5 rounded-2xl bg-emerald-950/20 border border-emerald-500/20 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center">
-                      <Send size={15} />
-                    </div>
-                    <div>
-                      <div className="text-xs font-semibold text-white">Safe Email Sending</div>
-                      <div className="text-[10px] text-gray-400">Personalized emails delivered at natural intervals</div>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-mono text-emerald-400">Safe Pace</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="lg:col-span-6 space-y-6 order-1 lg:order-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-mono">
-              <Zap size={13} /> 04 • Takes Action
-            </div>
-            <h3 className="font-serif text-3xl md:text-4xl text-white leading-tight">
-              Drafts, schedules, reaches out — autonomously.
-            </h3>
-            <p className="text-gray-300 text-base leading-relaxed font-light">
-              When the agent spots an opportunity, it doesn&apos;t just flag it — it acts. Drafts reactive posts, sends personalized outreach, schedules content, identifies creators, and updates your pipeline.
-            </p>
-            <div className="space-y-3.5 pt-2">
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 flex-shrink-0 mt-1">
-                  <Check size={14} />
-                </div>
-                <div>
-                  <strong className="text-white text-sm block">Multi-Channel Execution</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Posts to X, LinkedIn, Instagram, TikTok. Sends personalized emails. Creates images and videos. All from one agent loop.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 flex-shrink-0 mt-1">
-                  <Check size={14} />
-                </div>
-                <div>
-                  <strong className="text-white text-sm block">Reactive Content</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">When a competitor makes a move or a topic trends, the agent drafts a post within minutes — not days.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 flex-shrink-0 mt-1">
-                  <Check size={14} />
-                </div>
-                <div>
-                  <strong className="text-white text-sm block">Smart Outreach</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Finds verified decision-makers, writes emails that reference real context, and spaces sending to protect your inbox.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ------------------------------------------------------------- */}
-        {/* ITEM 5: Review Mode or Autopilot (Text Left, Visual Right)    */}
-        {/* ------------------------------------------------------------- */}
-        <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
-          <div className="lg:col-span-6 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-300 text-xs font-mono">
-              <Shield size={13} /> 05 • You Stay in Control
-            </div>
-            <h3 className="font-serif text-3xl md:text-4xl text-white leading-tight">
-              The agent proposes. You decide.
-            </h3>
-            <p className="text-gray-300 text-base leading-relaxed font-light">
-              Set your autonomy level: approve everything, approve outreach only, or let it run fully autonomous. Every action is logged, every decision is transparent, and you can override anything.
-            </p>
-            <div className="space-y-3.5 pt-2">
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-300 flex-shrink-0 mt-1">
-                  <Check size={14} />
-                </div>
-                <div>
-                  <strong className="text-white text-sm block">1-Click Morning Approvals</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Quickly approve or tweak scheduled posts and cold emails in a clean, simple queue.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-300 flex-shrink-0 mt-1">
-                  <Check size={14} />
-                </div>
-                <div>
-                  <strong className="text-white text-sm block">Autopilot Switch</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Switch between reviewing drafts yourself and 100% automated posting whenever you want.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-300 flex-shrink-0 mt-1">
-                  <Check size={14} />
-                </div>
-                <div>
-                  <strong className="text-white text-sm block">Always Sounds Like You</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Every message follows your brand voice guidelines and sounds like a real person wrote it.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="lg:col-span-6">
-            <div className="bg-gradient-to-b from-[#151412] to-[#0a0908] border border-yellow-500/20 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-4">
-              <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                <span className="text-xs font-mono text-yellow-300 flex items-center gap-2">
-                  <SlidersHorizontal size={14} />
-                  Posting Mode
-                </span>
-                <span className="text-[11px] font-mono bg-yellow-500/20 text-yellow-300 px-2.5 py-0.5 rounded-full">
-                  Easy Toggle
-                </span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-xs font-semibold text-white">Review Mode (Recommended at first)</div>
-                    <div className="text-[11px] text-gray-400">Look over drafts before anything goes live</div>
-                  </div>
-                  <div className="w-10 h-6 bg-emerald-500 rounded-full p-0.5 flex items-center justify-end">
-                    <div className="w-5 h-5 bg-white rounded-full shadow-md"></div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-xs font-semibold text-white">Autopilot Mode (Hands-Free)</div>
-                    <div className="text-[11px] text-gray-400">AI creates, schedules, and posts on its own</div>
-                  </div>
-                  <div className="w-10 h-6 bg-white/20 rounded-full p-0.5 flex items-center">
-                    <div className="w-5 h-5 bg-gray-400 rounded-full shadow-md"></div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-3 bg-yellow-950/20 border border-yellow-500/20 rounded-xl text-xs text-yellow-200">
-                ⚡ You stay in 100% control with zero stress or guesswork.
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ------------------------------------------------------------- */}
-        {/* ITEM 6: Brand Impact Intelligence (Visual Left, Text Right)   */}
-        {/* ------------------------------------------------------------- */}
-        <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
-          <div className="lg:col-span-6 order-2 lg:order-1">
-            <div className="bg-gradient-to-b from-[#181116] to-[#0d070b] border border-pink-500/20 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-4">
-              <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                <span className="text-xs font-mono text-pink-400 flex items-center gap-2">
-                  <Radar size={14} className="animate-pulse" />
-                  Live Market Intelligence
-                </span>
-                <span className="text-[11px] font-mono bg-red-500/20 text-red-300 px-2.5 py-0.5 rounded-full border border-red-500/30">
-                  Critical Impact Detected
-                </span>
-              </div>
-
-              <div className="p-4 bg-white/[0.03] rounded-2xl border border-white/5 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-white">Meta Developers API Update</span>
-                  <span className="text-[10px] font-mono text-gray-400">24 mins ago</span>
-                </div>
-                <p className="text-xs text-gray-300 leading-relaxed">
-                  Meta announces migration to BSUID identifiers across Instagram Graph APIs, deprecating legacy profile tokens.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                <div className="p-3 rounded-xl bg-red-950/20 border border-red-500/20 space-y-1">
-                  <span className="text-[10px] font-bold uppercase text-red-400 tracking-wider">Why It Matters</span>
-                  <p className="text-gray-300 text-[11px]">Directly impacts connected Instagram automation and OAuth token refresh workflows.</p>
-                </div>
-                <div className="p-3 rounded-xl bg-emerald-950/20 border border-emerald-500/20 space-y-1">
-                  <span className="text-[10px] font-bold uppercase text-emerald-400 tracking-wider">Action Taken</span>
-                  <p className="text-gray-300 text-[11px]">Instant founder email sent &amp; advisory post drafted for your followers.</p>
-                </div>
-              </div>
-
-              <div className="p-3 bg-pink-950/20 border border-pink-500/20 rounded-xl flex items-center justify-between text-xs text-pink-200">
-                <span>✨ 1-Click Draft Reactive Post Hook</span>
-                <span className="font-semibold text-white bg-pink-500/30 px-2.5 py-1 rounded-lg">Ready in Queue</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="lg:col-span-6 space-y-6 order-1 lg:order-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/20 text-pink-300 text-xs font-mono">
-              <LineChart size={13} /> 06 • Learns &amp; Improves
-            </div>
-            <h3 className="font-serif text-3xl md:text-4xl text-white leading-tight">
-              Tracks what worked and gets smarter over time.
-            </h3>
-            <p className="text-gray-300 text-base leading-relaxed font-light">
-              The agent tracks engagement, replies, and conversions from every action it takes. Weekly performance reports show exactly what the agent did and what it achieved — so it refines future decisions automatically.
-            </p>
-            <div className="space-y-3.5 pt-2">
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-400 flex-shrink-0 mt-1">
-                  <Check size={14} />
-                </div>
-                <div>
-                  <strong className="text-white text-sm block">Outcome Tracking</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Every action is tracked to its outcome — which posts got engagement, which emails got replies, which leads converted.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-400 flex-shrink-0 mt-1">
-                  <Check size={14} />
-                </div>
-                <div>
-                  <strong className="text-white text-sm block">Weekly Agent Report</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Get a clear summary: signals scanned, opportunities found, actions taken, and results achieved — in plain English.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-400 flex-shrink-0 mt-1">
-                  <Check size={14} />
-                </div>
-                <div>
-                  <strong className="text-white text-sm block">Self-Improving Decisions</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">The agent learns which signal types, content styles, and outreach approaches work best for your specific market.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
       </section>
 
-      {/* ========================================================================= */}
-      {/* SECTION: The Old Way vs The Markopilot Way                                */}
-      {/* ========================================================================= */}
-      <section className="py-24 max-w-7xl mx-auto px-6 relative z-10 border-t border-white/5">
-        <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-300 text-xs font-mono uppercase tracking-wider">
-            <BarChart3 size={14} /> Why An Agent
+      {/* ── Playbooks Section ────────────────────────────────────────────────── */}
+      <section id="playbooks" className="py-24 max-w-7xl mx-auto px-6 relative z-10 border-t border-white/5 scroll-mt-20">
+        <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-mono uppercase tracking-wider">
+            <Layers size={13} /> Autonomous Playbooks
           </div>
-          <h2 className="font-serif text-4xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">
-            Replace a marketing team, not your judgment.
+          <h2 className="font-serif text-4xl sm:text-5xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 font-normal">
+            Growth Strategies Executed Automatically.
           </h2>
-          <p className="text-gray-400 text-base md:text-lg">
-            See the difference between hiring humans to do your growth versus deploying an AI agent.
+          <p className="text-gray-300 text-base sm:text-lg font-light leading-relaxed">
+            Forget manual posting calendars. Markopilot activates battle-tested growth mechanics triggered by live internet events.
+          </p>
+        </div>
+
+        {/* Playbook Tabs */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+          {playbooks.map((p, idx) => (
+            <button
+              key={p.id}
+              onClick={() => setActivePlaybook(idx)}
+              className={`p-5 rounded-2xl text-left border transition-all cursor-pointer ${
+                activePlaybook === idx
+                  ? "bg-white/[0.08] border-[#7c6eff] shadow-[0_0_30px_rgba(124,110,255,0.15)]"
+                  : "bg-white/[0.02] border-white/10 hover:border-white/20 text-gray-400 hover:text-white"
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-mono uppercase text-[#a89eff]">{p.tag}</span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 text-gray-300">{p.metric}</span>
+              </div>
+              <h4 className="font-medium text-white text-base">{p.title}</h4>
+            </button>
+          ))}
+        </div>
+
+        {/* Selected Playbook Showcase Display */}
+        <div className="rounded-3xl bg-gradient-to-b from-[#111116] to-[#07070a] border border-white/15 p-8 lg:p-12 shadow-2xl">
+          <div className="grid lg:grid-cols-12 gap-8 items-center">
+            <div className="lg:col-span-7 space-y-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-mono">
+                {playbooks[activePlaybook].badge}
+              </div>
+              <h3 className="font-serif text-3xl sm:text-4xl text-white leading-tight">
+                {playbooks[activePlaybook].title}
+              </h3>
+              <p className="text-gray-300 text-base sm:text-lg leading-relaxed font-light">
+                {playbooks[activePlaybook].description}
+              </p>
+
+              <div className="pt-2">
+                <button
+                  onClick={handleSignIn}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-black font-semibold text-sm hover:bg-gray-100 transition shadow active:scale-95 cursor-pointer"
+                >
+                  <span>Activate This Playbook</span>
+                  <ArrowRight size={15} />
+                </button>
+              </div>
+            </div>
+
+            <div className="lg:col-span-5">
+              <div className="p-6 rounded-2xl bg-black/60 border border-white/10 space-y-4">
+                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <span className="text-xs font-mono text-gray-400">TELEMETRY CASE STUDY</span>
+                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Verified Output</span>
+                </div>
+
+                <div className="space-y-3 text-xs">
+                  <div>
+                    <span className="text-[11px] font-mono text-amber-400 block mb-1">01 • TRIGGER DETECTED</span>
+                    <p className="text-gray-300 bg-white/[0.02] p-3 rounded-xl border border-white/5 font-sans leading-relaxed">
+                      "{playbooks[activePlaybook].example.trigger}"
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-[11px] font-mono text-[#a89eff] block mb-1">02 • AGENT INTERVENTION</span>
+                    <p className="text-gray-300 bg-white/[0.02] p-3 rounded-xl border border-white/5 font-sans leading-relaxed">
+                      {playbooks[activePlaybook].example.action}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-[11px] font-mono text-emerald-400 block mb-1">03 • MEASURED RESULT</span>
+                    <p className="text-emerald-300 bg-emerald-950/20 p-3 rounded-xl border border-emerald-500/20 font-medium font-sans leading-relaxed">
+                      ✓ {playbooks[activePlaybook].example.outcome}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Governance & Autonomy Dial Section ─────────────────────────────────── */}
+      <section id="governance" className="py-24 max-w-7xl mx-auto px-6 relative z-10 border-t border-white/5 scroll-mt-20">
+        <div className="grid lg:grid-cols-12 gap-12 items-center">
+
+          <div className="lg:col-span-6 space-y-6">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono uppercase tracking-wider">
+              <ShieldCheck size={14} /> Safety &amp; Governance
+            </div>
+            <h2 className="font-serif text-4xl sm:text-5xl text-white font-normal leading-tight">
+              Calibrated Autonomy. <br />
+              You Hold the Steering Wheel.
+            </h2>
+            <p className="text-gray-300 text-base sm:text-lg font-light leading-relaxed">
+              We reject black-box hallucination. You decide how much autonomy your growth agent gets — from strict 1-click approvals to full-throttle autopilot within parameterized safety guardrails.
+            </p>
+
+            <div className="space-y-4 pt-2">
+              <div className="flex items-start gap-3.5">
+                <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Check size={14} />
+                </div>
+                <div>
+                  <h4 className="text-white text-sm font-medium">Domain Health Protection</h4>
+                  <p className="text-xs text-gray-400 leading-relaxed">Natural sending cadences, strict daily limits, and verified DKIM/SPF alignment keep your inbox reputation pristine.</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3.5">
+                <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Check size={14} />
+                </div>
+                <div>
+                  <h4 className="text-white text-sm font-medium">Anti-Hallucination Fact Verification</h4>
+                  <p className="text-xs text-gray-400 leading-relaxed">Every generated claim is verified against your brand knowledge base before publication or outreach.</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3.5">
+                <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Check size={14} />
+                </div>
+                <div>
+                  <h4 className="text-white text-sm font-medium">Instant Emergency Kill-Switch</h4>
+                  <p className="text-xs text-gray-400 leading-relaxed">Pause all autonomous actions, drafts, and campaigns in a single click whenever you need.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Interactive Autonomy Dial Visualizer */}
+          <div className="lg:col-span-6">
+            <div className="rounded-3xl bg-gradient-to-b from-[#13131a] to-[#09090d] border border-white/15 p-8 shadow-2xl space-y-6">
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <span className="text-xs font-mono text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                  <SlidersHorizontal size={14} className="text-[#a89eff]" />
+                  Autonomy Selector
+                </span>
+                <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full">
+                  Level {autonomyLevel} Active
+                </span>
+              </div>
+
+              {/* 3 Level Buttons */}
+              <div className="grid grid-cols-3 gap-2 p-1.5 rounded-2xl bg-black/40 border border-white/10">
+                <button
+                  onClick={() => setAutonomyLevel(1)}
+                  className={`py-2.5 rounded-xl text-xs font-mono transition-all cursor-pointer ${
+                    autonomyLevel === 1 ? "bg-white text-black font-semibold shadow" : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  L1: Co-Pilot
+                </button>
+                <button
+                  onClick={() => setAutonomyLevel(2)}
+                  className={`py-2.5 rounded-xl text-xs font-mono transition-all cursor-pointer ${
+                    autonomyLevel === 2 ? "bg-[#7c6eff] text-white font-semibold shadow" : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  L2: Supervised
+                </button>
+                <button
+                  onClick={() => setAutonomyLevel(3)}
+                  className={`py-2.5 rounded-xl text-xs font-mono transition-all cursor-pointer ${
+                    autonomyLevel === 3 ? "bg-emerald-500 text-black font-semibold shadow" : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  L3: Autonomous
+                </button>
+              </div>
+
+              {/* Mode Breakdown Box */}
+              <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-3">
+                {autonomyLevel === 1 && (
+                  <div className="space-y-2 animate-in fade-in duration-300">
+                    <div className="text-sm font-medium text-white flex items-center gap-2">
+                      <Lock size={15} className="text-amber-400" />
+                      Level 1: Human-in-the-Loop Co-Pilot
+                    </div>
+                    <p className="text-xs text-gray-300 leading-relaxed font-light">
+                      The agent functions as an elite research analyst. It continuously monitors the market, flags opportunities, and drafts complete actions, but requires your explicit approval before sending or publishing anything.
+                    </p>
+                    <div className="text-[11px] font-mono text-gray-400 pt-1">
+                      Best for: Early-stage founders validating positioning or sensitive B2B domains.
+                    </div>
+                  </div>
+                )}
+
+                {autonomyLevel === 2 && (
+                  <div className="space-y-2 animate-in fade-in duration-300">
+                    <div className="text-sm font-medium text-white flex items-center gap-2">
+                      <SlidersHorizontal size={15} className="text-[#a89eff]" />
+                      Level 2: Calibrated Supervised Autonomy (Recommended)
+                    </div>
+                    <p className="text-xs text-gray-300 leading-relaxed font-light">
+                      Low-risk actions (reactive social teardowns, GEO knowledge seeding, market monitoring) execute autonomously. High-impact outbound email sequences wait in a morning review queue for your 1-click authorization.
+                    </p>
+                    <div className="text-[11px] font-mono text-emerald-400 pt-1">
+                      Best for: Growing companies balancing high velocity with brand safety.
+                    </div>
+                  </div>
+                )}
+
+                {autonomyLevel === 3 && (
+                  <div className="space-y-2 animate-in fade-in duration-300">
+                    <div className="text-sm font-medium text-white flex items-center gap-2">
+                      <Zap size={15} className="text-emerald-400" />
+                      Level 3: Full-Throttle Autonomous Flight
+                    </div>
+                    <p className="text-xs text-gray-300 leading-relaxed font-light">
+                      The agent operates as your complete growth engineer. It perceives opportunities, enriches decision-maker contacts, writes context-rich copy, and executes across all channels within predetermined budget and volume caps.
+                    </p>
+                    <div className="text-[11px] font-mono text-purple-300 pt-1">
+                      Best for: Aggressive scale, programmatic lead acquisition, and solo operators.
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between text-xs font-mono text-gray-400 px-1">
+                <span>Guardrails: <strong className="text-white">Strict RFC 5322 &amp; CAN-SPAM Compliant</strong></span>
+                <span className="text-emerald-400">100% Opt-out Guarantee</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* ── Comparison Section: The Old Way vs Markopilot ──────────────────────── */}
+      <section className="py-24 max-w-7xl mx-auto px-6 relative z-10 border-t border-white/5">
+        <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-300 text-xs font-mono uppercase tracking-wider">
+            <Flame size={13} /> The Paradigm Shift
+          </div>
+          <h2 className="font-serif text-4xl sm:text-5xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 font-normal">
+            Why Modern Builders Deploy Agents.
+          </h2>
+          <p className="text-gray-300 text-base sm:text-lg font-light leading-relaxed">
+            Hiring a fragmented human marketing team vs deploying a tireless AI growth co-worker.
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-          {/* The Old Way */}
-          <div className="bg-red-950/10 border border-red-500/20 rounded-3xl p-8 space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold text-red-300 flex items-center gap-2">
-                <XCircle size={20} className="text-red-400" /> Hiring a Marketing Team
-              </h3>
-              <span className="text-xs font-mono text-red-400 bg-red-500/20 px-2.5 py-1 rounded-full">$3,000-8,000 / mo</span>
+
+          {/* Legacy Marketing */}
+          <div className="rounded-3xl bg-red-950/[0.08] border border-red-500/20 p-8 space-y-6">
+            <div className="flex items-center justify-between border-b border-red-500/20 pb-4">
+              <div>
+                <h3 className="text-xl font-medium text-red-200">The Fragmented Human Agency</h3>
+                <p className="text-xs text-red-400/80 font-mono mt-0.5">Agencies, Contractors &amp; Manual Schedulers</p>
+              </div>
+              <span className="text-xs font-mono text-red-400 bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20">
+                $4,000–$8,000 / mo
+              </span>
             </div>
-            <ul className="space-y-4 text-sm text-gray-300">
+
+            <ul className="space-y-4 text-sm text-gray-300 font-light">
               <li className="flex items-start gap-3">
-                <XCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
-                <span>Paying for a social media manager who posts 3x a week and misses trends.</span>
+                <XCircle size={17} className="text-red-400 flex-shrink-0 mt-0.5" />
+                <span><strong>Slow reaction time:</strong> Takes 3 to 5 business days to draft, approve, and post about breaking news or competitor shifts.</span>
               </li>
               <li className="flex items-start gap-3">
-                <XCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
-                <span>Paying for a lead gen tool, a market intelligence subscription, and a content agency.</span>
+                <XCircle size={17} className="text-red-400 flex-shrink-0 mt-0.5" />
+                <span><strong>Context-switching chaos:</strong> 5 disconnected tools for lead scraping, scheduling, email warmup, and analytics.</span>
               </li>
               <li className="flex items-start gap-3">
-                <XCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
-                <span>Still missing opportunities because humans sleep, take breaks, and context-switch.</span>
+                <XCircle size={17} className="text-red-400 flex-shrink-0 mt-0.5" />
+                <span><strong>Passive broadcasting:</strong> Blindly schedules generic social calendars without knowing what buyers are actually searching for.</span>
               </li>
               <li className="flex items-start gap-3">
-                <XCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
-                <span>No system connecting what happens in the market to what your team actually does.</span>
+                <XCircle size={17} className="text-red-400 flex-shrink-0 mt-0.5" />
+                <span><strong>Zero GEO strategy:</strong> No concept of how to optimize your brand so ChatGPT and Perplexity recommend your product.</span>
               </li>
             </ul>
           </div>
 
-          {/* The Markopilot Way */}
-          <div className="bg-emerald-950/15 border border-emerald-500/30 rounded-3xl p-8 space-y-6 shadow-[0_0_50px_rgba(16,185,129,0.1)] relative">
-            <div className="absolute -top-3 right-6 bg-emerald-500 text-black text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full shadow-lg">
-              The Easy Way
+          {/* Markopilot AI Agent */}
+          <div className="rounded-3xl bg-gradient-to-b from-[#13121d] to-[#09080f] border border-[#7c6eff]/40 p-8 space-y-6 shadow-[0_0_60px_rgba(124,110,255,0.15)] relative">
+            <div className="absolute -top-3 right-6 bg-[#7c6eff] text-white text-[10px] font-bold font-mono uppercase tracking-widest px-3.5 py-1 rounded-full shadow-lg">
+              Category Defining
             </div>
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold text-emerald-300 flex items-center gap-2">
-                <CheckCircle2 size={20} className="text-emerald-400" /> With Your AI Growth Agent
-              </h3>
-              <span className="text-xs font-mono text-emerald-300 bg-emerald-500/20 px-2.5 py-1 rounded-full">KES 3,800-25,800 / mo</span>
+
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <div>
+                <h3 className="text-xl font-medium text-white">The Markopilot Growth Agent</h3>
+                <p className="text-xs text-[#a89eff] font-mono mt-0.5">24/7 Autonomous Perception &amp; Execution</p>
+              </div>
+              <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+                From KES 3,800 / mo
+              </span>
             </div>
-            <ul className="space-y-4 text-sm text-gray-200">
+
+            <ul className="space-y-4 text-sm text-gray-200 font-light">
               <li className="flex items-start gap-3">
-                <CheckCircle2 size={16} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <span>Agent monitors your market 24/7 — never sleeps, never takes a break.</span>
+                <CheckCircle2 size={17} className="text-emerald-400 flex-shrink-0 mt-0.5" />
+                <span><strong>Sub-10 minute latency:</strong> Automatically detects competitor pricing shifts and intercepts prospects before rivals notice.</span>
               </li>
               <li className="flex items-start gap-3">
-                <CheckCircle2 size={16} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <span>Spots opportunities humans miss — creator signals, trending topics, competitive gaps.</span>
+                <CheckCircle2 size={17} className="text-emerald-400 flex-shrink-0 mt-0.5" />
+                <span><strong>Full-stack agent engine:</strong> Signal surveillance, contact discovery, verified enrichment, copy generation, and execution in one system.</span>
               </li>
               <li className="flex items-start gap-3">
-                <CheckCircle2 size={16} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <span>Drafts and executes growth actions autonomously across social, email, and outreach.</span>
+                <CheckCircle2 size={17} className="text-emerald-400 flex-shrink-0 mt-0.5" />
+                <span><strong>Generative Engine Optimization (GEO):</strong> Ensures your product is cited as the top recommendation in ChatGPT, Perplexity, and Claude.</span>
               </li>
               <li className="flex items-start gap-3">
-                <CheckCircle2 size={16} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <span>You stay in control — approve, edit, or let the agent run on full autopilot.</span>
+                <CheckCircle2 size={17} className="text-emerald-400 flex-shrink-0 mt-0.5" />
+                <span><strong>Continuous reinforcement learning:</strong> Refines tone, messaging, and outbound targeting based on real pipeline attribution.</span>
               </li>
             </ul>
           </div>
+
         </div>
       </section>
 
-      {/* ========================================================================= */}
-      {/* SECTION: 3-Step Setup (How It Works)                                      */}
-      {/* ========================================================================= */}
-      <section id="how-it-works" className="py-24 max-w-7xl mx-auto px-6 relative z-10 border-t border-white/5 scroll-mt-20">
-        <div className="text-center max-w-3xl mx-auto space-y-4 mb-20">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-mono uppercase tracking-wider">
-            <Zap size={14} /> Quick Setup
+      {/* ── Pricing Section ───────────────────────────────────────────────────── */}
+      <section id="pricing" className="py-28 max-w-7xl mx-auto px-6 relative z-10 border-t border-white/5 scroll-mt-20">
+        <div className="text-center max-w-3xl mx-auto mb-20 space-y-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-gray-300 text-xs font-mono uppercase tracking-wider">
+            <ShieldCheck size={14} className="text-emerald-400" /> Transparent Pricing
           </div>
-          <h2 className="font-serif text-4xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">
-            Get started in 2 minutes.
+          <h2 className="font-serif text-4xl sm:text-6xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 font-normal">
+            Deploy Your Agent in Minutes.
           </h2>
-          <p className="text-gray-400 text-base md:text-lg">
-            No technical knowledge or long setup required.
+          <p className="text-gray-300 text-base sm:text-lg font-light leading-relaxed">
+            All plans include a 7-day risk-free trial. Instant activation via Safaricom M-PESA STK Push or Buy Goods Till.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 relative">
-          <div className="bg-white/[0.02] border border-white/10 rounded-3xl p-8 space-y-5 hover:border-white/20 transition group">
-            <div className="w-12 h-12 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center font-mono font-bold text-lg border border-purple-500/30 group-hover:scale-110 transition">
-              01
-            </div>
-            <h3 className="text-xl font-semibold text-white">Tell It Your Goal</h3>
-            <p className="text-gray-400 text-sm leading-relaxed">
-              &quot;Grow MarkoPilot in Kenya.&quot; &quot;Get 100 SaaS leads this month.&quot; &quot;Become the go-to tool for freelancers.&quot; The agent takes it from there.
-            </p>
-          </div>
+        <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
+          {PLANS.map((plan) => {
+            const isFeatured = plan.featured;
+            const descriptions: Record<string, string> = {
+              starter: "Perfect for solo builders launching their first autonomous market presence.",
+              growth: "Designed for scaling startups that require daily autonomous outbound and competitor intercept.",
+              scale: "For high-velocity agencies and multi-brand enterprises running a fleet of growth agents.",
+            };
 
-          <div className="bg-white/[0.02] border border-white/10 rounded-3xl p-8 space-y-5 hover:border-white/20 transition group">
-            <div className="w-12 h-12 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-mono font-bold text-lg border border-blue-500/30 group-hover:scale-110 transition">
-              02
-            </div>
-            <h3 className="text-xl font-semibold text-white">The Agent Gets to Work</h3>
-            <p className="text-gray-400 text-sm leading-relaxed">
-              Starts watching your market, classifying signals, identifying opportunities, and drafting actions — all autonomously.
-            </p>
-          </div>
-
-          <div className="bg-white/[0.02] border border-white/10 rounded-3xl p-8 space-y-5 hover:border-white/20 transition group">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-mono font-bold text-lg border border-emerald-500/30 group-hover:scale-110 transition">
-              03
-            </div>
-            <h3 className="text-xl font-semibold text-white">Approve, Adjust, or Let It Run</h3>
-            <p className="text-gray-400 text-sm leading-relaxed">
-              Review the agent&apos;s actions in your feed. Approve what matters, edit what needs tweaking, and let the rest run on autopilot.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* SECTION: Pricing                                                          */}
-      {/* ========================================================================= */}
-      <section id="pricing" className="py-28 relative z-10 border-t border-white/5 bg-gradient-to-b from-white/[0.02] to-transparent scroll-mt-20">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-20 space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-gray-300 text-xs font-mono uppercase tracking-wider">
-              <ShieldCheck size={14} className="text-emerald-400" /> Simple Pricing
-            </div>
-            <h2 className="font-serif text-4xl md:text-6xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 drop-shadow-lg">
-              Simple, transparent plans.
-            </h2>
-            <p className="text-gray-400 text-lg md:text-xl font-light max-w-2xl mx-auto">
-              All plans include a 7-day free trial. Instant activation with Safaricom M-PESA STK Push or Business Till.
-            </p>
-          </div>
-
-          <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto items-center">
-            {PLANS.map((plan) => {
-              const isFeatured = plan.featured;
-              const descriptions: Record<string, string> = {
-                starter: "Great for solo builders who want an AI agent monitoring their market.",
-                growth: "Best for growing businesses that need daily autonomous growth actions.",
-                scale: "Designed for agencies and companies running multiple growth agents.",
-              };
-              return (
-                <div
-                  key={plan.id}
-                  suppressHydrationWarning
-                  className={isFeatured
-                    ? "group bg-gradient-to-b from-[var(--bg-elevated)] to-[#07070a] border border-[var(--accent-primary)]/70 rounded-[32px] p-8 md:p-10 flex flex-col relative shadow-[0_0_50px_rgba(168,85,247,0.25)] ring-2 ring-[var(--accent-primary)]/30 lg:scale-105 z-10 h-full backdrop-blur-2xl transition-all duration-500"
-                    : "bg-white/[0.02] backdrop-blur-xl border border-white/10 hover:border-white/20 transition-colors rounded-[32px] p-8 md:p-10 flex flex-col h-full hover:-translate-y-1 duration-500"
-                  }
-                >
-                  {isFeatured && (
-                    <>
-                      <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-primary)]/10 to-transparent rounded-[32px] opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
-                      <div className="absolute -top-4 inset-x-0 flex justify-center">
-                        <span className="bg-[var(--accent-primary)] text-white text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full shadow-xl flex items-center gap-1.5">
-                          <ShieldCheck size={14} /> Most Popular
-                        </span>
-                      </div>
-                    </>
-                  )}
-                  <h3 className={`text-xl font-medium text-white mb-2 ${isFeatured ? 'pb-1 relative z-10' : ''}`}>{plan.name}</h3>
-                  <p className={`text-sm mb-6 ${isFeatured ? 'text-gray-300 relative z-10' : 'text-gray-400'}`}>{descriptions[plan.id] || ''}</p>
-                  <div suppressHydrationWarning className={`font-serif text-white mb-8 ${isFeatured ? 'text-5xl md:text-6xl relative z-10 drop-shadow-md' : 'text-4xl md:text-5xl'}`}>
-                    {plan.price}<span className={`text-lg font-sans font-light ${isFeatured ? 'text-gray-300' : 'text-gray-500'}`}>/mo</span>
+            return (
+              <div
+                key={plan.id}
+                className={
+                  isFeatured
+                    ? "relative rounded-3xl bg-gradient-to-b from-[#181628] via-[#0f0e1a] to-[#07070a] border-2 border-[#7c6eff] p-8 md:p-10 flex flex-col justify-between shadow-[0_0_60px_rgba(124,110,255,0.25)] lg:-translate-y-2 z-10"
+                    : "rounded-3xl bg-white/[0.02] border border-white/10 hover:border-white/20 transition-all p-8 md:p-10 flex flex-col justify-between"
+                }
+              >
+                {isFeatured && (
+                  <div className="absolute -top-3.5 inset-x-0 flex justify-center">
+                    <span className="bg-[#7c6eff] text-white text-[10px] font-bold font-mono uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
+                      <Sparkles size={12} /> Recommended
+                    </span>
                   </div>
-                  <ul className={`space-y-4 mb-10 flex-1 ${isFeatured ? 'relative z-10' : ''}`}>
-                    <li className={`flex items-center gap-3 text-sm ${isFeatured ? 'text-white font-medium' : 'text-gray-300 font-light'}`}>
-                      <Check size={18} className="text-emerald-400 flex-shrink-0" /> {plan.brands}
+                )}
+
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-2xl font-medium text-white">{plan.name}</h3>
+                    <span className="text-xs font-mono px-2.5 py-0.5 rounded-md bg-white/5 text-gray-300">
+                      {plan.brands}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-400 mb-8 min-h-[36px] font-light leading-relaxed">
+                    {descriptions[plan.id] || "Autonomous growth operations for your brand."}
+                  </p>
+
+                  <div className="mb-8 font-serif text-white">
+                    <span className="text-5xl font-normal">{plan.price}</span>
+                    <span className="text-sm font-sans font-light text-gray-400 ml-2">/ month</span>
+                  </div>
+
+                  <ul className="space-y-3.5 mb-10 text-xs text-gray-300 font-light">
+                    <li className="flex items-center gap-3">
+                      <Check size={16} className="text-emerald-400 flex-shrink-0" />
+                      <span><strong>{plan.posts}</strong> Autonomous Interventions / mo</span>
                     </li>
-                    <li className={`flex items-center gap-3 text-sm ${isFeatured ? 'text-white font-medium' : 'text-gray-300 font-light'}`}>
-                      <Check size={18} className="text-emerald-400 flex-shrink-0" /> {plan.posts} / month
+                    <li className="flex items-center gap-3">
+                      <Check size={16} className="text-emerald-400 flex-shrink-0" />
+                      <span><strong>{plan.leads}</strong> Verified Decision-Makers Enriched</span>
                     </li>
-                    <li className={`flex items-center gap-3 text-sm ${isFeatured ? 'text-white font-medium' : 'text-gray-300 font-light'}`}>
-                      <Check size={18} className="text-emerald-400 flex-shrink-0" /> {plan.leads} / month
+                    <li className="flex items-center gap-3">
+                      <Check size={16} className="text-emerald-400 flex-shrink-0" />
+                      <span><strong>{plan.impactAlerts}</strong> (Competitor Diffs &amp; Trends)</span>
                     </li>
-                    <li className={`flex items-center gap-3 text-sm ${isFeatured ? 'text-white font-medium' : 'text-gray-300 font-light'}`}>
-                      <Check size={18} className="text-emerald-400 flex-shrink-0" /> X, LinkedIn, IG, TikTok &amp; Email
+                    <li className="flex items-center gap-3">
+                      <Check size={16} className="text-emerald-400 flex-shrink-0" />
+                      <span>Generative Engine Optimization (GEO/AEO)</span>
                     </li>
-                    <li className={`flex items-center gap-3 text-sm ${isFeatured ? 'text-white font-medium' : 'text-gray-300 font-light'}`}>
-                      <Check size={18} className="text-emerald-400 flex-shrink-0" /> AI Search (ChatGPT &amp; Google) Ranking
+                    <li className="flex items-center gap-3">
+                      <Check size={16} className="text-emerald-400 flex-shrink-0" />
+                      <span>Verified Mailbox Outreach &amp; Deliverability Engine</span>
                     </li>
-                    <li className={`flex items-center gap-3 text-sm ${isFeatured ? 'text-white font-medium' : 'text-gray-300 font-light'}`}>
-                      <Check size={18} className="text-emerald-400 flex-shrink-0" /> {plan.impactAlerts}
+                    <li className="flex items-center gap-3">
+                      <Check size={16} className="text-emerald-400 flex-shrink-0" />
+                      <span>Full Autonomy Control Dial (L1 – L3)</span>
                     </li>
                   </ul>
-                  <NavLink
-                    href="#"
-                    isAuth={true}
-                    className={isFeatured
-                      ? "w-full block text-center py-4 rounded-xl bg-[var(--accent-primary)] text-white font-semibold hover:opacity-95 hover:scale-[1.02] transition-all shadow-lg active:scale-95 relative z-10"
-                      : "w-full block text-center py-4 rounded-xl bg-white/5 border border-white/10 text-white font-medium hover:bg-white/10 transition-all active:scale-95"
-                    }
-                  >
-                    Activate Growth Agent
-                  </NavLink>
                 </div>
-              );
-            })}
-          </div>
 
-          {/* International Waitlist */}
-          <div className="mt-12 text-center text-xs text-gray-400">
-            <span>Outside M-PESA supported countries? </span>
-            <Link href="/coming-soon-country" className="text-emerald-400 hover:text-emerald-300 font-medium underline inline-flex items-center gap-1">
-              Join our International Priority Waitlist <ArrowRight size={12} />
-            </Link>
-          </div>
+                <button
+                  onClick={handleSignIn}
+                  className={
+                    isFeatured
+                      ? "w-full py-4 rounded-full bg-[#7c6eff] text-white font-semibold text-sm hover:bg-[#6e5ff0] transition-all shadow-[0_0_30px_rgba(124,110,255,0.4)] cursor-pointer active:scale-95 flex items-center justify-center gap-2"
+                      : "w-full py-4 rounded-full bg-white/5 border border-white/10 text-white font-medium text-sm hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-2"
+                  }
+                >
+                  <GoogleLogo />
+                  <span>Start 7-Day Free Trial</span>
+                </button>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* International Priority Waitlist Banner */}
+        <div className="mt-16 text-center text-xs text-gray-400">
+          <span>Operating outside M-PESA supported countries? </span>
+          <Link href="/coming-soon-country" className="text-emerald-400 hover:text-emerald-300 font-medium underline inline-flex items-center gap-1">
+            Join the International Priority Waitlist <ArrowRight size={12} />
+          </Link>
         </div>
       </section>
 
-      {/* ========================================================================= */}
-      {/* SECTION: Safe & Responsible Outreach                                      */}
-      {/* ========================================================================= */}
-      <section id="compliance" className="py-24 max-w-7xl mx-auto px-6 relative z-10 border-t border-white/5">
-        <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono uppercase tracking-wider">
-            <ShieldCheck size={14} /> Safe &amp; Responsible
-          </div>
-          <h2 className="font-serif text-4xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">
-            Email outreach that respects people's inboxes.
-          </h2>
-          <p className="text-gray-400 text-base md:text-lg">
-            Markopilot finds public business contacts, checks fit, and gives people a clear way to opt out.
-          </p>
-        </div>
-
-        <div className="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto mb-8">
-          <div className="rounded-3xl bg-white/[0.03] border border-white/10 p-8 md:p-10 space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-300 flex items-center justify-center">
-                <Search size={20} />
-              </div>
-              <div>
-                <p className="text-xs font-mono uppercase tracking-wider text-blue-300">How Finding Leads Works</p>
-                <h3 className="text-2xl font-serif text-white">Public, verified business contacts.</h3>
-              </div>
-            </div>
-            <div className="space-y-4">
-              <div className="flex gap-3">
-                <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-gray-300 leading-relaxed">Searches public business websites and professional profiles. Made strictly for finding business contacts, not consumer emails.</p>
-              </div>
-              <div className="flex gap-3">
-                <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-gray-300 leading-relaxed">Every person is scored against your customer criteria before any message is drafted.</p>
-              </div>
-              <div className="flex gap-3">
-                <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-gray-300 leading-relaxed">Emails are verified and checked to avoid duplicate messages.</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-3xl bg-emerald-500/[0.05] border border-emerald-400/20 p-8 md:p-10 space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-400/20 text-emerald-300 flex items-center justify-center">
-                <ShieldCheck size={20} />
-              </div>
-              <div>
-                <p className="text-xs font-mono uppercase tracking-wider text-emerald-300">How Sending Stays Safe</p>
-                <h3 className="text-2xl font-serif text-white">Reviewable and easy to opt out.</h3>
-              </div>
-            </div>
-            <div className="space-y-4">
-              <div className="flex gap-3">
-                <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-gray-300 leading-relaxed">Review Mode lets you read and approve every email before it sends. Autopilot is available whenever you are ready.</p>
-              </div>
-              <div className="flex gap-3">
-                <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-gray-300 leading-relaxed">Emails include your real business name, truthful subject lines, and a 1-click unsubscribe button.</p>
-              </div>
-              <div className="flex gap-3">
-                <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-gray-300 leading-relaxed">Safe sending limits prevent email spikes and protect your account from getting blocked.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          <div className="p-7 rounded-2xl bg-white/[0.02] border border-white/10 space-y-4">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-              <Globe size={18} />
-            </div>
-            <h3 className="text-lg font-medium text-white">Public Sources Only</h3>
-            <p className="text-xs text-gray-400 leading-relaxed">
-              No bought spam lists or mystery databases. The system only looks at public business information.
-            </p>
-          </div>
-
-          <div className="p-7 rounded-2xl bg-white/[0.02] border border-white/10 space-y-4">
-            <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
-              <Ban size={18} />
-            </div>
-            <h3 className="text-lg font-medium text-white">1-Click Unsubscribe</h3>
-            <p className="text-xs text-gray-400 leading-relaxed">
-              If someone unsubscribes, they are instantly removed and will never be emailed again.
-            </p>
-          </div>
-
-          <div className="p-7 rounded-2xl bg-white/[0.02] border border-white/10 space-y-4">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-300">
-              <Mail size={18} />
-            </div>
-            <h3 className="text-lg font-medium text-white">Sent From Your Email</h3>
-            <p className="text-xs text-gray-400 leading-relaxed">
-              Emails go out through your connected Gmail or work address with your real name for transparency.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* SECTION: FAQ Accordion                                                    */}
-      {/* ========================================================================= */}
+      {/* ── FAQ Section ───────────────────────────────────────────────────────── */}
       <section id="faq" className="py-24 max-w-4xl mx-auto px-6 relative z-10 border-t border-white/5 scroll-mt-20">
         <div className="text-center space-y-4 mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-gray-300 text-xs font-mono uppercase tracking-wider">
-            <Sparkles size={14} className="text-purple-400" /> Common Questions
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-gray-300 text-xs font-mono uppercase tracking-wider">
+            <Sparkles size={14} className="text-[#a89eff]" /> Clear Answers
           </div>
-          <h2 className="font-serif text-4xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">
+          <h2 className="font-serif text-4xl sm:text-5xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 font-normal">
             Frequently Asked Questions
           </h2>
-          <p className="text-gray-400 text-base md:text-lg">
-            Everything you need to know about Markopilot.
+          <p className="text-gray-400 text-base sm:text-lg font-light">
+            Everything you need to know about deploying your autonomous growth co-pilot.
           </p>
         </div>
 
@@ -1244,11 +1035,11 @@ export default function LandingPage() {
                   <span>{faq.q}</span>
                   <ChevronDown
                     size={20}
-                    className={`text-gray-400 flex-shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180 text-purple-400' : ''}`}
+                    className={`text-gray-400 flex-shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180 text-[#a89eff]" : ""}`}
                   />
                 </button>
                 {isOpen && (
-                  <div className="px-6 pb-6 text-sm md:text-base text-gray-300 font-light leading-relaxed border-t border-white/5 pt-4 animate-in fade-in duration-200">
+                  <div className="px-6 pb-6 text-sm text-gray-300 font-light leading-relaxed border-t border-white/5 pt-4 animate-in fade-in duration-200">
                     {faq.a}
                   </div>
                 )}
@@ -1258,76 +1049,81 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-32 text-center px-6 relative z-10 overflow-hidden mt-10 border-t border-white/5 bg-gradient-to-b from-transparent via-purple-950/10 to-transparent">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(124,110,255,0.1),transparent_70%)] pointer-events-none"></div>
+      {/* ── Final Call to Action ──────────────────────────────────────────────── */}
+      <section className="py-28 text-center px-6 relative z-10 border-t border-white/5 bg-gradient-to-b from-transparent via-[#7c6eff]/5 to-transparent">
         <div className="relative z-10 space-y-8 max-w-4xl mx-auto flex flex-col items-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-gray-300">
-            <Sparkle size={13} className="text-purple-400" /> Your growth function, automated
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-gray-300">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            Growth Engine v2.4 Active &amp; Operational
           </div>
-          <h2 className="font-serif text-5xl md:text-7xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 drop-shadow-xl">
-            Deploy your AI growth agent today.
+
+          <h2 className="font-serif text-5xl sm:text-6xl md:text-7xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 font-normal tracking-tight">
+            Deploy your growth agent today.
           </h2>
-          <p className="text-gray-400 text-lg md:text-xl font-light max-w-xl">
-            Tell it your goal. It watches, understands, decides, and acts — while you build.
+
+          <p className="text-gray-300 text-lg md:text-xl font-light max-w-xl leading-relaxed">
+            Stop losing hours on manual marketing gruntwork. Set your objective and let MarkoPilot handle the rest.
           </p>
-          <NavLink href="#" isAuth={true} isPrimary className="group inline-flex items-center gap-3 px-10 py-5 rounded-full bg-white text-black font-semibold text-lg hover:scale-[1.04] transition-all shadow-[0_0_50px_rgba(255,255,255,0.25)] active:scale-95">
-            Activate Your Growth Agent <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-          </NavLink>
+
+          <button
+            onClick={handleSignIn}
+            className="group inline-flex items-center gap-3 px-9 py-4 rounded-full bg-white text-black font-semibold text-lg hover:scale-[1.03] transition-all shadow-[0_0_50px_rgba(255,255,255,0.3)] active:scale-95 cursor-pointer"
+          >
+            <GoogleLogo />
+            <span>Deploy Growth Agent</span>
+            <ArrowRight size={19} className="group-hover:translate-x-1 transition-transform" />
+          </button>
         </div>
       </section>
 
-      {/* Footer */}
+      {/* ── Footer ───────────────────────────────────────────────────────────── */}
       <footer className="relative z-10 border-t border-white/5 bg-[#07070a] pt-16 pb-12">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-10 pb-12 border-b border-white/5">
-            {/* Brand column */}
             <div className="md:col-span-5 space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white shadow-sm">
-                  <Rocket size={16} />
+                <div className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white">
+                  <Bot size={18} />
                 </div>
                 <span className="text-xl font-serif tracking-tight font-medium text-white">Markopilot</span>
               </div>
               <p className="text-gray-400 text-sm max-w-sm font-light leading-relaxed">
-                An AI growth agent that continuously monitors your market, identifies opportunities, and takes growth actions on your behalf.
+                Autonomous AI growth co-pilot for founders, creators, and modern engineering companies.
               </p>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>Growth Agent Active</span>
+                <span>System Operational • 99.98% Telemetry</span>
               </div>
             </div>
 
-            {/* Links column: Product */}
             <div className="md:col-span-4 md:col-start-7 space-y-3">
-              <div className="text-xs uppercase tracking-wider text-gray-300 font-semibold font-mono">Product &amp; Features</div>
-              <ul className="space-y-2.5 text-sm text-gray-400">
-                <li><Link href="#features" className="hover:text-white transition-colors">Features</Link></li>
-                <li><Link href="#how-it-works" className="hover:text-white transition-colors">How It Works</Link></li>
-                <li><Link href="#compliance" className="hover:text-white transition-colors">Safe Outreach</Link></li>
-                <li><Link href="#pricing" className="hover:text-white transition-colors">Plans &amp; Pricing</Link></li>
-                <li><Link href="#faq" className="hover:text-white transition-colors">FAQ</Link></li>
+              <div className="text-xs uppercase tracking-wider text-gray-300 font-semibold font-mono">Platform Architecture</div>
+              <ul className="space-y-2.5 text-sm text-gray-400 font-light">
+                <li><Link href="#mission-control" className="hover:text-white transition-colors">Mission Control</Link></li>
+                <li><Link href="#architecture" className="hover:text-white transition-colors">The 4-Stage Loop</Link></li>
+                <li><Link href="#playbooks" className="hover:text-white transition-colors">Autonomous Playbooks</Link></li>
+                <li><Link href="#governance" className="hover:text-white transition-colors">Safety &amp; Governance</Link></li>
+                <li><Link href="#pricing" className="hover:text-white transition-colors">Pricing &amp; Plans</Link></li>
               </ul>
             </div>
 
-            {/* Links column: Legal & Contact */}
             <div className="md:col-span-2 space-y-3">
-              <div className="text-xs uppercase tracking-wider text-gray-300 font-semibold font-mono">Company &amp; Legal</div>
-              <ul className="space-y-2.5 text-sm text-gray-400">
+              <div className="text-xs uppercase tracking-wider text-gray-300 font-semibold font-mono">Legal &amp; Support</div>
+              <ul className="space-y-2.5 text-sm text-gray-400 font-light">
                 <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
-                <li><Link href="/terms" className="hover:text-white transition-colors">Terms &amp; Conditions</Link></li>
-                <li><a href="mailto:hello@markopilot.com" className="hover:text-white transition-colors">Contact Support</a></li>
+                <li><Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
+                <li><a href="mailto:hello@markopilot.com" className="hover:text-white transition-colors">Contact Engineering</a></li>
               </ul>
             </div>
           </div>
 
-          {/* Bottom copyright row */}
-          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-400 font-sans">
-            <p>© {new Date().getFullYear()} Markopilot Ltd. Registered address: Mirage Tower, Chiromo Rd, Nairobi, Kenya.</p>
-            <p className="text-gray-400">Your AI growth agent. Built for founders, creators, and indie builders.</p>
+          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500 font-sans">
+            <p>© {new Date().getFullYear()} Markopilot Ltd. Mirage Tower, Chiromo Rd, Nairobi, Kenya.</p>
+            <p className="text-gray-500 font-mono">Autonomous AI Growth Engine.</p>
           </div>
         </div>
       </footer>
+
     </div>
   );
 }

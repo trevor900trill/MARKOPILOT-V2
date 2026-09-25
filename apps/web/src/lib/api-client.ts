@@ -3,7 +3,7 @@
 import { getSession } from "next-auth/react";
 import { toast } from "sonner";
 
-const envApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5030";
+const envApiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.markopilot.com";
 const API_BASE_URL = envApiUrl.endsWith("/api") ? envApiUrl : `${envApiUrl}/api`;
 
 async function getToken(): Promise<string | null> {
