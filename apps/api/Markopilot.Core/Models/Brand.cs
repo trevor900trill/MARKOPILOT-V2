@@ -32,6 +32,15 @@ public class Brand
     public bool AutomationPostReviewEnabled { get; set; } = false;
     public string? BusinessAddress { get; set; }
 
+    // ── Autonomous Growth Agent Fields ───────────
+    public string? GrowthGoal { get; set; }
+    public string? TargetMarketContext { get; set; }
+    public List<string> CompetitorUrls { get; set; } = [];
+    public List<string> WatchKeywords { get; set; } = [];
+    public List<string> WatchHashtags { get; set; } = [];
+    public AgentAutonomyLevel AgentAutonomyLevel { get; set; } = AgentAutonomyLevel.ApproveOutreach;
+    public bool AgentEnabled { get; set; } = true;
+
     // Social tokens (stored encrypted)
     public string? TwitterAccessToken { get; set; }
     public string? TwitterRefreshToken { get; set; }

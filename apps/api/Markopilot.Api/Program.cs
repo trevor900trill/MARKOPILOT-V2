@@ -61,6 +61,7 @@ builder.Services.AddSingleton<IOutreachRepository>(sp => sp.GetRequiredService<S
 builder.Services.AddSingleton<INotificationRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
 builder.Services.AddSingleton<IEmailPatternRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
 builder.Services.AddSingleton<IBrandImpactRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
+builder.Services.AddSingleton<IAgentRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
 builder.Services.AddHttpClient<IBrandImpactService, Markopilot.Infrastructure.Services.BrandImpactService>();
 
 builder.Services.AddSingleton<ITokenEncryptionService>(sp =>
@@ -85,6 +86,7 @@ builder.Services.AddSingleton<Markopilot.Core.Interfaces.IContentGenerationServi
 builder.Services.AddHttpClient<Markopilot.Core.Interfaces.ISearchClient, Markopilot.Infrastructure.Search.SerperClient>();
 builder.Services.AddHttpClient<Markopilot.Core.Interfaces.ISearchClient, Markopilot.Infrastructure.Search.ExaClient>();
 builder.Services.AddHttpClient<Markopilot.Infrastructure.Mpesa.DarajaMpesaClient>();
+builder.Services.AddHttpClient<Markopilot.Core.Interfaces.IModelRegistryService, Markopilot.Infrastructure.OpenRouter.ModelRegistryService>();
 builder.Services.AddHttpClient<Markopilot.Core.Interfaces.IAiRoutingService, Markopilot.Infrastructure.OpenRouter.AiRoutingService>();
 builder.Services.AddHttpClient<Markopilot.Infrastructure.Search.JinaReaderClient>();
 builder.Services.AddHttpClient<Markopilot.Core.Interfaces.ILeadDiscoveryService, Markopilot.Infrastructure.Services.LeadDiscoveryService>()
@@ -116,6 +118,39 @@ builder.Services.AddTransient<Markopilot.Core.Interfaces.ISocialPostingWorker, M
 builder.Services.AddTransient<Markopilot.Core.Interfaces.IOutreachWorker, Markopilot.Workers.Workers.OutreachWorker>();
 builder.Services.AddTransient<Markopilot.Core.Interfaces.IEmailEnrichmentWorker, Markopilot.Workers.Workers.EmailEnrichmentWorker>();
 builder.Services.AddTransient<Markopilot.Core.Interfaces.IBounceProcessorWorker, Markopilot.Workers.Workers.BounceProcessorWorker>();
+
+// ── Autonomous Growth Agent Pipeline ─────────────
+builder.Services.AddHttpClient<Markopilot.Infrastructure.Collectors.RssCollector>();
+builder.Services.AddSingleton<Markopilot.Infrastructure.Collectors.WebSearchCollector>();
+builder.Services.AddHttpClient<Markopilot.Infrastructure.Collectors.RedditCollector>();
+builder.Services.AddSingleton<Markopilot.Infrastructure.Collectors.CompetitorDiffCollector>();
+builder.Services.AddSingleton<Markopilot.Infrastructure.Collectors.TwitterMentionCollector>();
+builder.Services.AddSingleton<IEnumerable<ISignalCollector>>(sp => new ISignalCollector[]
+{
+    sp.GetRequiredService<Markopilot.Infrastructure.Collectors.RssCollector>(),
+    sp.GetRequiredService<Markopilot.Infrastructure.Collectors.WebSearchCollector>(),
+    sp.GetRequiredService<Markopilot.Infrastructure.Collectors.RedditCollector>(),
+    sp.GetRequiredService<Markopilot.Infrastructure.Collectors.CompetitorDiffCollector>(),
+    sp.GetRequiredService<Markopilot.Infrastructure.Collectors.TwitterMentionCollector>()
+});
+
+builder.Services.AddSingleton<ISignalCollectorService, Markopilot.Infrastructure.Services.SignalCollectorService>();
+builder.Services.AddSingleton<ISignalProcessorService, Markopilot.Infrastructure.Services.SignalProcessorService>();
+builder.Services.AddSingleton<IOpportunityEngineService, Markopilot.Infrastructure.Services.OpportunityEngineService>();
+builder.Services.AddSingleton<IOutcomeTrackerService, Markopilot.Infrastructure.Services.OutcomeTrackerService>();
+
+builder.Services.AddSingleton<Markopilot.Infrastructure.Executors.PostDraftExecutor>();
+builder.Services.AddSingleton<Markopilot.Infrastructure.Executors.ReplyDraftExecutor>();
+builder.Services.AddSingleton<Markopilot.Infrastructure.Executors.OutreachExecutor>();
+builder.Services.AddSingleton<Markopilot.Infrastructure.Executors.NotificationExecutor>();
+builder.Services.AddSingleton<IEnumerable<IActionExecutor>>(sp => new IActionExecutor[]
+{
+    sp.GetRequiredService<Markopilot.Infrastructure.Executors.PostDraftExecutor>(),
+    sp.GetRequiredService<Markopilot.Infrastructure.Executors.ReplyDraftExecutor>(),
+    sp.GetRequiredService<Markopilot.Infrastructure.Executors.OutreachExecutor>(),
+    sp.GetRequiredService<Markopilot.Infrastructure.Executors.NotificationExecutor>()
+});
+builder.Services.AddSingleton<IActionDispatcherService, Markopilot.Infrastructure.Services.ActionDispatcherService>();
 
 // ── API ──────────────────────────────────────────
 builder.Services.AddControllers();

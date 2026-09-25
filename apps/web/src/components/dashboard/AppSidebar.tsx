@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutDashboard, Send, Users, Activity, Settings, ChevronDown, ChevronsLeft, ChevronsRight, Mail, Briefcase, Calendar, HelpCircle, Rocket, Radar, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, Send, Users, Activity, Settings, ChevronDown, ChevronsLeft, ChevronsRight, Mail, Briefcase, Calendar, HelpCircle, Rocket, Radar, ShieldCheck, Bot } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -26,6 +26,7 @@ export function AppSidebar() {
 
   const links = [
     { name: "Overview", href: "/dashboard", icon: LayoutDashboard, exact: true },
+    { name: "Growth Agent", href: "/dashboard/agent", icon: Bot },
     { name: "Brands", href: "/dashboard/brands", icon: Briefcase },
     { name: "Calendar & Schedule", href: "/dashboard/calendar", icon: Calendar },
     { name: "Social Posting", href: "/dashboard/social", icon: Send },

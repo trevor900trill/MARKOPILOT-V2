@@ -14,6 +14,19 @@ public interface IAiRoutingService
 {
     Task<AiCompletionResponse> CompleteAsync(AiCompletionRequest request);
     string GetModelForTask(AiTask task);
+    string GetFallbackModelForTask(AiTask task);
+    Task<string> DecideModelWithJevAsync(AiTask task, string promptSnippet, string[] candidateModels);
+}
+
+/// <summary>
+/// Maintains and caches OpenRouter's live model catalog and pricing.
+/// </summary>
+public interface IModelRegistryService
+{
+    Task RefreshRegistryAsync();
+    Task<string[]> FilterActiveModelsAsync(string[] patterns);
+    Task<ModelPricing?> GetModelPricingAsync(string modelId);
+    Task<List<string>> GetDeprecatedModelsAsync(string[] patterns);
 }
 
 /// <summary>

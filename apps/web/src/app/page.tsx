@@ -28,7 +28,14 @@ import {
   XCircle,
   BarChart3,
   Clock,
-  Flame
+  Flame,
+  Eye,
+  Brain,
+  Target,
+  Activity,
+  Shield,
+  LineChart,
+  RefreshCw
 } from "lucide-react";
 import { PLANS } from "@/lib/plans";
 import { XIcon, LinkedInIcon, InstagramIcon, TikTokIcon } from "@/components/icons/SocialIcons";
@@ -38,7 +45,7 @@ export default function LandingPage() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [mounted, setMounted] = useState(false);
   const [typedText, setTypedText] = useState("");
-  const fullText = "Running Itself.";
+  const fullText = "Always Watching. Always Acting.";
 
   // State for FAQ Accordion
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -116,20 +123,20 @@ export default function LandingPage() {
 
   const faqs = [
     {
-      q: "Do I have to approve every post, or can it post automatically?",
-      a: "You are in complete control. With 'Review Mode' turned on, every post, image, video, and email waits in a morning queue for your 1-click approval. Whenever you feel ready, you can switch on 'Autopilot' and let Markopilot post and send on its own."
+      q: "How much control do I have over the agent?",
+      a: "You set your autonomy level. 'Approve Everything' means the agent proposes and you decide. 'Approve Outreach' means posts go out automatically but emails wait for your okay. 'Full Auto' means the agent runs your growth function end to end. You can change this anytime."
     },
     {
       q: "How does posting on social media help my brand get recommended by ChatGPT?",
       a: "When potential customers ask AI tools like ChatGPT, Perplexity, or Google for recommendations, the AI checks live internet conversations to see which products are real, active, and trusted. Regular social activity gives AI engines the fresh proof they need to recommend your brand."
     },
     {
-      q: "How are images and videos made?",
-      a: "Markopilot creates clean 4K visuals and short videos with captions automatically using your product notes. You don't need any design skills or video editing software."
+      q: "What does the agent actually do?",
+      a: "It watches your market 24/7 — news, social media, competitors, Reddit, trending topics. When it spots something relevant to your growth goal, it decides what to do: draft a reactive post, identify a creator to reach out to, queue an outreach email, or update your lead pipeline. Everything is logged in your agent feed."
     },
     {
-      q: "I'm a solo founder. How much time will this save me?",
-      a: "Most solo founders spend 15 to 20 hours a week on social posts, editing graphics, and cold emails. With Markopilot, you simply add your website link once, and your weekly marketing time drops to under 15 minutes of quick reviews."
+      q: "I'm a solo founder. Can an AI really replace a marketing team?",
+      a: "Not replace — operate your growth function while you build. Solo founders spend 15 to 20 hours a week on marketing. With MarkoPilot's agent, you spend 15 minutes reviewing its decisions and approving actions. The agent handles the other 19+ hours."
     },
     {
       q: "Can I use my own email address for outreach?",
@@ -140,8 +147,8 @@ export default function LandingPage() {
       a: "Yes. Markopilot searches public business websites for verified work contacts. It removes duplicate emails, checks for real company matches, includes a one-click unsubscribe button in every email, and lets you review every message before it sends."
     },
     {
-      q: "How does the automatic schedule work without a messy calendar?",
-      a: "Markopilot automatically picks the best times when your target audience is awake and active. It spaces out your posts and outreach steadily throughout the week so you never have to organize calendar slots by hand."
+      q: "How does the agent know what's relevant to my business?",
+      a: "When you onboard, you tell the agent your growth goal — like 'Grow in Kenya' or 'Get 100 SaaS leads this month.' The agent uses this to filter everything it monitors, only surfacing signals and opportunities that match your market, industry, and business context."
     }
   ];
 
@@ -218,7 +225,7 @@ export default function LandingPage() {
 
           {/* Headline */}
           <h1 className="font-serif text-[clamp(42px,6.5vw,88px)] leading-[1.08] tracking-tight text-white font-normal">
-            Your Entire Growth Engine, <br />
+            Your AI Growth Agent. <br />
             <span className="relative inline-block mt-1">
               <span className="opacity-0 tracking-tight select-none pointer-events-none pb-2 inline-block">
                 {fullText}
@@ -236,13 +243,13 @@ export default function LandingPage() {
 
           {/* Plain English Subtitle */}
           <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto font-sans font-light leading-relaxed">
-            Markopilot automatically writes and posts for you on <strong className="text-white font-medium">X, LinkedIn, Instagram, and TikTok</strong>, finds verified business leads, and gets your brand recommended by ChatGPT and Google 24/7.
+            Tell MarkoPilot your growth goal. It continuously <strong className="text-white font-medium">monitors your market, spots opportunities</strong> your competitors miss, and takes action — drafting posts, reaching out to prospects, and growing your brand 24/7.
           </p>
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-3">
             <NavLink href="#" isAuth={true} isPrimary className="group relative w-full sm:w-auto px-7 py-3.5 rounded-full bg-white text-black font-semibold text-sm hover:bg-gray-100 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 overflow-hidden shadow-[0_0_30px_rgba(255,255,255,0.2)]">
-              Start 7-Day Free Trial <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
+              Activate Your Growth Agent <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
             </NavLink>
             <Link href="#features" className="w-full sm:w-auto px-6 py-3.5 rounded-full bg-white/5 border border-white/10 text-gray-200 font-medium text-sm hover:bg-white/10 hover:text-white hover:border-white/20 transition-all flex items-center justify-center gap-2 backdrop-blur-md">
               See How It Works
@@ -255,7 +262,7 @@ export default function LandingPage() {
             <span className="hidden sm:inline text-white/20">•</span>
             <span className="flex items-center gap-1.5 text-gray-300"><CheckCircle2 size={13} className="text-emerald-400 flex-shrink-0" /> 2-minute setup</span>
             <span className="hidden sm:inline text-white/20">•</span>
-            <span className="flex items-center gap-1.5 text-gray-300"><CheckCircle2 size={13} className="text-emerald-400 flex-shrink-0" /> Review first or run on autopilot</span>
+            <span className="flex items-center gap-1.5 text-gray-300"><CheckCircle2 size={13} className="text-emerald-400 flex-shrink-0" /> You stay in control</span>
           </div>
         </div>
 
@@ -268,10 +275,10 @@ export default function LandingPage() {
               </div>
               <div>
                 <p className="text-xs font-mono uppercase tracking-wider text-red-300 mb-2">The Problem</p>
-                <h2 className="text-xl font-serif text-white">Marketing stops when you're busy building.</h2>
+                <h2 className="text-xl font-serif text-white">You&apos;re blind to what&apos;s happening in your market.</h2>
               </div>
               <p className="text-sm text-gray-400 leading-relaxed">
-                Writing posts, creating visuals, and finding leads takes 20 hours a week. When product work picks up, marketing goes quiet.
+                Competitors launch features, creators mention your space, trends emerge — and you miss it all because you&apos;re building.
               </p>
             </div>
 
@@ -280,11 +287,11 @@ export default function LandingPage() {
                 <Bot size={20} />
               </div>
               <div>
-                <p className="text-xs font-mono uppercase tracking-wider text-purple-300 mb-2">How Markopilot Helps</p>
-                <h2 className="text-xl font-serif text-white">Turn product updates into daily marketing.</h2>
+                <p className="text-xs font-mono uppercase tracking-wider text-purple-300 mb-2">The Solution</p>
+                <h2 className="text-xl font-serif text-white">An AI agent that never sleeps.</h2>
               </div>
               <p className="text-sm text-gray-400 leading-relaxed">
-                Enter your website URL once. Markopilot automatically writes posts, makes images and videos, finds new customers, and sends emails.
+                Tell it your growth goal. It watches your market, identifies what matters, and acts — drafting content, reaching prospects, responding to opportunities.
               </p>
             </div>
 
@@ -294,10 +301,10 @@ export default function LandingPage() {
               </div>
               <div>
                 <p className="text-xs font-mono uppercase tracking-wider text-emerald-300 mb-2">The Result</p>
-                <h2 className="text-xl font-serif text-white">Get new buyers and stay recommended by AI.</h2>
+                <h2 className="text-xl font-serif text-white">Growth on autopilot, decisions in your hands.</h2>
               </div>
               <p className="text-sm text-gray-400 leading-relaxed">
-                Your brand stays active every day, gets cited when buyers ask ChatGPT for recommendations, and brings in qualified leads consistently.
+                Every opportunity spotted. Every action logged. You approve what matters, the agent handles the rest.
               </p>
             </div>
           </div>
@@ -344,13 +351,13 @@ export default function LandingPage() {
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-mono uppercase tracking-wider">
-            <Zap size={14} /> What It Does
+            <Zap size={14} /> The Agent Loop
           </div>
           <h2 className="font-serif text-4xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">
-            How Markopilot Works For You
+            Perceive. Understand. Decide. Act.
           </h2>
           <p className="text-gray-400 text-base md:text-lg">
-            Everything you need to find customers, grow your social accounts, and get noticed—made simple and automatic.
+            Your AI growth agent continuously runs a loop — watching your market, understanding what matters, and taking action autonomously.
           </p>
         </div>
 
@@ -360,13 +367,13 @@ export default function LandingPage() {
         <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           <div className="lg:col-span-6 space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-mono">
-              <Share2 size={13} /> 01 • Social Media Posting
+              <Eye size={13} /> 01 • Watches Your Market
             </div>
             <h3 className="font-serif text-3xl md:text-4xl text-white leading-tight">
-              Automatically creates and shares posts on 4 social networks.
+              Continuously scans news, social media, competitors &amp; trends.
             </h3>
             <p className="text-gray-300 text-base leading-relaxed font-light">
-              You don't need to write 4 different posts every time you have an update. Markopilot turns your website notes and feature releases into natural posts tailored for each platform.
+              The agent monitors everything relevant to your growth goal — news, social media, Reddit, blogs, competitor activity, creator posts, and industry events — 24/7 without you lifting a finger.
             </p>
             <div className="space-y-3.5 pt-2">
               <div className="flex items-start gap-3">
@@ -374,8 +381,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">Written for Each Platform</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Threads for Twitter/X, professional essays for LinkedIn, picture posts for Instagram, and short video clips for TikTok.</p>
+                  <strong className="text-white text-sm block">Multi-Source Signal Collection</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Scans Twitter/X, LinkedIn, Reddit, RSS feeds, tech blogs, and competitor websites for signals relevant to your business.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -383,8 +390,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">Makes Images &amp; Short Videos</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Automatically creates crisp 4K pictures and short video clips so you don't have to hire a designer.</p>
+                  <strong className="text-white text-sm block">Competitor Tracking</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Notices when competitors launch features, raise funding, or make moves that create opportunities for you.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -392,8 +399,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">Posts at the Best Times</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Publishes when your target audience is online and reading, giving your product the best organic reach.</p>
+                  <strong className="text-white text-sm block">Trend Detection</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Spots emerging topics and conversations in your market before they go mainstream — keeping you ahead.</p>
                 </div>
               </div>
             </div>
@@ -404,65 +411,65 @@ export default function LandingPage() {
               <div className="flex items-center justify-between border-b border-white/5 pb-4">
                 <span className="text-xs font-mono text-gray-400 flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  Automated Social Feed
+                  Live Signal Feed
                 </span>
                 <span className="text-[11px] font-mono bg-purple-500/20 text-purple-300 px-2.5 py-0.5 rounded-full">
-                  4 Channels Ready
+                  12 New Signals
                 </span>
               </div>
 
-              {/* 4 Clean Rows */}
+              {/* Signal Feed Rows */}
               <div className="space-y-2.5">
+                <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between hover:bg-white/[0.06] transition">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-orange-500/20 flex items-center justify-center text-orange-400 border border-orange-500/30">
+                      <Globe size={16} />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-white">Reddit r/KenyanSMEs</div>
+                      <div className="text-[11px] text-gray-400">&quot;Anyone using AI for marketing?&quot;</div>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded">Creator Opp</span>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between hover:bg-white/[0.06] transition">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-red-500/20 flex items-center justify-center text-red-400 border border-red-500/30">
+                      <TrendingUp size={16} />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-white">TechCrunch</div>
+                      <div className="text-[11px] text-gray-400">Competitor X raises $5M Series A</div>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono text-red-400 bg-red-500/10 px-2 py-0.5 rounded">Competitor</span>
+                </div>
+
                 <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between hover:bg-white/[0.06] transition">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-lg bg-black flex items-center justify-center text-white border border-white/10">
                       <XIcon size={16} />
                     </div>
                     <div>
-                      <div className="text-xs font-semibold text-white">Twitter / X</div>
-                      <div className="text-[11px] text-gray-400">Launch threads &amp; product highlights</div>
+                      <div className="text-xs font-semibold text-white">@sarahbuilds on X</div>
+                      <div className="text-[11px] text-gray-400">&quot;Struggling with social scheduling...&quot;</div>
                     </div>
                   </div>
-                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Ready to Post</span>
+                  <span className="text-[10px] font-mono text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded">Lead Signal</span>
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between hover:bg-white/[0.06] transition">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-[#0A66C2]/20 flex items-center justify-center text-[#0A66C2] border border-[#0A66C2]/30">
-                      <LinkedInIcon size={16} />
+                    <div className="w-9 h-9 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400 border border-emerald-500/30">
+                      <Activity size={16} />
                     </div>
                     <div>
-                      <div className="text-xs font-semibold text-white">LinkedIn</div>
-                      <div className="text-[11px] text-gray-400">Case studies &amp; business insights</div>
+                      <div className="text-xs font-semibold text-white">Trending Topic</div>
+                      <div className="text-[11px] text-gray-400">&quot;AI agents for SMEs&quot; spiking in Kenya</div>
                     </div>
                   </div>
-                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Professional Tone</span>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between hover:bg-white/[0.06] transition">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-pink-500/20 flex items-center justify-center text-pink-400 border border-pink-500/30">
-                      <InstagramIcon size={16} />
-                    </div>
-                    <div>
-                      <div className="text-xs font-semibold text-white">Instagram</div>
-                      <div className="text-[11px] text-gray-400">4K image carousels &amp; infographics</div>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-mono text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded">4K Image Made</span>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between hover:bg-white/[0.06] transition">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-cyan-500/20 flex items-center justify-center text-cyan-400 border border-cyan-500/30">
-                      <TikTokIcon size={16} />
-                    </div>
-                    <div>
-                      <div className="text-xs font-semibold text-white">TikTok &amp; Shorts</div>
-                      <div className="text-[11px] text-gray-400">Short vertical video with dynamic subtitles</div>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-mono text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded">Video Rendered</span>
+                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Market Trend</span>
                 </div>
               </div>
             </div>
@@ -507,13 +514,13 @@ export default function LandingPage() {
 
           <div className="lg:col-span-6 space-y-6 order-1 lg:order-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-mono">
-              <Globe size={13} /> 02 • AI Search Recommendations
+              <Brain size={13} /> 02 • Understands What Matters
             </div>
             <h3 className="font-serif text-3xl md:text-4xl text-white leading-tight">
-              Get recommended when people ask ChatGPT &amp; Perplexity.
+              AI classifies every signal and scores its relevance.
             </h3>
             <p className="text-gray-300 text-base leading-relaxed font-light">
-              Old-school SEO keyword stuffing doesn't work anymore. In 2026, buyers ask AI models for software recommendations. AI tools look at active social discussions to decide which products to trust and recommend.
+              Not every signal matters. The agent uses multi-model AI to classify each one — is it a creator opportunity? A competitor move? A trending topic? — and scores how relevant it is to your specific growth goal.
             </p>
             <div className="space-y-3.5 pt-2">
               <div className="flex items-start gap-3">
@@ -521,8 +528,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">AI Models Learn About Your Product</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Active discussions on X and LinkedIn make sure AI search engines know about your latest updates.</p>
+                  <strong className="text-white text-sm block">Contextual Relevance Scoring</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Each signal gets a relevance score (0-100) based on how closely it matches your growth goal, market, and brand.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -530,8 +537,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">Builds Real Online Trust</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Having matching, active social accounts proves to search engines and buyers that your brand is real.</p>
+                  <strong className="text-white text-sm block">Smart Classification</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">&quot;This creator posted about struggling with scheduling&quot; vs &quot;This competitor launched a new feature&quot; — different signal, different response.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -539,8 +546,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">Brings in Ready-to-Buy Customers</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">People looking for solutions discover your brand directly from answers given by ChatGPT and Perplexity.</p>
+                  <strong className="text-white text-sm block">Filters the Noise</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Out of hundreds of daily signals, only the ones worth acting on reach your feed or trigger autonomous actions.</p>
                 </div>
               </div>
             </div>
@@ -553,13 +560,13 @@ export default function LandingPage() {
         <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           <div className="lg:col-span-6 space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-mono">
-              <Users size={13} /> 03 • Finding Customers &amp; Outreach
+              <Target size={13} /> 03 • Generates Opportunities
             </div>
             <h3 className="font-serif text-3xl md:text-4xl text-white leading-tight">
-              Find real decision-makers &amp; send personalized emails.
+              Identifies which signals are worth acting on.
             </h3>
             <p className="text-gray-300 text-base leading-relaxed font-light">
-              No more buying stale email lists. Markopilot searches public business pages to find people who actually need your product, checks their contact details, and writes personalized emails for them.
+              The agent doesn&apos;t just watch — it thinks. It evaluates every classified signal and decides: is this a potential customer? A partnership lead? A content moment? A competitive gap worth exploiting?
             </p>
             <div className="space-y-3.5 pt-2">
               <div className="flex items-start gap-3">
@@ -567,8 +574,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">Finds the Right Buyers</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Scores prospects out of 100 so you only contact people who are a great match for your product.</p>
+                  <strong className="text-white text-sm block">Priority-Ranked Opportunities</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Each opportunity is ranked by potential impact — a struggling creator to reach out to vs a trending topic to post about.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -576,8 +583,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">Writes Personal Messages</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Mentions recent news or updates about the person's company so the email feels genuine, not robotic.</p>
+                  <strong className="text-white text-sm block">Multi-Type Detection</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Spots lead opportunities, content moments, partnership signals, and competitive gaps — all from the same signal feed.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -585,8 +592,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">Protects Your Email Inbox</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Spaces out emails safely and includes a one-click unsubscribe button so your account never gets flagged as spam.</p>
+                  <strong className="text-white text-sm block">Reasoning You Can See</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Every opportunity comes with a plain-English explanation of why the agent thinks it&apos;s worth your time.</p>
                 </div>
               </div>
             </div>
@@ -694,13 +701,13 @@ export default function LandingPage() {
 
           <div className="lg:col-span-6 space-y-6 order-1 lg:order-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-mono">
-              <Clock size={13} /> 04 • Automatic Timing &amp; Scheduling
+              <Zap size={13} /> 04 • Takes Action
             </div>
             <h3 className="font-serif text-3xl md:text-4xl text-white leading-tight">
-              Runs in the background. No calendar to manage.
+              Drafts, schedules, reaches out — autonomously.
             </h3>
             <p className="text-gray-300 text-base leading-relaxed font-light">
-              You don't have to set reminders, manage calendar slots, or remember to follow up. Markopilot handles the timing automatically so your marketing stays active every day.
+              When the agent spots an opportunity, it doesn&apos;t just flag it — it acts. Drafts reactive posts, sends personalized outreach, schedules content, identifies creators, and updates your pipeline.
             </p>
             <div className="space-y-3.5 pt-2">
               <div className="flex items-start gap-3">
@@ -708,8 +715,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">Zero Daily Maintenance</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Background tasks handle the posting and lead searches automatically without you lifting a finger.</p>
+                  <strong className="text-white text-sm block">Multi-Channel Execution</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Posts to X, LinkedIn, Instagram, TikTok. Sends personalized emails. Creates images and videos. All from one agent loop.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -717,8 +724,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">Warms Up Your Prospects</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">People see your social posts first, so they recognize your brand when your email arrives in their inbox.</p>
+                  <strong className="text-white text-sm block">Reactive Content</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">When a competitor makes a move or a topic trends, the agent drafts a post within minutes — not days.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -726,8 +733,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">Smart Timezone Timing</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Sends emails and shares content when potential customers in different countries are awake and browsing.</p>
+                  <strong className="text-white text-sm block">Smart Outreach</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Finds verified decision-makers, writes emails that reference real context, and spaces sending to protect your inbox.</p>
                 </div>
               </div>
             </div>
@@ -740,13 +747,13 @@ export default function LandingPage() {
         <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           <div className="lg:col-span-6 space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-300 text-xs font-mono">
-              <SlidersHorizontal size={13} /> 05 • Full Control or Autopilot
+              <Shield size={13} /> 05 • You Stay in Control
             </div>
             <h3 className="font-serif text-3xl md:text-4xl text-white leading-tight">
-              Check everything in 60 seconds, or let it run hands-free.
+              The agent proposes. You decide.
             </h3>
             <p className="text-gray-300 text-base leading-relaxed font-light">
-              You never have to worry about the AI posting something off-brand. Use Review Mode for simple 1-click approvals in the morning, or turn on Autopilot whenever you're ready.
+              Set your autonomy level: approve everything, approve outreach only, or let it run fully autonomous. Every action is logged, every decision is transparent, and you can override anything.
             </p>
             <div className="space-y-3.5 pt-2">
               <div className="flex items-start gap-3">
@@ -868,13 +875,13 @@ export default function LandingPage() {
 
           <div className="lg:col-span-6 space-y-6 order-1 lg:order-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/20 text-pink-300 text-xs font-mono">
-              <Radar size={13} /> 06 • Brand Impact Intelligence
+              <LineChart size={13} /> 06 • Learns &amp; Improves
             </div>
             <h3 className="font-serif text-3xl md:text-4xl text-white leading-tight">
-              Monitors news, AI shifts &amp; platform updates for your brand.
+              Tracks what worked and gets smarter over time.
             </h3>
             <p className="text-gray-300 text-base leading-relaxed font-light">
-              When tech platforms change rules (like Meta, Google, or OpenAI) or new government regulations drop, Markopilot alerts you immediately, explains why it matters to your business, and gives you a 1-click button to draft a reactive post.
+              The agent tracks engagement, replies, and conversions from every action it takes. Weekly performance reports show exactly what the agent did and what it achieved — so it refines future decisions automatically.
             </p>
             <div className="space-y-3.5 pt-2">
               <div className="flex items-start gap-3">
@@ -882,8 +889,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">Autonomous Market Sweeps</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Scans tech blogs, regulatory feeds, and industry news without you having to browse all day.</p>
+                  <strong className="text-white text-sm block">Outcome Tracking</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Every action is tracked to its outcome — which posts got engagement, which emails got replies, which leads converted.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -891,8 +898,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">Critical Founder Alerts</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Breaking API changes or policy shifts trigger an immediate alert email so you are never caught off guard.</p>
+                  <strong className="text-white text-sm block">Weekly Agent Report</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">Get a clear summary: signals scanned, opportunities found, actions taken, and results achieved — in plain English.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -900,8 +907,8 @@ export default function LandingPage() {
                   <Check size={14} />
                 </div>
                 <div>
-                  <strong className="text-white text-sm block">1-Click Reactive Content</strong>
-                  <p className="text-gray-400 text-xs leading-relaxed">Turns breaking industry news into authoritative social media posts with one tap to keep you ahead of competitors.</p>
+                  <strong className="text-white text-sm block">Self-Improving Decisions</strong>
+                  <p className="text-gray-400 text-xs leading-relaxed">The agent learns which signal types, content styles, and outreach approaches work best for your specific market.</p>
                 </div>
               </div>
             </div>
@@ -916,13 +923,13 @@ export default function LandingPage() {
       <section className="py-24 max-w-7xl mx-auto px-6 relative z-10 border-t border-white/5">
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-300 text-xs font-mono uppercase tracking-wider">
-            <BarChart3 size={14} /> Time &amp; Cost Savings
+            <BarChart3 size={14} /> Why An Agent
           </div>
           <h2 className="font-serif text-4xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">
-            Save 20 hours every single week.
+            Replace a marketing team, not your judgment.
           </h2>
           <p className="text-gray-400 text-base md:text-lg">
-            See the difference between doing everything by hand versus using Markopilot.
+            See the difference between hiring humans to do your growth versus deploying an AI agent.
           </p>
         </div>
 
@@ -931,26 +938,26 @@ export default function LandingPage() {
           <div className="bg-red-950/10 border border-red-500/20 rounded-3xl p-8 space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-semibold text-red-300 flex items-center gap-2">
-                <XCircle size={20} className="text-red-400" /> The Old, Manual Way
+                <XCircle size={20} className="text-red-400" /> Hiring a Marketing Team
               </h3>
-              <span className="text-xs font-mono text-red-400 bg-red-500/20 px-2.5 py-1 rounded-full">18-22 hrs / week</span>
+              <span className="text-xs font-mono text-red-400 bg-red-500/20 px-2.5 py-1 rounded-full">$3,000-8,000 / mo</span>
             </div>
             <ul className="space-y-4 text-sm text-gray-300">
               <li className="flex items-start gap-3">
                 <XCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
-                <span>Logging into 5 separate social and email apps every morning.</span>
+                <span>Paying for a social media manager who posts 3x a week and misses trends.</span>
               </li>
               <li className="flex items-start gap-3">
                 <XCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
-                <span>Paying $500+/mo for separate schedulers, image editors, video tools, and lead databases.</span>
+                <span>Paying for a lead gen tool, a market intelligence subscription, and a content agency.</span>
               </li>
               <li className="flex items-start gap-3">
                 <XCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
-                <span>Invisible on ChatGPT and Perplexity because your accounts are quiet.</span>
+                <span>Still missing opportunities because humans sleep, take breaks, and context-switch.</span>
               </li>
               <li className="flex items-start gap-3">
                 <XCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
-                <span>Marketing stops completely whenever coding sprints or client work begins.</span>
+                <span>No system connecting what happens in the market to what your team actually does.</span>
               </li>
             </ul>
           </div>
@@ -962,26 +969,26 @@ export default function LandingPage() {
             </div>
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-semibold text-emerald-300 flex items-center gap-2">
-                <CheckCircle2 size={20} className="text-emerald-400" /> With Markopilot
+                <CheckCircle2 size={20} className="text-emerald-400" /> With Your AI Growth Agent
               </h3>
-              <span className="text-xs font-mono text-emerald-300 bg-emerald-500/20 px-2.5 py-1 rounded-full">15 mins / week</span>
+              <span className="text-xs font-mono text-emerald-300 bg-emerald-500/20 px-2.5 py-1 rounded-full">KES 3,800-25,800 / mo</span>
             </div>
             <ul className="space-y-4 text-sm text-gray-200">
               <li className="flex items-start gap-3">
                 <CheckCircle2 size={16} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <span>One dashboard: X, LinkedIn, Instagram, TikTok, and Email all organized in one place.</span>
+                <span>Agent monitors your market 24/7 — never sleeps, never takes a break.</span>
               </li>
               <li className="flex items-start gap-3">
                 <CheckCircle2 size={16} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <span>AI images and short video clips made for you automatically.</span>
+                <span>Spots opportunities humans miss — creator signals, trending topics, competitive gaps.</span>
               </li>
               <li className="flex items-start gap-3">
                 <CheckCircle2 size={16} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <span>Get recommended when buyers search on ChatGPT, Google, and Perplexity.</span>
+                <span>Drafts and executes growth actions autonomously across social, email, and outreach.</span>
               </li>
               <li className="flex items-start gap-3">
                 <CheckCircle2 size={16} className="text-emerald-400 flex-shrink-0 mt-0.5" />
-                <span>Approve drafts in 60 seconds each morning, or let it run 100% on autopilot.</span>
+                <span>You stay in control — approve, edit, or let the agent run on full autopilot.</span>
               </li>
             </ul>
           </div>
@@ -1009,9 +1016,9 @@ export default function LandingPage() {
             <div className="w-12 h-12 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center font-mono font-bold text-lg border border-purple-500/30 group-hover:scale-110 transition">
               01
             </div>
-            <h3 className="text-xl font-semibold text-white">Add Your Website</h3>
+            <h3 className="text-xl font-semibold text-white">Tell It Your Goal</h3>
             <p className="text-gray-400 text-sm leading-relaxed">
-              Type in your website URL or a short description of what you sell. Markopilot scans your product features and learns your brand voice.
+              &quot;Grow MarkoPilot in Kenya.&quot; &quot;Get 100 SaaS leads this month.&quot; &quot;Become the go-to tool for freelancers.&quot; The agent takes it from there.
             </p>
           </div>
 
@@ -1019,9 +1026,9 @@ export default function LandingPage() {
             <div className="w-12 h-12 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-mono font-bold text-lg border border-blue-500/30 group-hover:scale-110 transition">
               02
             </div>
-            <h3 className="text-xl font-semibold text-white">AI Creates &amp; Finds Leads</h3>
+            <h3 className="text-xl font-semibold text-white">The Agent Gets to Work</h3>
             <p className="text-gray-400 text-sm leading-relaxed">
-              Markopilot writes social posts, generates pictures and videos, and finds matching business leads automatically.
+              Starts watching your market, classifying signals, identifying opportunities, and drafting actions — all autonomously.
             </p>
           </div>
 
@@ -1029,9 +1036,9 @@ export default function LandingPage() {
             <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-mono font-bold text-lg border border-emerald-500/30 group-hover:scale-110 transition">
               03
             </div>
-            <h3 className="text-xl font-semibold text-white">Approve or Autopilot</h3>
+            <h3 className="text-xl font-semibold text-white">Approve, Adjust, or Let It Run</h3>
             <p className="text-gray-400 text-sm leading-relaxed">
-              Click approve with one tap in your morning review queue, or switch on Autopilot to let everything run completely hands-free.
+              Review the agent&apos;s actions in your feed. Approve what matters, edit what needs tweaking, and let the rest run on autopilot.
             </p>
           </div>
         </div>
@@ -1058,9 +1065,9 @@ export default function LandingPage() {
             {PLANS.map((plan) => {
               const isFeatured = plan.featured;
               const descriptions: Record<string, string> = {
-                starter: "Great for solo builders starting out on social media and AI search.",
-                growth: "Best for growing businesses wanting daily posts, videos, and leads.",
-                scale: "Designed for agencies and companies managing multiple products.",
+                starter: "Great for solo builders who want an AI agent monitoring their market.",
+                growth: "Best for growing businesses that need daily autonomous growth actions.",
+                scale: "Designed for agencies and companies running multiple growth agents.",
               };
               return (
                 <div
@@ -1114,7 +1121,7 @@ export default function LandingPage() {
                       : "w-full block text-center py-4 rounded-xl bg-white/5 border border-white/10 text-white font-medium hover:bg-white/10 transition-all active:scale-95"
                     }
                   >
-                    Start 7-Day Free Trial
+                    Activate Growth Agent
                   </NavLink>
                 </div>
               );
@@ -1284,16 +1291,16 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(124,110,255,0.1),transparent_70%)] pointer-events-none"></div>
         <div className="relative z-10 space-y-8 max-w-4xl mx-auto flex flex-col items-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-gray-300">
-            <Sparkle size={13} className="text-purple-400" /> Start growing without marketing burnout
+            <Sparkle size={13} className="text-purple-400" /> Your growth function, automated
           </div>
           <h2 className="font-serif text-5xl md:text-7xl text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 drop-shadow-xl">
-            Put your brand's growth on autopilot.
+            Deploy your AI growth agent today.
           </h2>
           <p className="text-gray-400 text-lg md:text-xl font-light max-w-xl">
-            Join founders and solo builders saving 20 hours a week while getting recommended by AI search engines.
+            Tell it your goal. It watches, understands, decides, and acts — while you build.
           </p>
           <NavLink href="#" isAuth={true} isPrimary className="group inline-flex items-center gap-3 px-10 py-5 rounded-full bg-white text-black font-semibold text-lg hover:scale-[1.04] transition-all shadow-[0_0_50px_rgba(255,255,255,0.25)] active:scale-95">
-            Start Your 7-Day Free Trial <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+            Activate Your Growth Agent <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
           </NavLink>
         </div>
       </section>
@@ -1311,11 +1318,11 @@ export default function LandingPage() {
                 <span className="text-xl font-serif tracking-tight font-medium text-white">Markopilot</span>
               </div>
               <p className="text-gray-400 text-sm max-w-sm font-light leading-relaxed">
-                Automatic marketing and customer discovery. Post across 4 networks, find verified business leads, and get recommended by AI engines hands-free.
+                An AI growth agent that continuously monitors your market, identifies opportunities, and takes growth actions on your behalf.
               </p>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>Automatic Engine Active</span>
+                <span>Growth Agent Active</span>
               </div>
             </div>
 
@@ -1345,7 +1352,7 @@ export default function LandingPage() {
           {/* Bottom copyright row */}
           <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-400 font-sans">
             <p>© {new Date().getFullYear()} Markopilot Ltd. Registered address: Mirage Tower, Chiromo Rd, Nairobi, Kenya.</p>
-            <p className="text-gray-400">Built for founders, creators, and indie builders.</p>
+            <p className="text-gray-400">Your AI growth agent. Built for founders, creators, and indie builders.</p>
           </div>
         </div>
       </footer>

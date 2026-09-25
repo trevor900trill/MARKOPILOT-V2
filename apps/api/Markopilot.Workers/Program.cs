@@ -54,6 +54,7 @@ builder.Services.AddSingleton<IOutreachRepository>(sp => sp.GetRequiredService<S
 builder.Services.AddSingleton<INotificationRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
 builder.Services.AddSingleton<IEmailPatternRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
 builder.Services.AddSingleton<IBrandImpactRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
+builder.Services.AddSingleton<IAgentRepository>(sp => sp.GetRequiredService<SupabaseRepository>());
 builder.Services.AddHttpClient<IBrandImpactService, Markopilot.Infrastructure.Services.BrandImpactService>();
 
 builder.Services.AddSingleton<ITokenEncryptionService>(sp =>
@@ -70,6 +71,7 @@ builder.Services.AddSingleton<ITokenEncryptionService>(sp =>
 
 builder.Services.AddSingleton<IGlobalRateLimiter, GlobalRateLimiter>();
 builder.Services.AddSingleton<IQuotaService, QuotaService>();
+builder.Services.AddHttpClient<Markopilot.Core.Interfaces.IModelRegistryService, Markopilot.Infrastructure.OpenRouter.ModelRegistryService>();
 builder.Services.AddHttpClient<Markopilot.Core.Interfaces.IAiRoutingService, Markopilot.Infrastructure.OpenRouter.AiRoutingService>();
 builder.Services.AddSingleton<Markopilot.Core.Interfaces.IContentGenerationService, Markopilot.Infrastructure.AI.ContentGenerationService>();
 builder.Services.AddHttpClient<Markopilot.Core.Interfaces.ISearchClient, Markopilot.Infrastructure.Search.SerperClient>();
@@ -111,6 +113,42 @@ builder.Services.AddHttpClient<Markopilot.Core.Interfaces.ISupabaseStorageServic
 
 // ── Subscription Monitoring ──────────────────────
 builder.Services.AddTransient<SubscriptionMonitoringWorker>();
+
+// ── Autonomous Growth Agent Pipeline ─────────────
+builder.Services.AddHttpClient<Markopilot.Infrastructure.Collectors.RssCollector>();
+builder.Services.AddSingleton<Markopilot.Infrastructure.Collectors.WebSearchCollector>();
+builder.Services.AddHttpClient<Markopilot.Infrastructure.Collectors.RedditCollector>();
+builder.Services.AddSingleton<Markopilot.Infrastructure.Collectors.CompetitorDiffCollector>();
+builder.Services.AddSingleton<Markopilot.Infrastructure.Collectors.TwitterMentionCollector>();
+builder.Services.AddSingleton<IEnumerable<ISignalCollector>>(sp => new ISignalCollector[]
+{
+    sp.GetRequiredService<Markopilot.Infrastructure.Collectors.RssCollector>(),
+    sp.GetRequiredService<Markopilot.Infrastructure.Collectors.WebSearchCollector>(),
+    sp.GetRequiredService<Markopilot.Infrastructure.Collectors.RedditCollector>(),
+    sp.GetRequiredService<Markopilot.Infrastructure.Collectors.CompetitorDiffCollector>(),
+    sp.GetRequiredService<Markopilot.Infrastructure.Collectors.TwitterMentionCollector>()
+});
+
+builder.Services.AddSingleton<ISignalCollectorService, Markopilot.Infrastructure.Services.SignalCollectorService>();
+builder.Services.AddSingleton<ISignalProcessorService, Markopilot.Infrastructure.Services.SignalProcessorService>();
+builder.Services.AddSingleton<IOpportunityEngineService, Markopilot.Infrastructure.Services.OpportunityEngineService>();
+builder.Services.AddSingleton<IOutcomeTrackerService, Markopilot.Infrastructure.Services.OutcomeTrackerService>();
+
+builder.Services.AddSingleton<Markopilot.Infrastructure.Executors.PostDraftExecutor>();
+builder.Services.AddSingleton<Markopilot.Infrastructure.Executors.ReplyDraftExecutor>();
+builder.Services.AddSingleton<Markopilot.Infrastructure.Executors.OutreachExecutor>();
+builder.Services.AddSingleton<Markopilot.Infrastructure.Executors.NotificationExecutor>();
+builder.Services.AddSingleton<IEnumerable<IActionExecutor>>(sp => new IActionExecutor[]
+{
+    sp.GetRequiredService<Markopilot.Infrastructure.Executors.PostDraftExecutor>(),
+    sp.GetRequiredService<Markopilot.Infrastructure.Executors.ReplyDraftExecutor>(),
+    sp.GetRequiredService<Markopilot.Infrastructure.Executors.OutreachExecutor>(),
+    sp.GetRequiredService<Markopilot.Infrastructure.Executors.NotificationExecutor>()
+});
+builder.Services.AddSingleton<IActionDispatcherService, Markopilot.Infrastructure.Services.ActionDispatcherService>();
+
+builder.Services.AddTransient<AgentOrchestrationWorker>();
+builder.Services.AddTransient<ActionDispatcherWorker>();
 
 var host = builder.Build();
 
@@ -163,6 +201,39 @@ using (var scope = host.Services.CreateScope())
         "BrandImpactWorker_Starter",
         worker => worker.ExecuteStarterPlanAsync(),
         "0 8 * * 1,4"); // Mon & Thu at 8:00 UTC
+
+    // OpenRouter Model Registry: Daily cache refresh
+    jobManager.AddOrUpdate<Markopilot.Core.Interfaces.IModelRegistryService>(
+        "OpenRouterModelRegistryRefresh",
+        svc => svc.RefreshRegistryAsync(),
+        "0 6 * * *"); // Daily at 6:00 UTC
+
+    // ── Master Agent Loop Jobs ──────────────────────
+    jobManager.AddOrUpdate<AgentOrchestrationWorker>(
+        "AgentLoop_Scale",
+        worker => worker.ExecuteScaleLoopAsync(),
+        "*/30 * * * *"); // Every 30 mins for Scale
+
+    jobManager.AddOrUpdate<AgentOrchestrationWorker>(
+        "AgentLoop_Growth",
+        worker => worker.ExecuteGrowthLoopAsync(),
+        "0 */4 * * *"); // Every 4 hours for Growth
+
+    jobManager.AddOrUpdate<AgentOrchestrationWorker>(
+        "AgentLoop_Starter",
+        worker => worker.ExecuteStarterLoopAsync(),
+        "0 8 * * *"); // Daily for Starter
+
+    jobManager.AddOrUpdate<ActionDispatcherWorker>(
+        "AgentActionDispatcher",
+        worker => worker.ProcessPendingActionsAsync(),
+        "*/5 * * * *"); // Every 5 mins
+
+    // Weekly database housekeeping: purge unlinked stale signals
+    jobManager.AddOrUpdate<AgentOrchestrationWorker>(
+        "AgentSignalsCleanup",
+        worker => worker.PurgeOldSignalsAsync(),
+        "0 3 * * 0"); // Every Sunday at 3am UTC
 }
 
 host.Run();

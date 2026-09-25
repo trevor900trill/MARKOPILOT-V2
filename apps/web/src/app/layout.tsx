@@ -20,8 +20,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Markopilot — Autonomous Social Media & Lead Generation",
-  description: "Markopilot autonomously handles your social media, lead generation, and outreach — so you can focus entirely on building.",
+  title: "Markopilot — AI Growth Agent for Your Business",
+  description: "MarkoPilot is an AI growth agent that continuously monitors your market, identifies opportunities, and takes growth actions on your behalf. Tell it your goal. It does the rest.",
 };
 
 export default function RootLayout({

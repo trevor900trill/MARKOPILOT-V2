@@ -12,7 +12,7 @@ namespace Markopilot.Infrastructure.Supabase;
 /// Uses Npgsql directly for maximum control over queries.
 /// Also implements IUserRepository for Core service access.
 /// </summary>
-public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepository, ILeadRepository, IOutreachRepository, INotificationRepository, IEmailPatternRepository, IBrandImpactRepository
+public partial class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepository, ILeadRepository, IOutreachRepository, INotificationRepository, IEmailPatternRepository, IBrandImpactRepository, IAgentRepository
 {
     private readonly string _connectionString;
     private readonly ILogger<SupabaseRepository> _logger;
@@ -211,6 +211,13 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
                 automation_outreach_delay_hours = @outreachDelay,
                 require_email_approval = @requireApproval,
                 require_post_review = @requirePostReview,
+                growth_goal = @growthGoal,
+                target_market_context = @targetContext,
+                competitor_urls = @compUrls::jsonb,
+                watch_keywords = @watchKeys::jsonb,
+                watch_hashtags = @watchTags::jsonb,
+                agent_autonomy_level = @autonomyLevel,
+                agent_enabled = @agentEnabled,
                 updated_at = NOW()
             WHERE id = @id AND owner_id = @ownerId
             RETURNING *", conn);
@@ -238,6 +245,13 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         cmd.Parameters.AddWithValue("outreachDelay", brand.AutomationOutreachDelayHours);
         cmd.Parameters.AddWithValue("requireApproval", brand.RequireEmailApproval);
         cmd.Parameters.AddWithValue("requirePostReview", brand.AutomationPostReviewEnabled);
+        cmd.Parameters.AddWithValue("growthGoal", (object?)brand.GrowthGoal ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("targetContext", (object?)brand.TargetMarketContext ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("compUrls", System.Text.Json.JsonSerializer.Serialize(brand.CompetitorUrls ?? []));
+        cmd.Parameters.AddWithValue("watchKeys", System.Text.Json.JsonSerializer.Serialize(brand.WatchKeywords ?? []));
+        cmd.Parameters.AddWithValue("watchTags", System.Text.Json.JsonSerializer.Serialize(brand.WatchHashtags ?? []));
+        cmd.Parameters.AddWithValue("autonomyLevel", brand.AgentAutonomyLevel.ToString());
+        cmd.Parameters.AddWithValue("agentEnabled", brand.AgentEnabled);
         await using var reader = await cmd.ExecuteReaderAsync();
         await reader.ReadAsync();
         return MapBrand(reader);
@@ -1789,9 +1803,35 @@ public class SupabaseRepository : IUserRepository, IBrandRepository, ISocialRepo
         AutomationOutreachEnabled = r.GetBoolean(r.GetOrdinal("automation_outreach_enabled")),
         RequireEmailApproval = !r.IsDBNull(r.GetOrdinal("require_email_approval")) && r.GetBoolean(r.GetOrdinal("require_email_approval")),
         AutomationPostReviewEnabled = !r.IsDBNull(r.GetOrdinal("require_post_review")) && r.GetBoolean(r.GetOrdinal("require_post_review")),
+        GrowthGoal = SafeGetString(r, "growth_goal"),
+        TargetMarketContext = SafeGetString(r, "target_market_context"),
+        CompetitorUrls = SafeGetJsonList(r, "competitor_urls"),
+        WatchKeywords = SafeGetJsonList(r, "watch_keywords"),
+        WatchHashtags = SafeGetJsonList(r, "watch_hashtags"),
+        AgentAutonomyLevel = Enum.TryParse<AgentAutonomyLevel>(SafeGetString(r, "agent_autonomy_level"), true, out var aal) ? aal : AgentAutonomyLevel.ApproveOutreach,
+        AgentEnabled = !HasColumn(r, "agent_enabled") || r.IsDBNull(r.GetOrdinal("agent_enabled")) || r.GetBoolean(r.GetOrdinal("agent_enabled")),
         CreatedAt = r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("created_at")),
         UpdatedAt = r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("updated_at")),
     };
+
+
+    private static string? SafeGetString(NpgsqlDataReader r, string col)
+    {
+        return HasColumn(r, col) && !r.IsDBNull(r.GetOrdinal(col)) ? r.GetString(r.GetOrdinal(col)) : null;
+    }
+
+    private static List<string> SafeGetJsonList(NpgsqlDataReader r, string col)
+    {
+        if (!HasColumn(r, col) || r.IsDBNull(r.GetOrdinal(col))) return [];
+        try
+        {
+            return JsonSerializer.Deserialize<List<string>>(r.GetString(r.GetOrdinal(col))) ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
 
     private static SocialPost MapPost(NpgsqlDataReader r) => new()
     {

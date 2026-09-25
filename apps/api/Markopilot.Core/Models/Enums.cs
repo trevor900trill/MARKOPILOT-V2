@@ -9,7 +9,12 @@ public enum AiTask
     EmailOutreachCopy,
     ContentPillarSuggestion,
     OnboardingEnhancement,
-    ImagePromptGeneration
+    ImagePromptGeneration,
+    SignalClassification,
+    OpportunityEvaluation,
+    ActionPlanning,
+    ReplyDrafting,
+    WeeklyReportGeneration
 }
 
 public enum SocialPlatform
@@ -27,6 +32,7 @@ public class AiCompletionRequest
     public string UserPrompt { get; set; } = string.Empty;
     public double Temperature { get; set; } = 0.7;
     public int MaxTokens { get; set; } = 2048;
+    public bool RequireJson { get; set; } = false;
 }
 
 public class AiCompletionResponse
