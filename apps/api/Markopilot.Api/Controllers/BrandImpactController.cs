@@ -9,7 +9,6 @@ namespace Markopilot.Api.Controllers;
 
 [ApiController]
 [Route("api/brands/{brandId:guid}/impact")]
-[Authorize]
 public class BrandImpactController : ControllerBase
 {
     private readonly IBrandImpactRepository _impactRepo;

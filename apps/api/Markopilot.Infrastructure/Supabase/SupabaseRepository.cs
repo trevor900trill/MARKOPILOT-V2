@@ -2539,15 +2539,24 @@ public partial class SupabaseRepository : IUserRepository, IBrandRepository, ISo
         await using var conn = CreateConnection();
         await conn.OpenAsync();
 
-        var sql = @"
+        var sql = string.IsNullOrWhiteSpace(status)
+            ? @"
             SELECT m.*, u.email as user_email, u.display_name as user_display_name
             FROM manual_payment_submissions m
             LEFT JOIN users u ON m.user_id = u.id
-            WHERE (@status IS NULL OR m.status = @status)
+            ORDER BY m.created_at DESC"
+            : @"
+            SELECT m.*, u.email as user_email, u.display_name as user_display_name
+            FROM manual_payment_submissions m
+            LEFT JOIN users u ON m.user_id = u.id
+            WHERE m.status = @status
             ORDER BY m.created_at DESC";
 
         await using var cmd = new NpgsqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("status", (object?)status ?? DBNull.Value);
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            cmd.Parameters.Add(new NpgsqlParameter("status", NpgsqlTypes.NpgsqlDbType.Text) { Value = status.Trim() });
+        }
 
         var list = new List<ManualPaymentSubmission>();
         await using var reader = await cmd.ExecuteReaderAsync();
@@ -2624,10 +2633,10 @@ public partial class SupabaseRepository : IUserRepository, IBrandRepository, ISo
                 admin_notes = COALESCE(@adminNotes, admin_notes)
             WHERE id = @id", conn);
 
-        cmd.Parameters.AddWithValue("id", id);
-        cmd.Parameters.AddWithValue("status", status);
-        cmd.Parameters.AddWithValue("reviewedBy", (object?)reviewedBy ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("adminNotes", (object?)adminNotes ?? DBNull.Value);
+        cmd.Parameters.Add(new NpgsqlParameter("id", id));
+        cmd.Parameters.Add(new NpgsqlParameter("status", NpgsqlTypes.NpgsqlDbType.Text) { Value = status });
+        cmd.Parameters.Add(new NpgsqlParameter("reviewedBy", NpgsqlTypes.NpgsqlDbType.Text) { Value = (object?)reviewedBy ?? DBNull.Value });
+        cmd.Parameters.Add(new NpgsqlParameter("adminNotes", NpgsqlTypes.NpgsqlDbType.Text) { Value = (object?)adminNotes ?? DBNull.Value });
 
         await cmd.ExecuteNonQueryAsync();
     }

@@ -3,4 +3,5 @@
   <Project Path="Markopilot.Core/Markopilot.Core.csproj" />
   <Project Path="Markopilot.Infrastructure/Markopilot.Infrastructure.csproj" />
   <Project Path="Markopilot.Workers/Markopilot.Workers.csproj" />
+  <Project Path="Markopilot.Tests/Markopilot.Tests.csproj" />
 </Solution>

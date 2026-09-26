@@ -8,7 +8,6 @@ namespace Markopilot.Api.Controllers;
 
 [ApiController]
 [Route("api/brands/{brandId:guid}/agent")]
-[Authorize]
 public class AgentController : ControllerBase
 {
     private readonly IAgentRepository _agentRepo;
