@@ -19,12 +19,14 @@ import {
   X,
   Sliders,
   Sparkles,
-  ExternalLink
+  ExternalLink,
+  Bot
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useBrand } from "@/lib/brand-context";
 import { apiGet, apiPost, apiDelete, apiPut } from "@/lib/api-client";
 import { XIcon, LinkedInIcon, InstagramIcon, TikTokIcon, PlatformIcon } from "@/components/icons/SocialIcons";
+import Link from "next/link";
 
 type Post = {
   id: string;
@@ -54,7 +56,6 @@ export default function SocialPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [copied, setCopied] = useState(false);
-  const [togglingReview, setTogglingReview] = useState(false);
 
   const connectedPlatforms: Record<string, boolean> = {
     x: activeBrand?.twitterConnected ?? false,
@@ -63,7 +64,9 @@ export default function SocialPage() {
     tiktok: activeBrand?.tiktokConnected ?? false,
   };
 
-  const isReviewQueueEnabled = activeBrand?.automationPostReviewEnabled ?? false;
+  // Derived from the centralized agent autonomy level
+  const autonomyLevel = (activeBrand as any)?.agentAutonomyLevel ?? "ApproveOutreach";
+  const isReviewQueueEnabled = autonomyLevel === "ApproveAll";
 
   const fetchPosts = useCallback(async () => {
     if (!activeBrand) return;
@@ -172,22 +175,7 @@ export default function SocialPage() {
     }
   };
 
-  const handleToggleWorkflow = async () => {
-    if (!activeBrand) return;
-    setTogglingReview(true);
-    try {
-      const nextValue = !isReviewQueueEnabled;
-      await apiPut(`/brands/${activeBrand.id}`, {
-        ...activeBrand,
-        automationPostReviewEnabled: nextValue,
-      });
-      await refreshBrands();
-    } catch (err) {
-      console.error("Failed to toggle review workflow:", err);
-    } finally {
-      setTogglingReview(false);
-    }
-  };
+
 
   const handleCreatePost = async () => {
     if (!activeBrand || !newPostCopy.trim()) return;
@@ -298,14 +286,13 @@ export default function SocialPage() {
             </div>
           </div>
 
-          <button
-            onClick={handleToggleWorkflow}
-            disabled={togglingReview}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold border transition flex items-center gap-2 flex-shrink-0 ${isReviewQueueEnabled ? 'bg-[var(--bg-surface)] hover:bg-white/10 text-white border-[var(--border)]' : 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/30'}`}
+          <Link
+            href="/dashboard/agent"
+            className="px-4 py-2 rounded-xl text-xs font-semibold border transition flex items-center gap-2 flex-shrink-0 bg-violet-500/10 hover:bg-violet-500/20 text-violet-300 border-violet-500/30"
           >
-            {togglingReview && <RefreshCw size={12} className="animate-spin" />}
-            {isReviewQueueEnabled ? "Switch to Auto-Post" : "Switch to Review Queue"}
-          </button>
+            <Bot size={12} />
+            Change in Agent Settings
+          </Link>
         </div>
       )}
 

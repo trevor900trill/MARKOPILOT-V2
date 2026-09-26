@@ -55,6 +55,25 @@ public class AgentController : ControllerBase
         return Ok(metrics);
     }
 
+    [HttpGet("signals")]
+    public async Task<IActionResult> GetSignals(Guid brandId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    {
+        var brand = await GetAuthorizedBrandAsync(brandId);
+        if (brand == null) return NotFound("Brand not found or access denied.");
+
+        var (items, total) = await _agentRepo.GetSignalsPagedAsync(brandId, page, pageSize);
+        var totalPages = (int)Math.Ceiling((double)total / Math.Max(1, pageSize));
+
+        return Ok(new
+        {
+            items,
+            total,
+            page,
+            pageSize,
+            totalPages
+        });
+    }
+
     [HttpGet("opportunities")]
     public async Task<IActionResult> GetOpportunities(Guid brandId, [FromQuery] int limit = 50)
     {
@@ -136,7 +155,28 @@ public class AgentController : ControllerBase
         if (req.CompetitorUrls != null) brand.CompetitorUrls = req.CompetitorUrls;
         if (req.WatchKeywords != null) brand.WatchKeywords = req.WatchKeywords;
         if (req.WatchHashtags != null) brand.WatchHashtags = req.WatchHashtags;
-        if (req.AgentAutonomyLevel.HasValue) brand.AgentAutonomyLevel = req.AgentAutonomyLevel.Value;
+        if (req.AgentAutonomyLevel.HasValue)
+        {
+            brand.AgentAutonomyLevel = req.AgentAutonomyLevel.Value;
+
+            // Sync legacy boolean fields from the centralized autonomy level
+            // so existing workers (SocialPostingWorker, OutreachWorker) behave correctly.
+            switch (req.AgentAutonomyLevel.Value)
+            {
+                case AgentAutonomyLevel.ApproveAll:
+                    brand.AutomationPostReviewEnabled = true;
+                    brand.RequireEmailApproval = true;
+                    break;
+                case AgentAutonomyLevel.ApproveOutreach:
+                    brand.AutomationPostReviewEnabled = false;
+                    brand.RequireEmailApproval = true;
+                    break;
+                case AgentAutonomyLevel.FullAuto:
+                    brand.AutomationPostReviewEnabled = false;
+                    brand.RequireEmailApproval = false;
+                    break;
+            }
+        }
         if (req.AgentEnabled.HasValue) brand.AgentEnabled = req.AgentEnabled.Value;
 
         var updated = await _brandRepo.UpdateBrandAsync(brand);

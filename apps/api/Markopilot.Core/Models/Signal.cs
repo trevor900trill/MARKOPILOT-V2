@@ -16,6 +16,12 @@ public class RawSignal
     public bool IsProcessed { get; set; }
     public DateTimeOffset? PublishedAt { get; set; }
     public DateTimeOffset IngestedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    // Enriched fields for action evaluation display
+    public Guid? OpportunityId { get; set; }
+    public string? OpportunityTitle { get; set; }
+    public string? OpportunityReasoning { get; set; }
+    public string? OpportunityStatus { get; set; }
 }
 
 public class ProcessedSignal

@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Mail, CheckCircle2, AlertCircle, Settings, Send, Clock, Eye, Play, Pause, RefreshCw, Edit2, FileCheck, XCircle, CheckCheck, AlertTriangle, Smartphone } from "lucide-react";
+import { Mail, CheckCircle2, AlertCircle, Settings, Send, Clock, Eye, Play, Pause, RefreshCw, Edit2, FileCheck, XCircle, CheckCheck, AlertTriangle, Smartphone, Bot } from "lucide-react";
 import { useBrand } from "@/lib/brand-context";
 import { apiGet, apiPut, apiDelete } from "@/lib/api-client";
 import { MpesaCheckoutModal } from "@/components/dashboard/MpesaCheckoutModal";
 import { toast } from "sonner";
+import Link from "next/link";
 
 type OutreachEmail = {
   id: string;
@@ -28,10 +29,13 @@ export default function OutreachPage() {
 
   const isSubscriptionActive = user?.isSubscriptionActive ?? true;
   
+  // Derived from the centralized agent autonomy level
+  const autonomyLevel = (activeBrand as any)?.agentAutonomyLevel ?? "ApproveOutreach";
+  const requireApproval = autonomyLevel !== "FullAuto";
+
   const [dailyLimit, setDailyLimit] = useState(50);
   const [delayHours, setDelayHours] = useState(4);
   const [isAutomationEnabled, setIsAutomationEnabled] = useState(true);
-  const [requireApproval, setRequireApproval] = useState(false);
 
   const [emails, setEmails] = useState<OutreachEmail[]>([]);
   const [pendingEmails, setPendingEmails] = useState<OutreachEmail[]>([]);
@@ -49,7 +53,6 @@ export default function OutreachPage() {
       setIsAutomationEnabled(activeBrand.automationOutreachEnabled);
       setDailyLimit((activeBrand as any).automationOutreachDailyLimit ?? 50);
       setDelayHours((activeBrand as any).automationOutreachDelayHours ?? 4);
-      setRequireApproval((activeBrand as any).requireEmailApproval ?? false);
     }
   }, [activeBrand]);
 
@@ -197,7 +200,6 @@ export default function OutreachPage() {
         automationOutreachEnabled: isAutomationEnabled,
         automationOutreachDailyLimit: dailyLimit,
         automationOutreachDelayHours: delayHours,
-        requireEmailApproval: requireApproval,
       });
       await refreshBrands();
       toast.success("Outreach settings saved.");
@@ -391,30 +393,21 @@ export default function OutreachPage() {
                    <span className="text-[var(--text-secondary)] text-sm">hours delay duration</span>
                 </div>
              </div>
-              {/* ── Review Mode Toggle ──────────────────── */}
+              {/* ── Review Mode — now managed from Agent Settings ──── */}
               <div className="pt-6 border-t border-[var(--border)]">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-white font-medium">Review Mode</h3>
-                    <p className="text-sm text-[var(--text-muted)] mt-1">When enabled, AI-generated emails will be held for your review before sending. You can approve, edit, or reject each email.</p>
+                    <p className="text-sm text-[var(--text-muted)] mt-1">Email approval is now managed centrally from the Growth Agent's Autonomy Level setting.</p>
                   </div>
-                  <button
-                    onClick={() => setRequireApproval(!requireApproval)}
-                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
-                      requireApproval ? 'bg-amber-500' : 'bg-neutral-700'
-                    }`}
+                  <Link
+                    href="/dashboard/agent"
+                    className="px-4 py-2 rounded-xl text-xs font-semibold border transition flex items-center gap-2 flex-shrink-0 bg-violet-500/10 hover:bg-violet-500/20 text-violet-300 border-violet-500/30"
                   >
-                    <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-                      requireApproval ? 'translate-x-6' : 'translate-x-1'
-                    }`} />
-                  </button>
+                    <Bot size={12} />
+                    Agent Settings
+                  </Link>
                 </div>
-                {requireApproval && (
-                  <div className="mt-3 p-3 bg-amber-500/5 border border-amber-500/20 rounded-xl text-sm text-amber-300">
-                    <Eye size={14} className="inline mr-2" />
-                    Review Mode is ON — outreach emails will appear in the Review Queue tab for your approval before being sent.
-                  </div>
-                )}
               </div>
 
               <div className="border-t border-[var(--border)] pt-6 flex justify-end">

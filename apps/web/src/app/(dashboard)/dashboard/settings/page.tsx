@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Save, AlertTriangle, Smartphone } from "lucide-react";
+import { Save, AlertTriangle, Smartphone, Bot, ArrowRight } from "lucide-react";
 import { useBrand, type BrandSummary } from "@/lib/brand-context";
 import { apiGet, apiPut } from "@/lib/api-client";
 import { MpesaCheckoutModal } from "@/components/dashboard/MpesaCheckoutModal";
 import { toast } from "sonner";
+import Link from "next/link";
 
 type BrandDetails = {
   id: string;
@@ -22,11 +23,7 @@ type BrandDetails = {
   targetPainPoints: string[];
   targetGeographies: string[];
   contentPillars: string[];
-  automationPostsEnabled?: boolean;
-  automationLeadsEnabled?: boolean;
-  automationOutreachEnabled?: boolean;
-  automationPostReviewEnabled?: boolean;
-  requireEmailApproval?: boolean;
+  agentAutonomyLevel?: string;
 };
 
 export default function BrandSettingsPage() {
@@ -51,11 +48,7 @@ export default function BrandSettingsPage() {
     targetPainPoints: [] as string[],
     targetGeographies: [] as string[],
     contentPillars: [] as string[],
-    automationPostsEnabled: true,
-    automationLeadsEnabled: true,
-    automationOutreachEnabled: true,
-    automationPostReviewEnabled: false,
-    requireEmailApproval: false,
+
   });
 
   useEffect(() => {
@@ -77,11 +70,7 @@ export default function BrandSettingsPage() {
           targetPainPoints: brand.targetPainPoints || [],
           targetGeographies: brand.targetGeographies || [],
           contentPillars: brand.contentPillars || [],
-          automationPostsEnabled: brand.automationPostsEnabled ?? true,
-          automationLeadsEnabled: brand.automationLeadsEnabled ?? true,
-          automationOutreachEnabled: brand.automationOutreachEnabled ?? true,
-          automationPostReviewEnabled: brand.automationPostReviewEnabled ?? false,
-          requireEmailApproval: brand.requireEmailApproval ?? false,
+
         });
       } catch (err) {
         console.error("Failed to fetch brand details:", err);
@@ -97,12 +86,6 @@ export default function BrandSettingsPage() {
 
   const handleSave = async () => {
     if (!activeBrand) return;
-    const wantsAutomations = formData.automationPostsEnabled || formData.automationLeadsEnabled || formData.automationOutreachEnabled;
-    if (wantsAutomations && !isSubscriptionActive) {
-      toast.error("Cannot enable autonomous engines: your trial or subscription has expired. Please pay via M-PESA.");
-      setShowMpesaModal(true);
-      return;
-    }
     setLoading(true);
     try {
       await apiPut(`/brands/${activeBrand.id}`, { ...activeBrand, ...formData });
@@ -202,48 +185,25 @@ export default function BrandSettingsPage() {
         </button>
       </div>
 
-      {/* Workflow & Approval Settings Banner */}
-      <section data-tour="settings-approval" className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl p-6">
-        <h2 className="text-xl font-medium text-white mb-2">Automation & Review Workflow</h2>
-        <p className="text-xs text-[var(--text-secondary)] mb-6">Configure whether autonomous workers publish directly or wait for manual review in queues.</p>
-        
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl p-4 flex items-start justify-between gap-4">
-            <div>
-              <div className="text-sm font-medium text-white mb-1">Social Posting Approval Queue</div>
-              <p className="text-xs text-[var(--text-secondary)]">
-                {formData.automationPostReviewEnabled 
-                  ? "Manual Review: AI drafts posts to Pending Queue. You approve before publishing."
-                  : "Autonomous: AI automatically posts to connected accounts on schedule."}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => updateForm("automationPostReviewEnabled", !formData.automationPostReviewEnabled)}
-              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${formData.automationPostReviewEnabled ? 'bg-[var(--accent-primary)]' : 'bg-neutral-800'}`}
-            >
-              <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${formData.automationPostReviewEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
-            </button>
+      {/* Autonomy — now managed from the Growth Agent page */}
+      <section data-tour="settings-approval" className="bg-violet-500/5 border border-violet-500/20 rounded-2xl p-5 flex items-center justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <div className="p-2 rounded-xl bg-violet-500/10 text-violet-400 flex-shrink-0">
+            <Bot size={20} />
           </div>
-
-          <div className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl p-4 flex items-start justify-between gap-4">
-            <div>
-              <div className="text-sm font-medium text-white mb-1">Email Outreach Approval</div>
-              <p className="text-xs text-[var(--text-secondary)]">
-                {formData.requireEmailApproval
-                  ? "Manual Review: Outbound emails require review before sending."
-                  : "Autonomous: Dispatches emails automatically to qualified leads."}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => updateForm("requireEmailApproval", !formData.requireEmailApproval)}
-              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${formData.requireEmailApproval ? 'bg-[var(--accent-primary)]' : 'bg-neutral-800'}`}
-            >
-              <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${formData.requireEmailApproval ? 'translate-x-5' : 'translate-x-0'}`} />
-            </button>
+          <div>
+            <h2 className="text-base font-medium text-white">Automation & Approval Workflow</h2>
+            <p className="text-xs text-white/50 mt-0.5">
+              Post review, outreach approval, and overall autonomy are now managed from the <strong className="text-violet-300">Growth Agent</strong> settings — one place to control how autonomous the agent is.
+            </p>
           </div>
         </div>
+        <Link
+          href="/dashboard/agent"
+          className="px-4 py-2 rounded-xl bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap"
+        >
+          Agent Settings <ArrowRight size={14} />
+        </Link>
       </section>
 
       <div className="grid md:grid-cols-2 gap-8">

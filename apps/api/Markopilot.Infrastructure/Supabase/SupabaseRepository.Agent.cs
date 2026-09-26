@@ -444,15 +444,63 @@ public partial class SupabaseRepository : IAgentRepository
         return list;
     }
 
+    public async Task<(List<RawSignal> Items, int TotalCount)> GetSignalsPagedAsync(Guid brandId, int page = 1, int pageSize = 10)
+    {
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 10;
+        if (pageSize > 100) pageSize = 100;
+
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var countCmd = new NpgsqlCommand("SELECT COUNT(*) FROM signals WHERE brand_id = @brandId", conn);
+        countCmd.Parameters.AddWithValue("brandId", brandId);
+        var total = Convert.ToInt32(await countCmd.ExecuteScalarAsync() ?? 0);
+
+        var offset = (page - 1) * pageSize;
+        await using var cmd = new NpgsqlCommand(@"
+            SELECT 
+                s.*,
+                o.id AS opportunity_id,
+                o.title AS opportunity_title,
+                o.reasoning AS opportunity_reasoning,
+                o.status AS opportunity_status
+            FROM signals s
+            LEFT JOIN opportunities o ON o.signal_id = s.id
+            WHERE s.brand_id = @brandId
+            ORDER BY s.ingested_at DESC
+            LIMIT @limit OFFSET @offset;", conn);
+
+        cmd.Parameters.AddWithValue("brandId", brandId);
+        cmd.Parameters.AddWithValue("limit", pageSize);
+        cmd.Parameters.AddWithValue("offset", offset);
+
+        var list = new List<RawSignal>();
+        await using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            list.Add(MapRawSignal(reader));
+        }
+
+        return (list, total);
+    }
+
     private async Task<List<RawSignal>> GetRecentSignalsAsync(Guid brandId, int limit = 10)
     {
         await using var conn = CreateConnection();
         await conn.OpenAsync();
 
         await using var cmd = new NpgsqlCommand(@"
-            SELECT * FROM signals
-            WHERE brand_id = @brandId
-            ORDER BY ingested_at DESC
+            SELECT 
+                s.*,
+                o.id AS opportunity_id,
+                o.title AS opportunity_title,
+                o.reasoning AS opportunity_reasoning,
+                o.status AS opportunity_status
+            FROM signals s
+            LEFT JOIN opportunities o ON o.signal_id = s.id
+            WHERE s.brand_id = @brandId
+            ORDER BY s.ingested_at DESC
             LIMIT @limit;", conn);
 
         cmd.Parameters.AddWithValue("brandId", brandId);
@@ -484,7 +532,11 @@ public partial class SupabaseRepository : IAgentRepository
         RelevanceScore = r.IsDBNull(r.GetOrdinal("relevance_score")) ? null : r.GetDouble(r.GetOrdinal("relevance_score")),
         IsProcessed = r.GetBoolean(r.GetOrdinal("is_processed")),
         PublishedAt = r.IsDBNull(r.GetOrdinal("published_at")) ? null : r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("published_at")),
-        IngestedAt = r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("ingested_at"))
+        IngestedAt = r.GetFieldValue<DateTimeOffset>(r.GetOrdinal("ingested_at")),
+        OpportunityId = HasColumn(r, "opportunity_id") && !r.IsDBNull(r.GetOrdinal("opportunity_id")) ? r.GetGuid(r.GetOrdinal("opportunity_id")) : null,
+        OpportunityTitle = HasColumn(r, "opportunity_title") && !r.IsDBNull(r.GetOrdinal("opportunity_title")) ? r.GetString(r.GetOrdinal("opportunity_title")) : null,
+        OpportunityReasoning = HasColumn(r, "opportunity_reasoning") && !r.IsDBNull(r.GetOrdinal("opportunity_reasoning")) ? r.GetString(r.GetOrdinal("opportunity_reasoning")) : null,
+        OpportunityStatus = HasColumn(r, "opportunity_status") && !r.IsDBNull(r.GetOrdinal("opportunity_status")) ? r.GetString(r.GetOrdinal("opportunity_status")) : null,
     };
 
     private static Opportunity MapOpportunity(NpgsqlDataReader r) => new()

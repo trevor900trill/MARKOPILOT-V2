@@ -50,6 +50,7 @@ public interface IAgentRepository
     Task SaveSignalsAsync(List<RawSignal> signals);
     Task<List<RawSignal>> GetUnprocessedSignalsAsync(Guid brandId, int limit = 50);
     Task MarkSignalProcessedAsync(Guid signalId, double? relevanceScore = null);
+    Task<(List<RawSignal> Items, int TotalCount)> GetSignalsPagedAsync(Guid brandId, int page = 1, int pageSize = 10);
 
     // Opportunities
     Task SaveOpportunityAsync(Opportunity opportunity);
