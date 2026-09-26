@@ -120,6 +120,42 @@ Return a JSON object with an 'opportunities' array:
         return opportunities;
     }
 
+    public async Task<List<Opportunity>> EvaluateLeadOpportunitiesAsync(
+        Brand brand,
+        List<Lead> leads,
+        CancellationToken ct = default)
+    {
+        // Lead discovery has already performed extraction and scoring. Promote qualified
+        // leads directly into the same opportunity queue rather than treating them as an
+        // unrelated output of a separate pipeline.
+        var opportunities = new List<Opportunity>();
+        foreach (var lead in leads.Where(l => l.LeadScore >= 60))
+        {
+            var subject = !string.IsNullOrWhiteSpace(lead.Company)
+                ? lead.Company
+                : lead.Name ?? "qualified prospect";
+            var opp = new Opportunity
+            {
+                BrandId = brand.Id,
+                LeadId = lead.Id,
+                Category = SignalCategory.PartnershipLead,
+                Title = $"Qualify and engage {subject}",
+                Reasoning = string.IsNullOrWhiteSpace(lead.AiSummary)
+                    ? $"{subject} matched the ideal customer profile with a lead score of {lead.LeadScore}."
+                    : lead.AiSummary,
+                RelevanceScore = lead.LeadScore,
+                Urgency = lead.LeadScore >= 80 ? SignalUrgency.ActToday : SignalUrgency.ActThisWeek,
+                Status = OpportunityStatus.Pending,
+                CreatedAt = DateTimeOffset.UtcNow
+            };
+
+            await _agentRepo.SaveOpportunityAsync(opp);
+            opportunities.Add(opp);
+        }
+
+        return opportunities;
+    }
+
     public async Task<List<ActionQueueItem>> PlanActionsAsync(
         Brand brand,
         List<Opportunity> opportunities,
@@ -138,21 +174,19 @@ Target Geographies: {string.Join(", ", brand.TargetGeographies ?? ["Global"])}
 Autonomy Level: {brand.AgentAutonomyLevel}
 
 For each opportunity, plan 1 to 2 high-impact actions.
-Available ActionTypes:
+Available executable ActionTypes:
 - DraftReactivePost: writes a timely post for social media responding to a trend or competitor move
 - DraftReplyToCreator: drafts a helpful, non-spam reply to a creator or user discussion
-- IdentifyAndReachCreator: profiles a creator and drafts personalized collaboration outreach
-- CreateOutreachCampaign: designs an outreach email sequence for prospects in this niche
-- ScheduleContentSeries: schedules a sequence of posts exploring this topic
-- UpdateLeadScore: marks an account as hot/priority based on market intelligence
 - NotifyHuman: sends a priority alert to the brand owner about a critical market change
+
+Do not return an action that is not listed above. Lead opportunities should normally use NotifyHuman so a human can review the qualified prospect before outreach.
 
 Return a JSON object:
 {{
   ""actions"": [
     {{
       ""opportunityIndex"": 0,
-      ""actionType"": ""DraftReactivePost"" | ""DraftReplyToCreator"" | ""IdentifyAndReachCreator"" | ""CreateOutreachCampaign"" | ""ScheduleContentSeries"" | ""NotifyHuman"",
+      ""actionType"": ""DraftReactivePost"" | ""DraftReplyToCreator"" | ""NotifyHuman"",
       ""priority"": 1 to 5 (1 is highest),
       ""reasoning"": ""why this action will drive growth"",
       ""draftContent"": {{

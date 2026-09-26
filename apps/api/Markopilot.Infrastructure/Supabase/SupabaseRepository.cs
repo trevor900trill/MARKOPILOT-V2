@@ -433,13 +433,14 @@ public partial class SupabaseRepository : IUserRepository, IBrandRepository, ISo
         foreach (var lead in leads)
         {
             var cmd = new NpgsqlBatchCommand(@"
-                INSERT INTO leads (id, brand_id, discovered_via, source_url, name, job_title,
+                INSERT INTO leads (id, brand_id, opportunity_id, discovered_via, source_url, name, job_title,
                     company, email, linkedin_url, twitter_handle, location, ai_summary, lead_score, status, email_status, fingerprint)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
                 ON CONFLICT DO NOTHING");
 
             cmd.Parameters.AddWithValue(lead.Id == Guid.Empty ? Guid.NewGuid() : lead.Id);
             cmd.Parameters.AddWithValue(lead.BrandId);
+            cmd.Parameters.AddWithValue((object?)lead.OpportunityId ?? DBNull.Value);
             cmd.Parameters.AddWithValue((object?)lead.DiscoveredVia ?? DBNull.Value);
             cmd.Parameters.AddWithValue((object?)lead.SourceUrl ?? DBNull.Value);
             cmd.Parameters.AddWithValue((object?)lead.Name ?? DBNull.Value);
@@ -478,6 +479,20 @@ public partial class SupabaseRepository : IUserRepository, IBrandRepository, ISo
 
         await using var reader = await cmd.ExecuteReaderAsync();
         return await reader.ReadAsync() ? MapLead(reader) : null;
+    }
+
+    public async Task LinkLeadToOpportunityAsync(Guid leadId, Guid opportunityId)
+    {
+        await using var conn = CreateConnection();
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+            UPDATE leads
+            SET opportunity_id = @opportunityId, updated_at = NOW()
+            WHERE id = @leadId;", conn);
+        cmd.Parameters.AddWithValue("leadId", leadId);
+        cmd.Parameters.AddWithValue("opportunityId", opportunityId);
+        await cmd.ExecuteNonQueryAsync();
     }
 
     public async Task<bool> LeadSourceUrlExistsAsync(Guid brandId, string sourceUrl)
@@ -1852,6 +1867,7 @@ public partial class SupabaseRepository : IUserRepository, IBrandRepository, ISo
     {
         Id = r.GetGuid(r.GetOrdinal("id")),
         BrandId = r.GetGuid(r.GetOrdinal("brand_id")),
+        OpportunityId = HasColumn(r, "opportunity_id") && !r.IsDBNull(r.GetOrdinal("opportunity_id")) ? r.GetGuid(r.GetOrdinal("opportunity_id")) : null,
         DiscoveredVia = r.IsDBNull(r.GetOrdinal("discovered_via")) ? null : r.GetString(r.GetOrdinal("discovered_via")),
         SourceUrl = r.IsDBNull(r.GetOrdinal("source_url")) ? null : r.GetString(r.GetOrdinal("source_url")),
         Name = r.IsDBNull(r.GetOrdinal("name")) ? null : r.GetString(r.GetOrdinal("name")),

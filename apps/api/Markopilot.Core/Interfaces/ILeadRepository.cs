@@ -35,6 +35,7 @@ public interface ILeadRepository
     /// <summary>Update the status of a lead (e.g., new → contacted → interested → disqualified).</summary>
     /// <remarks>Used by: API, Workers (OutreachWorker — marks leads as 'interested' on reply)</remarks>
     Task UpdateLeadStatusAsync(Guid leadId, string status);
+    Task LinkLeadToOpportunityAsync(Guid leadId, Guid opportunityId);
 
     // ── Delete ───────────────────────────────────
     /// <summary>GDPR delete: removes a lead and all associated outreach emails.</summary>

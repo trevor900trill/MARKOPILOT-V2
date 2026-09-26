@@ -4,6 +4,8 @@ public class Lead
 {
     public Guid Id { get; set; }
     public Guid BrandId { get; set; }
+    /// <summary>The growth opportunity that caused this lead to be surfaced, if any.</summary>
+    public Guid? OpportunityId { get; set; }
     public string? DiscoveredVia { get; set; }
     public string? SourceUrl { get; set; }
     public string? Name { get; set; }

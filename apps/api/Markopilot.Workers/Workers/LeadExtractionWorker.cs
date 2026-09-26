@@ -20,6 +20,7 @@ public class LeadExtractionWorker : ILeadExtractionWorker
     private readonly IContentGenerationService _contentService;
     private readonly IQuotaService _quotaService;
     private readonly ILeadRepository _leadRepo;
+    private readonly IOpportunityEngineService _opportunityEngine;
     private readonly IBrandRepository _brandRepo;
     private readonly IGlobalRateLimiter _rateLimiter;
     private readonly ILogger<LeadExtractionWorker> _logger;
@@ -29,6 +30,7 @@ public class LeadExtractionWorker : ILeadExtractionWorker
         IContentGenerationService contentService,
         IQuotaService quotaService,
         ILeadRepository leadRepo,
+        IOpportunityEngineService opportunityEngine,
         IBrandRepository brandRepo,
         IGlobalRateLimiter rateLimiter,
         ILogger<LeadExtractionWorker> logger)
@@ -37,6 +39,7 @@ public class LeadExtractionWorker : ILeadExtractionWorker
         _contentService = contentService;
         _quotaService = quotaService;
         _leadRepo = leadRepo;
+        _opportunityEngine = opportunityEngine;
         _brandRepo = brandRepo;
         _rateLimiter = rateLimiter;
         _logger = logger;
@@ -229,11 +232,18 @@ public class LeadExtractionWorker : ILeadExtractionWorker
         if (qualifiedLeads.Count > 0)
         {
             await _leadRepo.BulkInsertLeadsAsync(qualifiedLeads);
+            var leadOpportunities = await _opportunityEngine.EvaluateLeadOpportunitiesAsync(brand, qualifiedLeads);
+            foreach (var opportunity in leadOpportunities)
+            {
+                if (opportunity.LeadId.HasValue)
+                    await _leadRepo.LinkLeadToOpportunityAsync(opportunity.LeadId.Value, opportunity.Id);
+            }
+            await _opportunityEngine.PlanActionsAsync(brand, leadOpportunities);
             await _quotaService.IncrementLeadsUsedAsync(brand.OwnerId, qualifiedLeads.Count);
             
             await _brandRepo.InsertActivityAsync(brandId, "lead_discovered",
-                $"Discovered and qualified {qualifiedLeads.Count} new leads.",
-                new Dictionary<string, object> { ["count"] = qualifiedLeads.Count });
+                $"Discovered {qualifiedLeads.Count} qualified leads and created {leadOpportunities.Count} linked opportunities.",
+                new Dictionary<string, object> { ["count"] = qualifiedLeads.Count, ["opportunities"] = leadOpportunities.Count });
                 
             _logger.LogInformation("Inserted {Count} successfully sourced leads for brand {BrandId}.", qualifiedLeads.Count, brandId);
         }

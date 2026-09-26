@@ -5,6 +5,7 @@ public class Opportunity
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid BrandId { get; set; }
     public Guid? SignalId { get; set; }
+    public Guid? LeadId { get; set; }
     public SignalCategory Category { get; set; }
     public string Title { get; set; } = string.Empty;
     public string Reasoning { get; set; } = string.Empty;
@@ -15,6 +16,7 @@ public class Opportunity
 
     // Optional navigation/hydrated signal
     public RawSignal? Signal { get; set; }
+    public Lead? Lead { get; set; }
 }
 
 public class ActionQueueItem

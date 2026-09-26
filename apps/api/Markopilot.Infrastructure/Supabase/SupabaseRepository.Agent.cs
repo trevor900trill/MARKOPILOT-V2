@@ -104,20 +104,22 @@ public partial class SupabaseRepository : IAgentRepository
 
         await using var cmd = new NpgsqlCommand(@"
             INSERT INTO opportunities (
-                id, brand_id, signal_id, category, title, reasoning,
+                id, brand_id, signal_id, lead_id, category, title, reasoning,
                 relevance_score, urgency, status, created_at
             ) VALUES (
-                @id, @brandId, @signalId, @category, @title, @reasoning,
+                @id, @brandId, @signalId, @leadId, @category, @title, @reasoning,
                 @relevanceScore, @urgency, @status, @createdAt
             )
             ON CONFLICT (id) DO UPDATE SET
                 status = EXCLUDED.status,
                 reasoning = EXCLUDED.reasoning,
-                relevance_score = EXCLUDED.relevance_score;", conn);
+                relevance_score = EXCLUDED.relevance_score,
+                lead_id = EXCLUDED.lead_id;", conn);
 
         cmd.Parameters.AddWithValue("id", opportunity.Id == Guid.Empty ? Guid.NewGuid() : opportunity.Id);
         cmd.Parameters.AddWithValue("brandId", opportunity.BrandId);
         cmd.Parameters.AddWithValue("signalId", (object?)opportunity.SignalId ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("leadId", (object?)opportunity.LeadId ?? DBNull.Value);
         cmd.Parameters.AddWithValue("category", opportunity.Category.ToString());
         cmd.Parameters.AddWithValue("title", opportunity.Title);
         cmd.Parameters.AddWithValue("reasoning", opportunity.Reasoning);
@@ -544,6 +546,7 @@ public partial class SupabaseRepository : IAgentRepository
         Id = r.GetGuid(r.GetOrdinal("id")),
         BrandId = r.GetGuid(r.GetOrdinal("brand_id")),
         SignalId = r.IsDBNull(r.GetOrdinal("signal_id")) ? null : r.GetGuid(r.GetOrdinal("signal_id")),
+        LeadId = HasColumn(r, "lead_id") && !r.IsDBNull(r.GetOrdinal("lead_id")) ? r.GetGuid(r.GetOrdinal("lead_id")) : null,
         Category = Enum.TryParse<SignalCategory>(r.GetString(r.GetOrdinal("category")), true, out var c) ? c : SignalCategory.MarketTrend,
         Title = r.GetString(r.GetOrdinal("title")),
         Reasoning = r.GetString(r.GetOrdinal("reasoning")),

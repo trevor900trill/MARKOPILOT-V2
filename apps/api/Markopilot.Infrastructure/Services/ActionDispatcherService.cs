@@ -48,8 +48,7 @@ public class ActionDispatcherService : IActionDispatcherService
         await _agentRepo.UpdateActionStatusAsync(action.Id, ActionQueueStatus.Executing);
 
         // Find appropriate executor
-        var executor = _executors.FirstOrDefault(e => e.ActionType == action.ActionType)
-            ?? _executors.FirstOrDefault(e => e.ActionType == ActionType.DraftReactivePost);
+        var executor = _executors.FirstOrDefault(e => e.ActionType == action.ActionType);
 
         if (executor == null)
         {

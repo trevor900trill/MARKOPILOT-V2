@@ -21,6 +21,7 @@ public interface ISignalProcessorService
 public interface IOpportunityEngineService
 {
     Task<List<Opportunity>> EvaluateOpportunitiesAsync(Brand brand, List<ProcessedSignal> signals, CancellationToken ct = default);
+    Task<List<Opportunity>> EvaluateLeadOpportunitiesAsync(Brand brand, List<Lead> leads, CancellationToken ct = default);
     Task<List<ActionQueueItem>> PlanActionsAsync(Brand brand, List<Opportunity> opportunities, CancellationToken ct = default);
 }
 
